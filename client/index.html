@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>LSTM Vis</title>
+    <script src="bower_components/jquery/dist/jquery.min.js"></script>
+    <script src="bower_components/d3/d3.min.js"></script>
+    <script src="bower_components/lodash/dist/lodash.min.js"></script>
+    <script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="bower_components/bootswatch/cosmo/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="bower_components/font-awesome/css/font-awesome.min.css">
+
+</head>
+<body>
+<div class="container">
+    <!--<div class="row">-->
+    <h1 class="text-center "><img src="assets/logo.png" height="40"> - Visualization for LSTMs</h1>
+    <!--</div>-->
+    <!--<h2>Datasets:</h2>-->
+    <!--<ul class="list-group" id="ds_list">-->
+    <!--</ul>-->
+    <div id="ds_list"></div>
+
+
+</div>
+
+<script>
+    var url = '';
+    var query = url + '/api/info/';
+    $.ajax(query, {
+        dataType: 'json',
+        success: function (info) {
+            console.log(info);
+
+            d3.text('assets/schema_interactive.svg', function (e_, schema_svg) {
+
+//                console.log(schema_svg);
+
+
+                var lis = d3.select('#ds_list').selectAll('div').data(info)
+                        .enter().append('div')
+                        .attr({
+                            class: "row"
+                        });
+
+                lis.append('h3').text(function (d, i) {return d.info.name});
+                lis.append('hr');
+
+                function add_info(parent, title, accesor) {
+                    parent.append('div').attr({
+                        class: 'col-md-2 col-xs-3 text-right'
+                    }).style({
+                        'font-weight': 'bold'
+                    }).html(title);
+
+                    parent.append('div').attr({
+                        class: 'col-md-10 col-xs-9 text-left'
+                    }).html(function (d) {return accesor(d)});
+
+                }
+
+                add_info(lis, 'file', function (d, i) {return d.project});
+                add_info(lis, 'meta', function (d, i) {
+                    var keys = Object.keys(d.info.meta);
+                    return (keys.length > 0) ? keys.join(', ') : '---'
+                });
+                add_info(lis, 'embedding_size', function (d, i) {return d.info.word_embedding.size.join(' x ')});
+                add_info(lis, 'sequence_length', function (d, i) {return d.info.word_sequence.size[0]});
+
+
+                lis.each(function (ds, ds_id) {
+                    var that = d3.select(this);
+                    ds.info.states.types.forEach(function (d, i) {
+
+                        add_info(that, d.file + ':' + d.path, function () {
+                            return '<a href="pattern_finder.html?data_set=' + ds_id + '&source=' + d.file + '::' + d.path + '">'
+                                    + 'layer ' + d.layer + ' ' + d.type
+                                    + ' ( size: ' + d.size.join(' x ') + ')'
+                                    + (d.unsigned ? ' - <b>unsigned</b>' : '')
+                                    + '</a>'
+                        })
+                    });
+
+//                    var no_layers = d3.max(ds.info.states.types.map(function (d, i) {return d.layer})) + 1;
+//                    var all_data_subsets = ds.info.states.types.map(function (d, i) {return d.layer + d.type});
+//                    var all_subset_paths = ds.info.states.types.map(function (d, i) {return d.path});
+//
+//                    var svgs = that.append('p').attr({class: 'text-center'});
+//
+//                    _.range(1, no_layers).forEach(function (layer_x) {
+//
+//                        var span = svgs.append('p').html(schema_svg);
+//                        span.select('.picto_states').attr({
+//                            hidden: function () {
+//                                return _.includes(all_data_subsets, layer_x + 'state') ? null : true;
+//                            }
+//                        }).on('click', function (d) {
+//                            var i = _.indexOf(all_data_subsets, layer_x + 'state');
+//                            window.open('pattern_finder.html?data_set='+ds_id+'&source='+all_subset_paths[i])
+//                            console.log(ds_id, layer_x, all_subset_paths[i]);
+//                        });
+//                        span.select('.picto_output').attr({
+//                            hidden: function () {
+//                                return _.includes(all_data_subsets, layer_x + 'output') ? null : true;
+//                            }
+//                        }).on('click', function (d) {
+//                            var i = _.indexOf(all_data_subsets, layer_x + 'output');
+//                            window.open('pattern_finder.html?data_set='+ds_id+'&source='+all_subset_paths[i])
+//
+//
+//                            console.log(ds_id, layer_x, all_subset_paths[i]);
+//                        });
+//
+//                    })
+
+
+                });
+
+            })
+
+
+//<div class="panel panel-success">
+//  <div class="panel-heading">
+//    <h3 class="panel-title">Panel success</h3>
+//  </div>
+//  <div class="panel-body">
+//    Panel content
+//  </div>
+//</div>
+
+//            info.forEach(function(ds){
+//
+//
+//
+//            })
+
+
+        }
+    })
+
+
+</script>
+
+
+</body>
+</html>

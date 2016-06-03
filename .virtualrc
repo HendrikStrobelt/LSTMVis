@@ -1,0 +1,3 @@
+source /etc/profile
+source ~/.bash_profile
+source  ~/Coding/python_venv/LSTM/bin/activate

@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xl="http://www.w3.org/1999/xlink" xmlns:dc="http://purl.org/dc/elements/1.1/" version="1.1" viewBox="281 165 266 211" width="200pt" height="160pt">
+<!--was 233 x 211 -->
+	<defs>
+		<marker orient="auto" overflow="visible" markerUnits="strokeWidth" id="FilledArrow_Marker" viewBox="-1 -3 6 6" markerWidth="6" markerHeight="6" color="#1399e4">
+			<g>
+				<path d="M 3.2 0 L 0 -1.2 L 0 1.2 Z" fill="currentColor" stroke="currentColor" stroke-width="1"/>
+			</g>
+		</marker>
+		<font-face font-family="Helvetica Neue" font-size="10" panose-1="2 0 4 3 0 0 0 2 0 4" units-per-em="1000" underline-position="-100" underline-thickness="50" slope="0" x-height="530" cap-height="728" ascent="966.99524" descent="-212.99744" font-weight="300">
+			<font-face-src>
+				<font-face-name name="HelveticaNeue-Light"/>
+			</font-face-src>
+		</font-face>
+		<marker orient="auto" overflow="visible" markerUnits="strokeWidth" id="FilledArrow_Marker_2" viewBox="-1 -3 7 6" markerWidth="7" markerHeight="6" color="#1399e4">
+			<g>
+				<path d="M 4.8 0 L 0 -1.8 L 0 1.8 Z" fill="currentColor" stroke="currentColor" stroke-width="1"/>
+			</g>
+		</marker>
+		<marker orient="auto" overflow="visible" markerUnits="strokeWidth" id="NegativeControls_Marker" viewBox="-1 -5 2 10" markerWidth="2" markerHeight="10" color="#e91a12">
+			<g>
+				<line x1="0" y1="-4" x2="0" y2="4" fill="none" stroke="currentColor" stroke-width="1"/>
+			</g>
+		</marker>
+		<marker orient="auto" overflow="visible" markerUnits="strokeWidth" id="FilledBall_Marker" viewBox="-7 -4 8 8" markerWidth="8" markerHeight="8" color="#e91a12">
+			<g>
+				<circle cx="-2.9999986" cy="0" r="2.9999973" fill="currentColor" stroke="currentColor" stroke-width="1"/>
+			</g>
+		</marker>
+	</defs>
+	<g stroke="none" stroke-opacity="1" stroke-dasharray="none" fill="none" fill-opacity="1" >
+		<g class='picto_main' >
+			<path d="M 316.97638 209.76378 L 507.9055 209.76378 C 512.3238 209.76378 515.9055 213.3455 515.9055 217.76378 L 515.9055 329.32283 C 515.9055 333.74111 512.3238 337.32283 507.9055 337.32283 L 316.97638 337.32283 C 312.5581 337.32283 308.97638 333.74111 308.97638 329.32283 L 308.97638 217.76378 C 308.97638 213.3455 312.5581 209.76378 316.97638 209.76378 Z" stroke="#666" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+			<line x1="286.29921" y1="238.11023" x2="522.51732" y2="238.11023" marker-end="url(#FilledArrow_Marker)" stroke="#1399e4" stroke-linecap="square" stroke-linejoin="round" stroke-width="4"/>
+			<line x1="286.29921" y1="317.48031" x2="522.51732" y2="317.48031" marker-end="url(#FilledArrow_Marker)" stroke="#1399e4" stroke-linecap="square" stroke-linejoin="round" stroke-width="4"/>
+			<path d="M 336.8189 229.6063 L 337.82677 229.6063 C 342.24505 229.6063 345.82677 233.18802 345.82677 237.6063 L 345.82677 238.61417 C 345.82677 243.03245 342.24505 246.61417 337.82677 246.61417 L 336.8189 246.61417 C 332.40062 246.61417 328.8189 243.03245 328.8189 238.61417 L 328.8189 237.6063 C 328.8189 233.18802 332.40062 229.6063 336.8189 229.6063 Z" fill="white"/>
+			<path d="M 336.8189 229.6063 L 337.82677 229.6063 C 342.24505 229.6063 345.82677 233.18802 345.82677 237.6063 L 345.82677 238.61417 C 345.82677 243.03245 342.24505 246.61417 337.82677 246.61417 L 336.8189 246.61417 C 332.40062 246.61417 328.8189 243.03245 328.8189 238.61417 L 328.8189 237.6063 C 328.8189 233.18802 332.40062 229.6063 336.8189 229.6063 Z" stroke="#ee9f2a" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+			<text transform="translate(328.8189 231.9652)" fill="#332637">
+				<tspan font-family="Helvetica Neue" font-size="10" font-weight="300" fill="#332637" x="5.633937" y="10" textLength="5.74">X</tspan>
+			</text>
+			<path d="M 404.8504 229.6063 L 405.85827 229.6063 C 410.27654 229.6063 413.85827 233.18802 413.85827 237.6063 L 413.85827 238.61417 C 413.85827 243.03245 410.27654 246.61417 405.85827 246.61417 L 404.8504 246.61417 C 400.43211 246.61417 396.8504 243.03245 396.8504 238.61417 L 396.8504 237.6063 C 396.8504 233.18802 400.43211 229.6063 404.8504 229.6063 Z" fill="white"/>
+			<path d="M 404.8504 229.6063 L 405.85827 229.6063 C 410.27654 229.6063 413.85827 233.18802 413.85827 237.6063 L 413.85827 238.61417 C 413.85827 243.03245 410.27654 246.61417 405.85827 246.61417 L 404.8504 246.61417 C 400.43211 246.61417 396.8504 243.03245 396.8504 238.61417 L 396.8504 237.6063 C 396.8504 233.18802 400.43211 229.6063 404.8504 229.6063 Z" stroke="#ee9f2a" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+			<text transform="translate(396.8504 231.9652)" fill="#332637">
+				<tspan font-family="Helvetica Neue" font-size="10" font-weight="300" fill="#332637" x="5.633937" y="10" textLength="5.74">X</tspan>
+			</text>
+			<path d="M 472.8819 308.97638 L 473.88976 308.97638 C 478.30804 308.97638 481.88976 312.5581 481.88976 316.97638 L 481.88976 317.98425 C 481.88976 322.40253 478.30804 325.98425 473.88976 325.98425 L 472.8819 325.98425 C 468.4636 325.98425 464.8819 322.40253 464.8819 317.98425 L 464.8819 316.97638 C 464.8819 312.5581 468.4636 308.97638 472.8819 308.97638 Z" fill="white"/>
+			<path d="M 472.8819 308.97638 L 473.88976 308.97638 C 478.30804 308.97638 481.88976 312.5581 481.88976 316.97638 L 481.88976 317.98425 C 481.88976 322.40253 478.30804 325.98425 473.88976 325.98425 L 472.8819 325.98425 C 468.4636 325.98425 464.8819 322.40253 464.8819 317.98425 L 464.8819 316.97638 C 464.8819 312.5581 468.4636 308.97638 472.8819 308.97638 Z" stroke="#ee9f2a" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+			<text transform="translate(464.8819 311.33528)" fill="#332637">
+				<tspan font-family="Helvetica Neue" font-size="10" font-weight="300" fill="#332637" x="5.633937" y="10" textLength="5.74">X</tspan>
+			</text>
+			<line x1="338.18215" y1="317.48031" x2="337.55997" y2="260.01339" marker-end="url(#FilledArrow_Marker_2)" stroke="#1399e4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+			<line x1="406.11616" y1="316.98034" x2="405.49398" y2="259.51342" marker-end="url(#FilledArrow_Marker_2)" stroke="#1399e4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+			<line x1="474.14765" y1="238.11023" x2="473.52548" y2="295.57716" marker-end="url(#FilledArrow_Marker_2)" stroke="#1399e4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+			<rect x="325.98425" y="291.9685" width="25.511811" height="14.173228" fill="#e7cbbc"/>
+			<rect x="325.98425" y="291.9685" width="25.511811" height="14.173228" stroke="#ec6e28" stroke-linecap="round" stroke-linejoin="round" stroke-width=".5"/>
+			<text transform="translate(325.98425 291.9685)" fill="#332637">
+				<tspan font-family="Helvetica Neue" font-size="10" font-weight="300" fill="#332637" x="6.6459054" y="10" textLength="12.22">sig</tspan>
+			</text>
+			<rect x="425.19685" y="310.3937" width="25.511811" height="14.173228" fill="#e7cbbc"/>
+			<rect x="425.19685" y="310.3937" width="25.511811" height="14.173228" stroke="#ec6e28" stroke-linecap="round" stroke-linejoin="round" stroke-width=".5"/>
+			<text transform="translate(425.19685 310.3937)" fill="#332637">
+				<tspan font-family="Helvetica Neue" font-size="10" font-weight="300" fill="#332637" x="6.6459054" y="10" textLength="12.22">sig</tspan>
+			</text>
+			<path d="M 404.8504 265.03937 L 405.85827 265.03937 C 410.27654 265.03937 413.85827 268.62109 413.85827 273.03937 L 413.85827 274.04724 C 413.85827 278.46552 410.27654 282.04724 405.85827 282.04724 L 404.8504 282.04724 C 400.43211 282.04724 396.8504 278.46552 396.8504 274.04724 L 396.8504 273.03937 C 396.8504 268.62109 400.43211 265.03937 404.8504 265.03937 Z" fill="white"/>
+			<path d="M 404.8504 265.03937 L 405.85827 265.03937 C 410.27654 265.03937 413.85827 268.62109 413.85827 273.03937 L 413.85827 274.04724 C 413.85827 278.46552 410.27654 282.04724 405.85827 282.04724 L 404.8504 282.04724 C 400.43211 282.04724 396.8504 278.46552 396.8504 274.04724 L 396.8504 273.03937 C 396.8504 268.62109 400.43211 265.03937 404.8504 265.03937 Z" stroke="#ee9f2a" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+			<text transform="translate(396.8504 267.39827)" fill="#332637">
+				<tspan font-family="Helvetica Neue" font-size="10" font-weight="300" fill="#332637" x="5.633937" y="10" textLength="5.74">X</tspan>
+			</text>
+			<rect x="393.09842" y="291.9685" width="25.511811" height="14.173228" fill="#e7cbbc"/>
+			<rect x="393.09842" y="291.9685" width="25.511811" height="14.173228" stroke="#ec6e28" stroke-linecap="round" stroke-linejoin="round" stroke-width=".5"/>
+			<text transform="translate(393.09842 291.9685)" fill="#332637">
+				<tspan font-family="Helvetica Neue" font-size="10" font-weight="300" fill="#332637" x="3.3109054" y="10" textLength="18.89">tanh</tspan>
+			</text>
+			<path d="M 368.9665 317.48031 L 368.96649 273.91927 L 383.4511 273.76961" marker-end="url(#FilledArrow_Marker_2)" stroke="#1399e4" stroke-linecap="butt" stroke-linejoin="round" stroke-width="2"/>
+			<rect x="357.16536" y="291.9685" width="25.511811" height="14.173228" fill="#e7cbbc"/>
+			<rect x="357.16536" y="291.9685" width="25.511811" height="14.173228" stroke="#ec6e28" stroke-linecap="round" stroke-linejoin="round" stroke-width=".5"/>
+			<text transform="translate(357.16536 291.9685)" fill="#332637">
+				<tspan font-family="Helvetica Neue" font-size="10" font-weight="300" fill="#332637" x="6.6459054" y="10" textLength="12.22">sig</tspan>
+			</text>
+			<rect x="461.12992" y="248.0315" width="25.511811" height="14.173228" fill="#e7cbbc"/>
+			<rect x="461.12992" y="248.0315" width="25.511811" height="14.173228" stroke="#ec6e28" stroke-linecap="round" stroke-linejoin="round" stroke-width=".5"/>
+			<text transform="translate(461.12992 248.0315)" fill="#332637">
+				<tspan font-family="Helvetica Neue" font-size="10" font-weight="300" fill="#332637" x="3.3109054" y="10" textLength="18.89">tanh</tspan>
+			</text>
+		</g>
+		<g class='picto_states'>
+
+			<path d="M 476.8794 283.67793 L 507.30464 283.73062 L 507.30464 184.1903" marker-end="url(#NegativeControls_Marker)" marker-start="url(#FilledBall_Marker)" stroke="#e91a12" stroke-linecap="butt" stroke-linejoin="round" stroke-width="1"/>
+			<rect x="486.95665" y="167.51708" width="40" height="14.173228" fill="white" style="cursor: crosshair;" class='picto_states_button'/>
+			<rect x="486.95665" y="167.51708" width="40" height="14.173228" stroke="#f03315" stroke-linecap="round" stroke-linejoin="round" stroke-width=".5"/>
+			<text transform="translate(486.95665 168.45866)" fill="black" style='pointer-events:none'>
+				<tspan font-family="Helvetica Neue" font-size="10" font-weight="300" x="7.04" y="10" textLength="25.92">states</tspan>
+			</text>
+		</g>
+		<g class = 'picto_output'>
+
+			<line x1="506.45665" y1="320.71618" x2="506.45665" y2="357.25633" marker-end="url(#NegativeControls_Marker)" marker-start="url(#FilledBall_Marker)" stroke="#e91a12" stroke-linecap="butt" stroke-linejoin="round" stroke-width="1"/>
+			<rect x="486.95665" y="359.75633" width="40" height="14.173228" fill="white" style="cursor: crosshair;" class='picto_output_button'/>
+			<rect x="486.95665" y="359.75633" width="40" height="14.173228" stroke="#f03315" stroke-linecap="round" stroke-linejoin="round" stroke-width=".5"/>
+			<text transform="translate(486.95665 360.6979)" fill="black" style='pointer-events:none'>
+				<tspan font-family="Helvetica Neue" font-size="10" font-weight="300" fill="black" x="6.02" y="10" textLength="27.96">output</tspan>
+			</text>
+		</g>
+	</g>
+</svg>

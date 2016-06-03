@@ -1,0 +1,28 @@
+{
+  "name": "LSTMVisClient",
+  "version": "0.1.0",
+  "authors": [
+    "LSTM Team"
+  ],
+  "description": "",
+  "main": "",
+  "moduleType": [],
+  "license": "GPL",
+  "homepage": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "~2.2",
+    "d3": "~3.5",
+    "lodash": "~4.6",
+    "bootswatch": "v3.3.6+1",
+    "font-awesome": "fontawesome#~4.5.0",
+    "lodash.math": "*"
+  }
+}

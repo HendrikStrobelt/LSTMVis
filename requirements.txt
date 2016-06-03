@@ -1,0 +1,14 @@
+click==6.6
+Flask==0.11
+Flask-Cors==2.1.2
+h5py==2.6.0
+itsdangerous==0.24
+Jinja2==2.8
+MarkupSafe==0.23
+numpy==1.11.0
+PyYAML==3.11
+scipy==0.17.1
+six==1.10.0
+Werkzeug==0.11.10
+wheel==0.24.0
+Whoosh==2.7.4
