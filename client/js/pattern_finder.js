@@ -5,6 +5,13 @@ var url = 'http://localhost:8888';
 var hostedURL = 'http://localhost:8888/client/closest_V1.html';
 var columnWidth = 70;
 
+const Event_list = {
+  threshold_update: 'threshold_update',
+  cell_hovered: 'cell_hovered',
+  new_page:'new_page'
+};
+
+
 /**
  * get URL parameters
  * @param variable
@@ -252,6 +259,11 @@ function bind_events() {
     }
 
   });
+
+  event_handler.bind(Event_list.new_page,function(e,d){
+    window.open(url_string(d.replace));
+  })
+
 }
 
 bind_events();

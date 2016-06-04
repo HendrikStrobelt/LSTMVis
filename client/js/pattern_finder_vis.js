@@ -5,10 +5,6 @@
 
 const CELL_COUNT_HM_ID = 'cell_count';
 
-const Event_list = {
-  threshold_update: 'threshold_update',
-  cell_hovered: 'cell_hovered'
-};
 
 /**
  * PatternFinder Visualization class

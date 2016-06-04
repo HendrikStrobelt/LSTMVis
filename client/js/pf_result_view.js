@@ -22,13 +22,16 @@ function ResultView(parent, x, y, data, options) {
       cw: 30, h: 15
     },
     result_histogram: {
-      x: 250, y: 0, h: 60, w: 400, cw: 15
+      x: 250, y: 0, h: 60, w: 400, cw: 12
     },
     result_cells: {
-      x: 0, y: 40, ch: 16
+      x: 0, y: 65, ch: 16
     },
     result_view: {
-      x: 0, y: 70
+      x: 20, y: 85
+    },
+    result_link: {
+      x: 0, y: 85
     },
     query_buttons: {
       x: 0, y: 0, cw: 150, h: 15
@@ -46,32 +49,8 @@ function ResultView(parent, x, y, data, options) {
     rect_selection: null
   };
 
-
-  this.result_cells_group = this.content_group.append('g').attr({
-    class: 'result_cells_group',
-    "transform": "translate(" + this.layout.result_cells.x + "," + this.layout.result_cells.y + ")"
-  });
-
-  this.result_view_group = this.content_group.append('g').attr({
-    class: 'result_view_group',
-    "transform": "translate(" + this.layout.result_view.x + "," + this.layout.result_view.y + ")"
-  });
-
-  this.result_view_group_bg = this.result_view_group.append('g').attr({
-    class: 'result_view_group_bg bg',
-    opacity: .5
-  });
-
-  this.result_histogram = this.content_group.append('g').attr({
-    class: 'result_histogram',
-    "transform": "translate(" + this.layout.result_histogram.x + "," + this.layout.result_histogram.y + ")"
-  });
-  this.result_histogram.append('text').attr({
-    class: 'result_histogram_name',
-    x: -3,
-    y: 12
-  }).text('length dist:');
-
+  this.all_content_groups = [];
+  this.create_groups();
 
   //=== heatmap ===
   this.heatmap_ids = Object.keys(globalInfo['info']['meta']).map(function (d) {return 'meta_' + d;});
@@ -99,9 +78,48 @@ ResultView.prototype.update = function (data, options) {
 
 };
 
+ResultView.prototype.create_groups = function () {
+  var that = this;
+
+  this.result_cells_group = this.content_group.append('g').attr({
+    class: 'result_cells_group',
+    "transform": "translate(" + this.layout.result_cells.x + "," + this.layout.result_cells.y + ")"
+  });
+  this.all_content_groups.push(that.result_cells_group);
+
+  this.result_view_group = this.content_group.append('g').attr({
+    class: 'result_view_group',
+    "transform": "translate(" + this.layout.result_view.x + "," + this.layout.result_view.y + ")"
+  });
+  this.all_content_groups.push(that.result_view_group);
+
+  this.result_link_group = this.content_group.append('g').attr({
+    class: 'result_link_group',
+    "transform": "translate(" + this.layout.result_link.x + "," + this.layout.result_link.y + ")"
+  });
+  this.all_content_groups.push(that.result_link_group);
+
+
+  this.result_view_group_bg = this.result_view_group.append('g').attr({
+    class: 'result_view_group_bg bg',
+    opacity: .5
+  });
+
+  this.result_histogram = this.content_group.append('g').attr({
+    class: 'result_histogram',
+    "transform": "translate(" + this.layout.result_histogram.x + "," + this.layout.result_histogram.y + ")"
+  });
+  this.result_histogram.append('text').attr({
+    class: 'result_histogram_name',
+    x: -3,
+    y: 12
+  }).text('length dist:');
+  this.all_content_groups.push(that.result_histogram);
+
+
+}
 
 ResultView.prototype.wrangle_data = function () {
-
 };
 
 ResultView.prototype.create_ui = function () {
@@ -505,8 +523,36 @@ ResultView.prototype.redraw = function (draw_options_) {
     x1: function (d) {return op.xScale(d) + 2},
     x2: function (d) {return op.xScale(d) + 2},
     y1: 0,
-    y2: that.layout.ch * 50
+    y2: that.layout.ch * that.results.index_query.data.length
   });
+
+
+  function update_links() {
+    var result_link = that.result_link_group.selectAll(".result_link").data(that.results.index_query.data);
+    result_link.exit().remove();
+
+    // --- adding Element to class result_link
+    var result_linkEnter = result_link.enter().append("text").attr({
+      "class": "result_link navigation_button"
+    });
+
+    // --- changing nodes for result_link
+    result_link.attr({
+      y: function (d, i) {return (i) * that.layout.ch + 14}
+    }).text("\uf0c1")
+      .on('click', function (d, i) {
+
+        that.event_handler.trigger(Event_list.new_page,
+          {replace: {pos: d[0], brush: '20,' + (d[2] + 20), padding: '1,0' }}
+        )
+
+      })
+    ;
+
+
+  }
+
+  update_links();
 
 
 };
@@ -556,16 +602,28 @@ ResultView.prototype.bind_event_handler = function (event_handler) {
 
     var query = op.url + '/api/closest_sequences?' + parameter.join('&');
 
-    that.result_view_group.style({
-      opacity: .2
-    });
+    // that.result_view_group.style({
+    //   opacity: 0
+    // });
+    that.all_content_groups.forEach(function (d) {d.transition().style({opacity: 0, 'pointer_events': 'none'})});
+
+    var wt = that.content_group.selectAll('.warning_text').data(['loading...'])
+    wt.enter().append('text').attr({class: 'warning_text', x: 20, y: 40});
+    wt.text(function (d, i) {return d});
+
+
     $.ajax(query, {
       dataType: 'json',
       success: function (index_query) {
 
+        console.log(index_query);
         var all_pos = index_query.data.map(function (d) {return d[0]});
         if (all_pos.length > 0) {
           var dimensions = ['states,words,cell_count'];
+
+          that.content_group.selectAll('.warning_text').remove();
+          that.all_content_groups.forEach(function (d) {d.transition().style({opacity: 1, 'pointer_events': null})});
+
 
           //Todo: global info
           Object.keys(globalInfo['info']['meta']).forEach(function (d) {dimensions.push('meta_' + d)});
@@ -588,6 +646,8 @@ ResultView.prototype.bind_event_handler = function (event_handler) {
 
                 that.results.index_query = index_query;
 
+                console.log(that.results);
+
                 that.selected_cells_in_results = [];
 
                 that.cummulative_heatmap_for_selected_cells = [];
@@ -595,16 +655,11 @@ ResultView.prototype.bind_event_handler = function (event_handler) {
 
                 that.redraw({});
 
-
-                that.result_view_group.transition().style({
-                  opacity: 1
-                })
-
               }
             });
         }
         else {
-          //that.result_view_group.append('text').text('NO RESULTS');
+          wt.text(function () {return 'no results'})
         }
       }
     })

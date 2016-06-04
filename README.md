@@ -1,7 +1,7 @@
 # LSTMVis
 Visualization Toolbox for Long Short Term Memory networks (LSTMs)
 
-![Alt text](client/assets/example1.png)
+![Alt text](client/assets/example2.png)
 
 
 ## Getting started

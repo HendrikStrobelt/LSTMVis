@@ -128,8 +128,8 @@
 
         .brush_indicator {
             stroke: #3fb391;
-            stroke-width: 1;
-            stroke-dasharray: 2,2;
+            stroke-width: 3;
+            stroke-dasharray: 2,1;
             fill: none;
         }
 
@@ -171,7 +171,7 @@
         .threshold_line {
             fill: none;
             stroke-width: 1;
-            stroke-dasharray: 3, 3;
+            stroke-dasharray: 3, 1;
             stroke: #ff4b33;
         }
 
@@ -285,13 +285,13 @@
             cursor: pointer;
         }
 
-        .brush_handles {
+        .brush_handles, .result_link {
             font-family: FontAwesome, sans-serif;
             font-size: 12px;
             fill: black;
             opacity: .5;
             /*pointer-events: none;*/
-            /*cursor: crosshair;*/
+            cursor: crosshair;
         }
 
         .separator_line {
