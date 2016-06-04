@@ -1,7 +1,7 @@
 # LSTMVis
 Visualization Toolbox for Long Short Term Memory networks (LSTMs)
 
-![Alt text](client/assets/example2.png)
+![Alt text](client/assets/example3.png)
 
 
 ## Getting started
@@ -92,4 +92,4 @@ TODO ...
 
 ## Credits
 
-LSTMVis is a project of Hendrik Strobelt, Alexander 'Sasha' Rush, Sebastian Gehrmann, and Bernd Huber at Harvard SEAS.
+LSTMVis is a collaborative project of Hendrik Strobelt, Alexander 'Sasha' Rush, Sebastian Gehrmann, and Bernd Huber at Harvard SEAS.
