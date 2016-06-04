@@ -110,7 +110,6 @@ HeatMap.prototype.draw = function (options) {
 
   options = options || {};
   var that = this;
-  //console.log(that.colorScale.domain(), that.colorScale.range());
   var hmCell = that.hmCells.selectAll(".hmCell").data(that.data);
   hmCell.exit().remove();
 
@@ -140,7 +139,6 @@ HeatMap.prototype.draw = function (options) {
   if (options && options.transition == true) {
     style_hm = hmCell.transition().duration(1000)
   }
-  console.log(that.colorScale.range(),'\n-- that.colorScale.range() --'); 
   style_hm.style({
     fill: function (d) {
       return that.colorScale(d.value);

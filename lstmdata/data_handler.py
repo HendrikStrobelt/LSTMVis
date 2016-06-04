@@ -459,7 +459,7 @@ class LSTMDataHandler:
 
         return res
 
-    def get_closest_sequences_2(self, cells, source, length, epsilon_left=0, epsilon_right=0, activation_threshold=.3,
+    def get_closest_sequences_2(self, cells, source, activation_threshold=.3,
                                 data_transform='tanh', add_histograms=False, phrase_length=0):
         """ search for the longest sequences given the activation threshold and a set of cells
 

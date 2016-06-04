@@ -271,8 +271,8 @@ $.ajax(url + "/api/info", {
     //}
 
 
-    var pfv = new PatternFinderVis(contextVisGroup.node(), 0, 0, url_parameters);
-    pfv.bindEvents(event_handler);
+    var pfv = new PatternFinderVis(contextVisGroup.node(), 0, 0,event_handler, url_parameters);
+    
 
 
     d3.selectAll('#loading').transition().style({

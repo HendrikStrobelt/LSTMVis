@@ -156,11 +156,8 @@ def closest_sequence():
     options = request.args
     data_set = int(request.args.get("data_set", 0))
     source = request.args.get("source")
-    length = int(options.get('length', 10))
     cell_string = options.get('cells', '')
     cells = map(lambda x: int(x), cell_string.split(','))
-    epsilon_left = int(options.get('e_left', 0))
-    epsilon_right = int(options.get('e_right', 0))
     threshold = float(options.get('threshold', .3))
     data_transform = request.args.get("data_transform", 'tanh')
     phrase_length = int(options.get('phrase_length', 0))
@@ -170,16 +167,13 @@ def closest_sequence():
     if not source:
         source = dh.config['states']['types'][0]['path']
 
-    indices, meta = dh.get_closest_sequences_2(cells, source, length,
-                                               epsilon_left=epsilon_left, epsilon_right=epsilon_right,
+    indices, meta = dh.get_closest_sequences_2(cells, source,
                                                activation_threshold=threshold,
                                                data_transform=data_transform,
                                                add_histograms=True,
                                                phrase_length=phrase_length)
 
     res = {
-        'e_left': epsilon_left,
-        'e_right': epsilon_right,
         'threshold': threshold,
         'source': source,
         'data_transform': data_transform,
