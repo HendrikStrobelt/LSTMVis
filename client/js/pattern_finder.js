@@ -90,7 +90,7 @@ var cat16colors = ["#3366cc", "#ff9900", "#109618", "#990099", "#0099c6",
   "#66aa00", "#316395", "#994499", "#22aa99", "#aaaa11",
   "#6633cc", "#e67300", "#8b0707", "#651067", "#329262", "#5574a6",
   "#3b3eac"].reverse();
-cat16colors = cat16colors.map(function (d) {return d3.rgb(d).brighter()});
+cat16colors = cat16colors.map(function (d) {return d3.rgb(d).brighter().brighter()});
 cat16colors = _.concat(cat16colors, cat20colors)
 
 var cat_colors = cat16colors;

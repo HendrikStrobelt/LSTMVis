@@ -460,7 +460,7 @@ class LSTMDataHandler:
         return res
 
     def get_closest_sequences_2(self, cells, source, activation_threshold=.3,
-                                data_transform='tanh', add_histograms=False, phrase_length=0):
+                                data_transform='tanh', add_histograms=False, phrase_length=0, sort_mode='cells'):
         """ search for the longest sequences given the activation threshold and a set of cells
 
         :param cells: the cells
@@ -529,23 +529,33 @@ class LSTMDataHandler:
 
         res = []
         all_pos = pos_intersection.flatten()
-        for p in all_pos:  # all positions where all pivot cells start jointly
-            min_length = np.min(pos_length_map[p])  # max length covered by all cells
+        if sort_mode == 'cells':
+            # sort by minimal number of other active cells
+            for p in all_pos:  # all positions where all pivot cells start jointly
+                min_length = np.min(pos_length_map[p])  # max length covered by all cells
 
-            # get the slice of cell states for the range
-            cs = cell_states[p:p + min_length - 1, :]
-            # discretize
-            cs[cs >= activation_threshold_corrected] = 1
-            cs[cs < activation_threshold_corrected] = 0
+                # get the slice of cell states for the range
+                cs = cell_states[p:p + min_length - 1, :]
+                # discretize
+                cs[cs >= activation_threshold_corrected] = 1
+                cs[cs < activation_threshold_corrected] = 0
 
-            # build sum
-            cs_sum = np.sum(cs, axis=0)
+                # build sum
+                cs_sum = np.sum(cs, axis=0)
 
-            # set all pivot cells to zero and discretize again
-            cs_sum[cells] = 0
-            cs_sum[cs_sum > 0] = 1
-            res.append([p, np.var(pos_length_map[p]), min_length, float(np.sum(cs_sum))])
-        # res = map(lambda x: [x, np.var(pos_length_map[x]), np.min(pos_length_map[x])], pos_intersection.flatten())
+                # set all pivot cells to zero and discretize again
+                cs_sum[cells] = 0
+                cs_sum[cs_sum > 0] = 1
+                res.append([p, np.var(pos_length_map[p]), min_length, float(np.sum(cs_sum))])
+
+            def key(elem):
+                return -elem[3], -elem[2]
+        else:
+            # sort by clean cut
+            res = map(lambda xx: [xx, np.var(pos_length_map[xx]), np.min(pos_length_map[xx]), 0], all_pos)
+
+            def key(elem):
+                return elem[1], -elem[2]
 
         # res.sort(key=lambda x: x[1], reverse=False)
         # res.sort(key=lambda x: x[2], reverse=True)
@@ -554,9 +564,6 @@ class LSTMDataHandler:
         if add_histograms:
             meta['fuzzy_length_histogram'] = np.bincount([x[2] for x in res])
             meta['strict_length_histogram'] = np.bincount([x[2] for x in res if x[1] == 0])
-
-        def key(elem):
-            return -elem[3], -elem[2]
 
         if phrase_length > 1:
             res = [x for x in res if x[2] == phrase_length]

@@ -81,7 +81,8 @@ PCPlot.prototype.redraw = function (draw_options) {
   // var current = that.current;
 
 
-  var line_opacity = 1.5 / (Math.log(dt.draw_data.length + 1) + 1);
+  // var line_opacity = 1.5 / (Math.log(dt.draw_data.length + 1) + 1);
+  var line_opacity = 1. / (Math.sqrt(dt.draw_data.length) + .00001);
 
   var line = d3.svg.line()
     .x(function (d, i) {return op.xScale(i)})

@@ -14,6 +14,7 @@ function ResultView(parent, x, y, data, options) {
   //=== queries ===
   this.left_context = 2;
   this.right_context = 15;
+  this.sort_mode = 'cells';
 
   this.layout = {
     ch: 16,
@@ -153,9 +154,20 @@ ResultView.prototype.create_ui = function () {
   createButton(that.content_group,
     that.layout.query_buttons.x, that.layout.query_buttons.y,
     that.layout.query_buttons.cw, that.layout.query_buttons.h,
-    'open_query', 'query open end',
+    'open_query', 'query unique first',
     function () {
       dt.phrase_length = null;
+      that.sort_mode='cells';
+      that.event_handler.trigger('open_query')
+    }
+  );
+   createButton(that.content_group,
+    that.layout.query_buttons.x, that.layout.query_buttons.y+that.layout.query_buttons.h+5,
+    that.layout.query_buttons.cw, that.layout.query_buttons.h,
+    'open_query', 'query precision first',
+    function () {
+      dt.phrase_length = null;
+      that.sort_mode='precision';
       that.event_handler.trigger('open_query')
     }
   );
@@ -281,13 +293,16 @@ ResultView.prototype.redraw = function (draw_options_) {
       y: function (d) {return d.x * that.layout.ch}
     });
 
+    var use_opacity = (rect_hm && that.current.rect_selection != CELL_COUNT_HM_ID);
     if (options.no_transition) {
       background_rect.style({
-        fill: function (d) {return rect_hm ? rect_hm.colorScale(d.value) : 'white';}
+        fill: function (d) {return rect_hm ? rect_hm.colorScale(d.value) : 'white';},
+        'fill-opacity': function (d) {return use_opacity ? that.opacity_map[d.x][d.y] : 1}
       });
     } else {
       background_rect.transition().style({
-        fill: function (d) {return rect_hm ? rect_hm.colorScale(d.value) : 'white';}
+        fill: function (d) {return rect_hm ? rect_hm.colorScale(d.value) : 'white';},
+        'fill-opacity': function (d) {return use_opacity ? that.opacity_map[d.x][d.y] : 1}
       });
     }
 
@@ -543,7 +558,7 @@ ResultView.prototype.redraw = function (draw_options_) {
       .on('click', function (d, i) {
 
         that.event_handler.trigger(Event_list.new_page,
-          {replace: {pos: d[0], brush: '20,' + (d[2] + 20), padding: '1,0' }}
+          {replace: {pos: d[0], brush: '20,' + (d[2] + 20), padding: '1,0'}}
         )
 
       })
@@ -564,8 +579,8 @@ ResultView.prototype.set_cell_count_hm = function (hm) {
   that.cell_count_hm_data = hm;
 
   var max = _.max(hm.map(function (d) {return _.max(d)}));
-  that.opacity_map = hm.map(function (x) {return x.map(function (y) { return 1. * y / max})})
-
+  // that.opacity_map = hm.map(function (x) {return x.map(function (y) { return 1. * y / max})})
+  that.opacity_map = hm.map(function (x) {return x.map(function (y, i) { return (y == max || i == that.left_context - 1) ? 1 : 0.1})})
 
 };
 
@@ -586,7 +601,8 @@ ResultView.prototype.bind_event_handler = function (event_handler) {
       'cells=' + query_cells.join(','),
       'threshold=' + dt.threshold,
       'data_set=' + (op.data_set),
-      'data_transform=' + (op.source_info.transform)
+      'data_transform=' + (op.source_info.transform),
+      'sort_mode=' + that.sort_mode
     ];
 
     if (op.source != null) {
@@ -608,7 +624,7 @@ ResultView.prototype.bind_event_handler = function (event_handler) {
     that.all_content_groups.forEach(function (d) {d.transition().style({opacity: 0, 'pointer_events': 'none'})});
 
     var wt = that.content_group.selectAll('.warning_text').data(['loading...'])
-    wt.enter().append('text').attr({class: 'warning_text', x: 20, y: 40});
+    wt.enter().append('text').attr({class: 'warning_text', x: 20, y: 60});
     wt.text(function (d, i) {return d});
 
 
@@ -666,7 +682,6 @@ ResultView.prototype.bind_event_handler = function (event_handler) {
 
 
   });
-
 
   that.event_handler.bind('result_cell_hovered', function (e, data) {
     //return;

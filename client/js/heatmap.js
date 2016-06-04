@@ -145,7 +145,7 @@ HeatMap.prototype.draw = function (options) {
     },
     opacity: function (d) {
       if (has_opacity) {
-        return that.opacity[d.x][d.y] * .8 + .2
+        return that.opacity[d.x][d.y] //* .8 + .2
       } else {
         return null;
       }

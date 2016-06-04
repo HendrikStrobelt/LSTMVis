@@ -390,23 +390,23 @@ PatternFinderVis.prototype.bindEvents = function (eventHandler) {
   eventHandler.bind('cell_clicked', function (e, cell_id) {
 
 
-      if (_.includes(that.current.selection.excluded_cells, cell_id)) {
-        _.remove(that.current.selection.excluded_cells, function (d) {return d == cell_id;})
+    if (_.includes(that.current.selection.excluded_cells, cell_id)) {
+      _.remove(that.current.selection.excluded_cells, function (d) {return d == cell_id;})
 
-      } else {
-        that.current.selection.excluded_cells.push(cell_id);
-      }
+    } else {
+      that.current.selection.excluded_cells.push(cell_id);
+    }
 
-      that.redraw();
+    that.redraw();
 
-      if (that.current.selection.excluded_cells.length > 0) {
-        that.eventHandler.trigger('replace_url', {ex_cell: that.current.selection.excluded_cells.join(',')});
-      }
-      else {
-        that.eventHandler.trigger('replace_url', {ex_cell: null});
-      }
+    if (that.current.selection.excluded_cells.length > 0) {
+      that.eventHandler.trigger('replace_url', {ex_cell: that.current.selection.excluded_cells.join(',')});
+    }
+    else {
+      that.eventHandler.trigger('replace_url', {ex_cell: null});
+    }
 
-    });
+  });
 
   eventHandler.bind('cell_hovered', function (e, data) {
     that.content_group.selectAll('.cell_' + data.cell).classed('hover', data.active);
@@ -796,10 +796,13 @@ PatternFinderVis.prototype.data_wrangling = function (data) {
     cell_id_mapper = function (d) {return that.data.cells[d]};
   }
 
+  // that.data.draw_data = that.data.states[0].data.map(function (d, i) {
+  //   return {index: cell_id_mapper(i), values: d};
+  // });
+
   that.data.draw_data = that.data.states[0].data.map(function (d, i) {
     return {index: cell_id_mapper(i), values: d};
-  });
-
+  }).filter(function (d) {return _.sum(d.values) != 0});
   //// clear variables:
   //that.selected_cells_by_threshold = [];
   //that.selected_cells_for_query = [];
@@ -854,11 +857,11 @@ PatternFinderVis.prototype.redraw = function () {
   // if all cells returned then all IDs should be index position in array
   var draw_data = that.data.draw_data;
 
-  that.result_view.update(  {
-      threshold: this.current.selection.threshold,
-      selected_cells: this.selected_cells_for_query,
-      excluded_cells: this.current.selection.excluded_cells
-    },{});
+  that.result_view.update({
+    threshold: this.current.selection.threshold,
+    selected_cells: this.selected_cells_for_query,
+    excluded_cells: this.current.selection.excluded_cells
+  }, {});
 
   function update_pc_lines() {
     if (that.pc_plots.length < 1) {

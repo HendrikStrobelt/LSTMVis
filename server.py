@@ -58,7 +58,7 @@ def rle_states(pos):
                         right=right,
                         data_transform=data_transform,
                         activation_threshold=threshold,
-                        transpose=True,  rle=rle)
+                        transpose=True, rle=rle)
 
     return Response(json.dumps(res), mimetype='application/json')
 
@@ -161,6 +161,7 @@ def closest_sequence():
     threshold = float(options.get('threshold', .3))
     data_transform = request.args.get("data_transform", 'tanh')
     phrase_length = int(options.get('phrase_length', 0))
+    sort_mode = options.get('sort_mode', 'cells')
 
     dh = data_handlers[data_handlers.keys()[data_set]]  # type: LSTMDataHandler
 
@@ -171,9 +172,11 @@ def closest_sequence():
                                                activation_threshold=threshold,
                                                data_transform=data_transform,
                                                add_histograms=True,
-                                               phrase_length=phrase_length)
+                                               phrase_length=phrase_length,
+                                               sort_mode=sort_mode)
 
     res = {
+        'sort_mode': sort_mode,
         'threshold': threshold,
         'source': source,
         'data_transform': data_transform,
