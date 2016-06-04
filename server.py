@@ -58,32 +58,7 @@ def rle_states(pos):
                         right=right,
                         data_transform=data_transform,
                         activation_threshold=threshold,
-                        transpose=True, raw=True)
-    data = res[0][0]['data']
-    if rle > 0:
-        data[data < threshold] = 0
-        states = np.where(res[0][0]['data'] >= threshold, [1], [0])
-        print states
-        # states[states >= threshold] = 1
-        # states[states < threshold] = 0
-
-        for i in range(0, len(states)):
-            state = states[i]
-            # print state
-            lengths, pos, values = hf.rle(state)
-            offset = 1 - values[0]
-            lengths_1 = lengths[offset::2]
-            pos_1 = pos[offset::2]
-            # print pos_1
-            # print lengths_1
-            del_pos = np.argwhere(lengths_1 <= rle)
-            # print del_pos
-            # print '--', data[i]
-            for p in del_pos:
-                data[i, pos_1[p]:pos_1[p] + lengths_1[p]] = 0
-                # print '==', data[i]
-
-    res[0][0]['data'] = [[round(y, 5) for y in x] for x in data.tolist()]
+                        transpose=True,  rle=rle)
 
     return Response(json.dumps(res), mimetype='application/json')
 
@@ -130,6 +105,7 @@ def get_context():
     data_transform = request.args.get("data_transform", 'tanh')
     bit_mask = request.args.get('bitmask', '')
     cell_string = request.args.get('cells', '')
+    rle = int(request.args.get('rle', 0))
     if len(bit_mask) > 0:
         cells = np.where(np.fromstring(bit_mask, dtype=np.uint8) > 48)[0].tolist()
     elif len(cell_string) > 0:
@@ -155,7 +131,8 @@ def get_context():
                             state_threshold=state_threshold,
                             data_transform=data_transform,
                             cells=cells,
-                            activation_threshold=threshold)
+                            activation_threshold=threshold,
+                            rle=rle)
 
     res['pos'] = pos_array
     res['data_set'] = data_set
@@ -197,7 +174,8 @@ def closest_sequence():
                                                epsilon_left=epsilon_left, epsilon_right=epsilon_right,
                                                activation_threshold=threshold,
                                                data_transform=data_transform,
-                                               add_histograms=True, phrase_length=phrase_length)
+                                               add_histograms=True,
+                                               phrase_length=phrase_length)
 
     res = {
         'e_left': epsilon_left,

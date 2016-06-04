@@ -57,7 +57,8 @@ class LSTMDataHandler:
         for x in self.config['states']['types']:
             x['file'] = x.get('file', default_state_file)
             x['unsigned'] = x.get('unsigned', False)
-            cell_states, _ = self.get_cached_matrix('tanh', x['file'] + '::' + x['path'])
+            x['transform'] = x.get('transform', 'tanh')
+            cell_states, _ = self.get_cached_matrix(x['transform'], x['file'] + '::' + x['path'])
             x['size'] = list(cell_states.shape)
 
         ws = self.config['word_sequence']
@@ -113,7 +114,7 @@ class LSTMDataHandler:
             return res.tolist(), self.current['mean_embedding'].tolist()
 
     def get_states(self, pos_array, source, left=10, right=0, cell_selection=None, raw=False, round_values=5,
-                   data_transform='tanh', activation_threshold=0.3, add_active_cells=False, transpose=False):
+                   data_transform='tanh', activation_threshold=0.3, add_active_cells=False, transpose=False, rle=0):
 
         """Get information about states.
 
@@ -162,11 +163,30 @@ class LSTMDataHandler:
                 'right': right_pos - 1
             }
 
-            if transpose:
-                sub_res['data'] = np.transpose(cs) if raw else [[round(y, round_values) for y in x] for x in
-                                                                np.transpose(cs).tolist()]
+            if rle > 0:
+                cs_t = np.transpose(np.copy(cs))
+                disc = np.copy(cs_t)
+                cs_t[cs_t < activation_threshold] = 0
+                disc[disc >= activation_threshold] = 1
+                disc[disc < activation_threshold] = 0
+
+                for i in range(0, len(disc)):
+                    state = disc[i]
+                    lengths, pos, values = hf.rle(state)
+                    offset = int(1 - values[0])
+                    lengths_1 = lengths[offset::2]
+                    pos_1 = pos[offset::2]
+                    del_pos = np.argwhere(lengths_1 <= rle)
+                    for p in del_pos:
+                        cs_t[i, pos_1[p]:pos_1[p] + lengths_1[p]] = 0
+                sub_res['data'] = cs_t if raw else [[round(y, round_values) for y in x] for x in cs_t.tolist()]
+
             else:
-                sub_res['data'] = cs if raw else [[round(y, round_values) for y in x] for x in cs.tolist()]
+                if transpose:
+                    sub_res['data'] = np.transpose(cs) if raw else [[round(y, round_values) for y in x] for x in
+                                                                    np.transpose(cs).tolist()]
+                else:
+                    sub_res['data'] = cs if raw else [[round(y, round_values) for y in x] for x in cs.tolist()]
 
             # add count of active cells -- !!! cs will be destroyed here !!!
             if add_active_cells:
@@ -178,6 +198,7 @@ class LSTMDataHandler:
                 a[a < activation_threshold_corrected] = 0
 
                 sum_active.append(np.sum(a, axis=1).tolist())
+
             del cs
             res.append(sub_res)
 
@@ -308,7 +329,7 @@ class LSTMDataHandler:
         return states, words_and_embedding, res
 
     def get_dimensions(self, pos_array, source, left, right, dimensions, round_values=5, embedding_threshold=.6,
-                       state_threshold=.6, data_transform='tanh', cells=None, activation_threshold=.3):
+                       state_threshold=.6, data_transform='tanh', cells=None, activation_threshold=.3, rle=0):
         """ selective information for a sequence
 
         :param pos_array: list of positions
@@ -351,7 +372,7 @@ class LSTMDataHandler:
                                                         cell_selection=cells,
                                                         activation_threshold=activation_threshold,
                                                         add_active_cells=('cell_count' in dimensions),
-                                                        transpose=True)
+                                                        transpose=True, rle=rle)
                 if 'cell_count' in dimensions:
                     res['cell_count'] = cell_active
             elif dim == 'words':  # reuse words from alignment
@@ -477,7 +498,7 @@ class LSTMDataHandler:
             cs[cs < activation_threshold_corrected] = 0
 
             length, pos, value = hf.rle(cs)
-            offset = 1 - value[0]
+            offset = int(1 - value[0])
             l = length[offset::2]
             l2 = np.argwhere(l > cut_off)
             p = pos[offset::2]
@@ -579,6 +600,6 @@ class LSTMDataHandler:
         else:
             transformed = False
             matrix = self.h5_files[source_file][source]
-        print 'cs:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+        # print 'cs:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 
         return matrix, transformed

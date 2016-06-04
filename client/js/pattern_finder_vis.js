@@ -3,7 +3,12 @@
  */
 
 
-CELL_COUNT_HM_ID = 'cell_count';
+const CELL_COUNT_HM_ID = 'cell_count';
+
+const Event_list = {
+  threshold_update: 'threshold_update'
+
+};
 
 /**
  * PatternFinder Visualization class
@@ -19,19 +24,20 @@ function PatternFinderVis(parent, x, y, options) {
   this.parent = d3.select(parent);
   this.options = options;
 
+  var source_split = options.source.split('::');
+  this.source_info = _.find(globalInfo.info.states.types, {file: source_split[0], path: source_split[1]});
+
+
   // == geometry ==
   this.layout = {
     pc: {
-      x: 20, y: 20, w: 1200, h: 200
+      x: 0, y: 20, h: 200
     },
     mini_preview: {
       x: 20, y: 255, w: 1200, h: 30
     },
     mini_range_preview: {
       x: 20, y: 290, w: 1200, h: 100
-    },
-    threshold_slider: {
-      x: 20, y: 20, w: 10
     },
     cell_selectors: {
       x: 20, y: 390, cw: 30, h: 15
@@ -61,7 +67,8 @@ function PatternFinderVis(parent, x, y, options) {
 
   };
 
-  this.yScale = d3.scale.linear().domain([-1, 1]).range([this.layout.pc.h - 6, 3]);
+  //noinspection JSUnresolvedVariable
+  this.yScale = d3.scale.linear().domain([this.source_info.unsigned ? 0 : -1, 1]).range([this.layout.pc.h - 6, 3]);
   this.xScale = d3.scale.linear();
   this.brushScale = d3.scale.linear();
 
@@ -109,7 +116,7 @@ function PatternFinderVis(parent, x, y, options) {
   this.cummulative_heatmap_for_selected_cells = [];
   this.cell_count_hm_data = [];
   this.opacity_map = [];
-  this.lineplots = [];
+  this.pc_plots = [];
 
   // == helper ===
   this.text_length_tester = this.content_group.append('text').attr({
@@ -122,11 +129,10 @@ function PatternFinderVis(parent, x, y, options) {
 
   // === start ===
   this.init_groups();
-  this.draw_slider();
   this.init_gui();
   this.draw_low_pass_slider();
 
-  this.query_context(this.current.pos, this.current.data_set, this.current.source);
+  this.query_context(this.current.pos, this.current.data_set, this.current.source, this.current.selection.low_pass_threshold);
 
   //if (options.pos && options.pos >= 0) {
   //  this.query_context(options.pos, options.data_set);
@@ -199,7 +205,6 @@ PatternFinderVis.prototype.update_cell_selection = function () {
     that.data.states[0].data.forEach(function (cell, cell_index) {
       var accept = true;
       cell.forEach(function (value, pos) {
-        //console.log();
         var evaluate = (
         (_.inRange(pos, left - that.current.zero_left, left) && value < that.current.selection.threshold) ||
         (_.inRange(pos, right, right + that.current.zero_right) && value < that.current.selection.threshold) ||
@@ -207,9 +212,6 @@ PatternFinderVis.prototype.update_cell_selection = function () {
         (pos < (left - that.current.zero_left)) || pos >= (right + that.current.zero_right));
         accept = accept && evaluate;
 
-        //if (!evaluate){
-        //  console.log(value,pos, left, right, that.threshold);
-        //}
       });
 
       if (accept) that.selected_cells_for_query.push(cell_index)
@@ -274,7 +276,7 @@ PatternFinderVis.prototype.bindEvents = function (eventHandler) {
     that.current.selection.cells = that.selected_cells_for_query;
 
 
-    that.query_context(that.current.pos, that.current.data_set, that.current.source);
+    that.query_context(that.current.pos, that.current.data_set, that.current.source, that.current.selection.low_pass_threshold);
 
     that.eventHandler.trigger('replace_url', {
       pos: that.current.pos,
@@ -293,7 +295,8 @@ PatternFinderVis.prototype.bindEvents = function (eventHandler) {
       + that.current.pos
       + '?left=20&right=20&threshold=' + that.current.selection.threshold
       + '&rle=' + that.current.selection.low_pass_threshold
-      + '&data_set=' + (that.current.data_set);
+      + '&data_set=' + (that.current.data_set)
+      + '&data_transform=' +(that.source_info.transform);
 
     if (that.current.source) {
       closestQuery += '&source=' + that.current.source
@@ -315,7 +318,7 @@ PatternFinderVis.prototype.bindEvents = function (eventHandler) {
 
         that.data.draw_data = that.data.states[0].data.map(function (d, i) {
           return {index: cell_id_mapper(i), values: d};
-        }).filter(function (d, i) {return _.sum(d.values) != 0});
+        }).filter(function (d) {return _.sum(d.values) != 0});
 
         that.update_cell_selection();
         that.redraw();
@@ -385,14 +388,17 @@ PatternFinderVis.prototype.bindEvents = function (eventHandler) {
   });
 
 
-  eventHandler.bind('threshold_update', function () {
+  eventHandler.bind(Event_list.threshold_update, function (e, d) {
 
-    that.reset_cell_selections();
+    if (d.pc_id == 0) {
+      // if primary pc_plot
+      that.current.selection.threshold = d.value;
+      that.reset_cell_selections();
 
-    if (that.update_cell_selection()) {
-      that.redraw();
+      if (that.update_cell_selection()) {
+        that.redraw();
+      }
     }
-
     that.eventHandler.trigger('replace_url', {threshold: that.current.selection.threshold});
   });
 
@@ -422,10 +428,9 @@ PatternFinderVis.prototype.bindEvents = function (eventHandler) {
    ================= */
 
   eventHandler.bind('cell_clicked', function (e, cell_id) {
-      var de_active = true;
+
 
       if (_.includes(that.current.selection.excluded_cells, cell_id)) {
-        de_active = false;
         _.remove(that.current.selection.excluded_cells, function (d) {return d == cell_id;})
 
       } else {
@@ -464,7 +469,6 @@ PatternFinderVis.prototype.bindEvents = function (eventHandler) {
 
     if (data.active && !_.includes(that.selected_cells_in_results, data.cell)) {
       var cell_index = _.indexOf(that.results.cells, data.cell);
-      //console.log('data-active & not in array-- ', use_bias);
       var hm_data = that.results.states.map(function (d, x) {
         return d.data[cell_index].map(function (dd, y) {
           return (use_bias ? that.cummulative_heatmap_for_selected_cells[x][y] : 0)
@@ -512,7 +516,6 @@ PatternFinderVis.prototype.bindEvents = function (eventHandler) {
     }
 
     // update bias for cell_count heatmap
-    var hm_id = CELL_COUNT_HM_ID;
     if (that.selected_cells_in_results.length > 0) {
       var cell_indices = that.selected_cells_in_results.map(function (d) {
         return _.indexOf(that.results.cells, d);
@@ -537,7 +540,7 @@ PatternFinderVis.prototype.bindEvents = function (eventHandler) {
 
     } else {
       that.cummulative_heatmap_for_selected_cells = [];
-      that.set_cell_count_hm(that.results[hm_id]);
+      that.set_cell_count_hm(that.results[CELL_COUNT_HM_ID]);
 
       //that.heatmaps[hm_id].updateData(that.results[hm_id], null, {});
       //that.heatmaps[hm_id].draw();
@@ -571,9 +574,6 @@ PatternFinderVis.prototype.bindEvents = function (eventHandler) {
 
     var query_cells = _.difference(that.selected_cells_for_query, that.current.selection.excluded_cells);
 
-    console.log(query_cells, '\n-- query_cells --');
-    console.log(that.selected_cells_for_query, that.current.selection.excluded_cells);
-
     var parameter = [
       'length=' + (that.current.brush_extent[1] - that.current.brush_extent[0]),
       'cells=' + query_cells.join(','),
@@ -581,10 +581,10 @@ PatternFinderVis.prototype.bindEvents = function (eventHandler) {
       //'c_left=' + 5,//(that.current.brush_extent[0] -1),
       //'c_right=' + 5,
       'threshold=' + that.current.selection.threshold,
-      'data_set=' + (that.options.data_set)
+      'data_set=' + (that.options.data_set),
+      'data_transform=' + (that.source_info.transform)
     ];
 
-    console.log(that.current, '\n-- that.current --');
     if (that.current.source != null) {
       parameter.push('source=' + that.current.source)
     }
@@ -604,7 +604,6 @@ PatternFinderVis.prototype.bindEvents = function (eventHandler) {
     $.ajax(query, {
       dataType: 'json',
       success: function (index_query) {
-        //console.log(data);
 
         var all_pos = index_query.data.map(function (d) {return d[0]});
         if (all_pos.length > 0) {
@@ -619,12 +618,12 @@ PatternFinderVis.prototype.bindEvents = function (eventHandler) {
             + '&left=' + that.left_context
             + '&right=' + (that.right_context)
             + '&data_set=' + (that.options.data_set)
-            + (that.current.source ? '&source=' + that.current.source : '')
+            + (that.current.source ? '&source=' + that.current.source : ''
+            + '&data_transform='+(that.source_info.transform))
 
             , {
               dataType: 'json',
               success: function (data) {
-                console.log(data);
                 that.results = data;
 
                 that.results.index_query = index_query;
@@ -660,18 +659,15 @@ PatternFinderVis.prototype.bindEvents = function (eventHandler) {
 PatternFinderVis.prototype.init_groups = function () {
 
   var that = this;
-  that.lineplot_main = this.content_group.append('g').attr({
-    "transform": "translate(" + that.layout.pc.x + "," + that.layout.pc.y + ")"
-  });
 
   that.label_group = this.content_group.append('g').attr({
     class: 'labels',
-    "transform": "translate(" + that.layout.pc.x + "," + (that.layout.pc.y + that.layout.pc.h) + ")"
+    "transform": "translate(" + (that.layout.pc.x + 20) + "," + (that.layout.pc.y + that.layout.pc.h) + ")"
   });
 
   that.zero_slider_group = this.content_group.append('g').attr({
     class: 'zero_slider',
-    "transform": "translate(" + that.layout.pc.x + "," + (that.layout.pc.y + that.layout.pc.h + 16) + ")"
+    "transform": "translate(" + (that.layout.pc.x + 20) + "," + (that.layout.pc.y + that.layout.pc.h + 16) + ")"
   });
 
   that.mini_preview = this.content_group.append('g').attr({
@@ -683,11 +679,6 @@ PatternFinderVis.prototype.init_groups = function () {
     class: 'mini_range_preview',
     "transform": "translate(" + that.layout.mini_range_preview.x + "," + that.layout.mini_range_preview.y + ")"
 
-  });
-
-  that.threshold_slider_group = this.content_group.append('g').attr({
-    class: 'threshold_slider_group slider_group',
-    "transform": "translate(" + that.layout.threshold_slider.x + "," + that.layout.threshold_slider.y + ")"
   });
 
   that.low_pass_threshold_slider_group = this.content_group.append('g').attr({
@@ -844,62 +835,6 @@ PatternFinderVis.prototype.init_gui = function () {
 
 };
 
-PatternFinderVis.prototype.draw_slider = function () {
-  var that = this;
-
-  var brushScale = d3.scale.linear().domain(that.yScale.domain()).range(that.yScale.range()).clamp(true);
-  var ex = that.current.selection.threshold;//that.yScale(that.threshold);
-  var brush = d3.svg.brush()
-    .y(brushScale)
-    .extent([ex, ex])
-    .on('brush', brushed);
-
-  var slider = that.threshold_slider_group.call(brush);
-  //slider.selectAll('.extent,.resize').remove();
-  slider.select(".background")
-    .attr("width", that.layout.threshold_slider.w);
-
-  var yAxis = d3.svg.axis().scale(brushScale).orient('left');
-  slider.append('g').attr({
-    class: 'axis',
-    "transform": "translate(" + that.layout.threshold_slider.w / 2 + "," + 0 + ")"
-  }).style('pointer-events', 'none').call(yAxis);
-
-  var handle = slider.append('circle').attr({
-    class: 'handle',
-    "transform": "translate(" + that.layout.threshold_slider.w / 2 + "," + 0 + ")",
-    "r": 5,
-    "cy": brushScale(that.current.selection.threshold)
-  });
-
-  var number_format = d3.format('.3f');
-
-  var value_text = slider.append('text').attr({
-    y: -3
-  }).style({
-    'text-achor': 'middle'
-  }).text(number_format(that.current.selection.threshold));
-
-  function brushed() {
-    var value = brush.extent()[0];
-
-    var e = d3.event;
-    if (e.sourceEvent) { // not a programmatic event
-      value = brushScale.invert(d3.mouse(this)[1]);
-      brush.extent([value, value]);
-    }
-
-    handle.attr("cy", brushScale(value));
-    that.current.selection.threshold = value;
-    value_text.text(number_format(that.current.selection.threshold));
-
-    that.eventHandler.trigger('threshold_update');
-
-  }
-
-
-};
-
 PatternFinderVis.prototype.draw_low_pass_slider = function () {
   var that = this;
 
@@ -956,7 +891,6 @@ PatternFinderVis.prototype.draw_low_pass_slider = function () {
 
 
 };
-
 
 PatternFinderVis.prototype.draw_word_slider = function () {
   var that = this;
@@ -1098,7 +1032,6 @@ PatternFinderVis.prototype.draw_zero_slider = function () {
 
     // if dragging, preserve the width of the extent
     if (d3.event.mode === "move") {
-      console.log('m');
       d0 = Math.floor(extent0[0]);
       d1 = Math.round(d0 + extent0[1] - extent0[0]);
 
@@ -1155,15 +1088,19 @@ PatternFinderVis.prototype.data_wrangling = function (data) {
 
 };
 
-PatternFinderVis.prototype.query_context = function (position, data_set, source) {
+PatternFinderVis.prototype.query_context = function (position, data_set, source, rle) {
   var that = this;
-
 
   var closestQuery = url + "/api/context/?pos=" + position
     + '&data_set=' + data_set
-    + '&left=20&right=20&dimensions=states,cell_count,words';
+    + '&left=20&right=20&dimensions=states,cell_count,words'
+    + '&data_transform='+(that.source_info.transform)
+    + "&threshold="+(that.current.selection.threshold);
   if (source) {
     closestQuery += '&source=' + source
+  }
+  if (rle){
+    closestQuery += '&rle=' + rle
   }
 
   $.ajax(closestQuery, {
@@ -1382,8 +1319,6 @@ PatternFinderVis.prototype.redraw_results = function (options) {
 
   function update_cell_selectors() {
 
-    //console.log(that.selected_cells, '\n-- that.selected_cells --');
-
     var cell_selector = that.result_cells_group.selectAll(".cell_selector").data(that.results.cells);
     cell_selector.exit().remove();
 
@@ -1473,9 +1408,9 @@ PatternFinderVis.prototype.redraw_results = function (options) {
       x: function (d) {return hScaleX(d)},
       width: function () {return hScaleX.rangeBand()}
     }).on({
-      'mouseenter': function (d, i) {
+      'mouseenter': function (d) {
 
-        var strict_value = strict_length_histogram[(d + minimal_relevant_length)]
+        var strict_value = strict_length_histogram[(d + minimal_relevant_length)];
         strict_value = strict_value || 0;
         overlay_layer.selectAll('.label_text')
           .attr({
@@ -1549,9 +1484,7 @@ PatternFinderVis.prototype.redraw_results = function (options) {
   separator_line.exit().remove();
 
   // --- adding Element to class separator_line
-  var seperator_lineEnter = separator_line.enter().append("line").attr({
-    "class": "separator_line"
-  });
+  separator_line.enter().append("line").attr({"class": "separator_line"});
 
   // --- changing nodes for separator_line
   separator_line.attr({
@@ -1573,19 +1506,31 @@ PatternFinderVis.prototype.redraw = function () {
   var draw_data = that.data.draw_data;
 
   function update_pc_lines() {
-    if (that.lineplots.length < 1) {
-      that.lineplots.push(new LinePlot(
-        that.lineplot_main.node(), 0, 0, that.xScale, that.eventHandler, 'cell_hovered',{}
-      ))
+    if (that.pc_plots.length < 1) {
+      var primary_pc_plot = new PCPlot(that.content_group.node(), that.layout.pc.x, that.layout.pc.y,
+        {threshold: that.current.selection.threshold},
+        {
+          xScale: that.xScale,
+          yScale: that.yScale,
+          hover_event_name: 'cell_hovered',
+          word_brush_scale: that.brushScale
+        });
+      primary_pc_plot.bind_event_handler(that.eventHandler);
+      that.pc_plots.push(primary_pc_plot)
     }
-    that.lineplots[0].redraw(
-      draw_data,
-      that.yScale,
-      that.current.selection.threshold,
-      that.selected_cells_for_query,
-      that.current.selection.excluded_cells,
-      that.current.brush_extent[0] == that.current.brush_extent[1] // active brush selection
-    );
+
+    that.pc_plots[0].update(
+      {
+        draw_data: draw_data,
+        threshold: that.current.selection.threshold,
+        selected_cells: that.selected_cells_for_query,
+        excluded_cells: that.current.selection.excluded_cells,
+        active_brush_selection: that.current.brush_extent[0] == that.current.brush_extent[1],
+        brush: that.current.brush_extent
+      },
+      {yScale: that.yScale});
+
+    that.pc_plots[0].redraw();
 
 
   }
@@ -1752,18 +1697,13 @@ PatternFinderVis.prototype.redraw = function () {
     });
 
 
-    //console.log(start_brush);
-    //console.log(cell_length_lines.map(function (d, i) {return d.sort_1}), '\n-- cell_length_lines --');
-    //console.log(cell_length_lines.map(function (d, i) {return d.sort_2}), '\n-- cell_length_lines 1--');
-    //console.log(cell_length_lines);
+
   }
 
   update_mini_range_preview();
 
 
   function update_cell_selectors() {
-
-    //console.log(that.selected_cells, '\n-- that.selected_cells --');
 
     var cell_selector = that.cell_selectors_group.selectAll(".cell_selector").data(that.selected_cells_for_query);
     cell_selector.exit().remove();

@@ -16,7 +16,7 @@
     <!--<script src="js/LongContextVis.js"></script>-->
 
     <script src="js/pattern_finder_vis.js"></script>
-    <script src="js/pf_lineplot.js"></script>
+    <script src="js/pf_pc_plot.js"></script>
 
     <!--<link rel="stylesheet" type="text/css" href="bower_components/bootstrap-select/dist/css/bootstrap-select.min.css">-->
     <link rel="stylesheet" type="text/css" href="bower_components/bootswatch/cosmo/bootstrap.min.css">
@@ -128,6 +128,13 @@
         .pc_line.hover, .pc_line_overlay.hover, .pc_line_discrete.hover {
             stroke-width: 5;
             stroke: #ff4b33;
+        }
+
+        .brush_indicator {
+            stroke: #3fb391;
+            stroke-width: 1;
+            stroke-dasharray: 2,2;
+            fill: none;
         }
 
         .noselect {
@@ -353,13 +360,13 @@
     </div>
 
     <div class="input-group-sm" style="position: absolute; top: 50px;left: 5px;width:150px;">
-        <select  class="form-control" id="sources">
+        <select class="form-control" id="sources">
 
         </select><!-- /input-group -->
 
     </div>
 
-    <div style="position: absolute; top: 50px;left: 300px;width:250px;">
+    <div style="position: absolute; top: 50px;left: 200px;width:250px;">
         <div class="input-group input-group-sm" id="search_group">
             <input type="text" class="form-control" id='searchPhrase' placeholder="Search for..."/>
               <span class="input-group-btn">
