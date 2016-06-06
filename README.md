@@ -92,4 +92,4 @@ TODO ...
 
 ## Credits
 
-LSTMVis is a collaborative project of Hendrik Strobelt, Alexander 'Sasha' Rush, Sebastian Gehrmann, and Bernd Huber at Harvard SEAS.
+LSTMVis is a collaborative project of Hendrik Strobelt, Sebastian Gehrmann, Bernd Huber, Hanspeter Pfister, and Alexander Rush at Harvard SEAS.
