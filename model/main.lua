@@ -49,7 +49,7 @@ function data.__index(self, idx)
    return {input, target}
 end
 
-
+-- Train a Model using SGD
 function train(data, valid_data, model, criterion)
    local last_score = 1e9
    local params, grad_params = model:getParameters()
@@ -64,12 +64,12 @@ function train(data, valid_data, model, criterion)
          local loss = criterion:forward(out, goal)         
          deriv = criterion:backward(out, goal)
          model:backward(input, deriv)
-         -- Grad Norm.
+         -- Renorm Gradient
          local grad_norm = grad_params:norm()
          if grad_norm > opt.max_grad_norm then
             grad_params:mul(opt.max_grad_norm / grad_norm)
          end
-         
+         -- Update Parameters
          params:add(grad_params:mul(-opt.learning_rate))
          
          if i % 100 == 0 then
@@ -83,6 +83,7 @@ function train(data, valid_data, model, criterion)
       torch.save(savefile, model)
       print('saving checkpoint to ' .. savefile)
 
+      --If Score did not improve, cut the training rate
       if score > last_score - .3 then
          opt.learning_rate = opt.learning_rate / 2
       end
@@ -91,7 +92,7 @@ function train(data, valid_data, model, criterion)
 end
 
 function eval(data, model)
-   -- Validation
+   -- Compute the perplexity of the model
    model:evaluate()
    local nll = 0
    local total = 0 
@@ -107,6 +108,7 @@ function eval(data, model)
    return valid
 end
 
+--Construct a standard LSTM
 function make_model(train_data)
    local model = nn.Sequential()
    model.lookups_zero = {}
@@ -131,26 +133,27 @@ function make_model(train_data)
 end
 
 function main() 
-    -- parse input params
+    -- Parse input params
    opt = cmd:parse(arg)
-   
    if opt.gpuid >= 0 then
-
       print('using CUDA on GPU ' .. opt.gpuid .. '...')
       require 'cutorch'
       require 'cunn'
       cutorch.setDevice(opt.gpuid + 1)
    end
    
-   -- Create the data loader class.
+   -- Create the data loader classes.
    local train_data = data.new(opt, opt.data_file)
    local valid_data = data.new(opt, opt.val_data_file)
+
+   -- Initialize Model and Criterion.
    model, criterion = make_model(train_data)
-   
    if opt.gpuid >= 0 then
       model:cuda()
       criterion:cuda()
    end
+
+   -- Train the model.
    train(train_data, valid_data, model, criterion)
 end
 

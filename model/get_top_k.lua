@@ -2,6 +2,10 @@ require 'rnn'
 require 'hdf5'
 require 'nngraph'
 
+----------------------------------------------------------------
+-- Stores the top k predictions for every point in a data set. 
+----------------------------------------------------------------
+
 cmd = torch.CmdLine()
 
 cmd:option('-data_file','data/','data directory. Should contain data.hdf5 with input data')
@@ -43,67 +47,42 @@ function data.__index(self, idx)
 end
 
 
-
-
-
 function top_k(data, model)
-   --local params, grad_params = model:getParameters()
-   
-
    local all_tops = torch.CudaTensor(data.length * data.batchlength, opt.k) 
    local all_scores = torch.CudaTensor(data.length * data.batchlength, opt.k)
-   --model:forget()
    model:training()
    for i = 1, data:size() do
       if i%100 == 0 or i==2 then
          print(i, "current batch")
       end
-
-      --DEV MODE
-      if i == 3 then
-          break
-      end 
       model:forget()
       model:zeroGradParameters()
       local d = data[i]
       input, goal = d[1], d[2]
-      ---1. forward
+      --- 1. forward
       local out = model:forward(input)
       out = out[input:size(1)]
+      -- 2. get top predictions
       local res, ind = out:topk(opt.k, true)
-      print(res)
-      print(ind)
 
       for cbatch=1, data.batchlength do
          local batchbonus = (cbatch-1) * data.length 
-
-         -- print(batchbonus .. " Index-Bonus for batch number")
          local new_index = i + data.batchlength * (i-1) + batchbonus
-         print(new_index)
-         -- print(new_index .. "new index")
-         --print(new_index, "new_index!")
-         --ICH WAR HIER!
          all_tops[new_index]:copy(ind:narrow(2, cbatch, 1))
          all_scores[new_index]:copy(res:narrow(2, cbatch, 1))
-         --print(all_grads[new_index])
-
       end
       
       collectgarbage()
-      --break
-
    end
 
-   -- local f = hdf5.open(opt.output_file, 'w')
-   -- f:write('grads', all_grads:float())
-   -- f:close()
-
+   local f = hdf5.open(opt.output_file, 'w')
+   f:write('preds', all_tops:float())
+   f:write('scores', all_scores:float())
+   f:close()
 end
 
-
-
 function main() 
-    -- parse input params
+    -- Parse input params
    opt = cmd:parse(arg)
    
    if opt.gpuid >= 0 then
@@ -116,11 +95,8 @@ function main()
    
    -- Create the data loader class.
    local train_data = data.new(opt, opt.data_file, opt.use_chars)
-
-
+   -- Initialize Model.
    model = torch.load(opt.checkpoint_file)
-
-   
    if opt.gpuid >= 0 then
       model:cuda()
    end

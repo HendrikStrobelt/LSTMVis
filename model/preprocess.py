@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-"""Create the data for the LSTM.
+"""
+Create the input data for the LSTM.
 """
 
 import os

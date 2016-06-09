@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
-"""Create the data for the LSTM.
+"""
+This Script does the preprocessing of a data set in form
+of a shifting window over the data. This is needed for
+the Saliency and the Word Influence Calculations.
 """
 
 import os
@@ -52,7 +55,7 @@ def get_data(args):
             targ = targ_orig.strip().split() + ["</s>"]
             target_sent = [target_indexer.convert(w) for w in targ]
             words += target_sent
-        #Don't let the shifting window get too big - It's too large anyway.     
+        #Don't let the shifting window get too big for memory reasons.     
         words = words[:1200000]
         # plus 1 for torch.
         targ_output = numpy.array(words[1:] + \
@@ -62,7 +65,7 @@ def get_data(args):
         # Write output.
         f = h5py.File(outfile, "w")
 
-        #new number of windows 
+        #number of batches of windows
         size = words.shape[0] / (batchsize*seqlength)
         size = size * seqlength - seqlength + 1 
         print (size, "number of blocks after conversion")
