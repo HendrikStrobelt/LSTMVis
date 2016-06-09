@@ -5,6 +5,11 @@ require 'cutorch'
 require 'cunn'
 require 'hdf5'
 
+----------------------------------------------------------------
+-- Extracts the hidden state of a trained model
+-- at each point of a data set.
+----------------------------------------------------------------
+
 cmd = torch.CmdLine()
 cmd:option('-rnn_size', 650, 'size of LSTM internal state')
 cmd:option('-num_layers', 2, 'number of layers in the LSTM')
@@ -15,12 +20,10 @@ cmd:option('-gpuid',-1,'which gpu to use. -1 = use CPU')
 opt = cmd:parse(arg)
 
 if opt.gpuid >= 0 then
-
    print('using CUDA on GPU ' .. opt.gpuid .. '...')
    require 'cutorch'
    require 'cunn'
    cutorch.setDevice(opt.gpuid + 1)
-   freeMemory, totalMemory = cutorch.getMemoryUsage(1)
 end
 
 -- Construct the data set.
@@ -46,6 +49,7 @@ function data.__index(self, idx)
    return {input, target}
 end
 
+--Load the Data
 local data = data.new(opt.data_file)
 model = torch.load(opt.checkpoint_file)
 
@@ -59,6 +63,7 @@ for i = 1, (2*opt.num_layers) do
    count[i] = 1
 end
 
+-- Function to recursively extract output and hidden state of the LSTM
 function Module:get_states()
    if self.modules then
       for i,module in ipairs(self.modules) do
@@ -80,7 +85,8 @@ function Module:get_states()
    end
 end
 
-function eval1(data, model)
+-- Runs over the Data Set and computes the current hidden states
+function eval_states(data, model)
    model:forget()
    model:evaluate()
    for b = 1, data.batchlength do
@@ -98,12 +104,9 @@ function eval1(data, model)
    end
 end
 
-print(all_hidden[1]:size())
-eval1(data, model)
---ret = nn.JoinTable(2):forward(all_hidden)
----print(ret:size())
+eval_states(data, model)
+
 local f = hdf5.open(opt.output_file, 'w')
---f:write('states', ret)
 f:write('output1', all_hidden[1]:float())
 f:write('states1', all_hidden[2]:float())
 f:write('output2', all_hidden[3]:float())
