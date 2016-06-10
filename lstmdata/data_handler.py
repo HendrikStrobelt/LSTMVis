@@ -530,28 +530,41 @@ class LSTMDataHandler:
         res = []
         all_pos = pos_intersection.flatten()
         if sort_mode == 'cells':
+
+
+        #elif sort_mode == 'cells':
+            # Uniq
             # sort by minimal number of other active cells
             for p in all_pos:  # all positions where all pivot cells start jointly
                 min_length = np.min(pos_length_map[p])  # max length covered by all cells
-
+                ml = min_length 
                 # get the slice of cell states for the range
-                cs = cell_states[p:p + min_length - 1, :]
+                cs = np.array(cell_states[p:p + ml, :])
+            
                 # discretize
+
                 cs[cs >= activation_threshold_corrected] = 1
                 cs[cs < activation_threshold_corrected] = 0
-
+                #print(cs[:, cells])
                 # build sum
+                # print(cs.shape, min_length)
                 cs_sum = np.sum(cs, axis=0)
-
                 # set all pivot cells to zero and discretize again
                 cs_sum[cells] = 0
-                cs_sum[cs_sum > 0] = 1
+                cs_sum[cs_sum < ml] = 0
+                cs_sum[(cs_sum >= (ml)) & ((cell_states[p + ml] >= activation_threshold_corrected) | (cell_states[p - 1] >= activation_threshold_corrected))] = 0
+                cs_sum[(cs_sum >= (ml)) & (cell_states[p + ml] < activation_threshold_corrected) & (cell_states[p - 1] < activation_threshold_corrected) ] = 1
+                for c in cells:
+                    if (cell_states[p+ml][c] >= activation_threshold_corrected):
+                        cs_sum[c] = 1
+
                 res.append([p, np.var(pos_length_map[p]), min_length, float(np.sum(cs_sum))])
 
             def key(elem):
-                return -elem[3], -elem[2]
+                return elem[3], -elem[2]
         else:
             # sort by clean cut
+            # Precision
             res = map(lambda xx: [xx, np.var(pos_length_map[xx]), np.min(pos_length_map[xx]), 0], all_pos)
 
             def key(elem):
@@ -571,7 +584,8 @@ class LSTMDataHandler:
         res.sort(key=key)
 
         res = res[:50]
-
+        # for i in range(len(res)):
+        #    print i, res[i][0], res[i][3], res[i][2]
         return res, meta
 
     def get_cached_matrix(self, data_transform, source, full_matrix=False):

@@ -309,17 +309,20 @@ def create_data_handlers(directory):
                 index_map[p_dir] = data_handlers[p_dir].config['index_dir']
         i += 1
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--nodebug", default=False)
+parser.add_argument("--port", default="8888")
+parser.add_argument("--nocache", default=False)
+parser.add_argument("-dir", type=str, default=os.path.abspath('data'))
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--nodebug", default=False)
-    parser.add_argument("--port", default="8888")
-    parser.add_argument("--nocache", default=False)
-    parser.add_argument("-dir", type=str, default=os.path.abspath('data'))
+if  __name__ == '__main__':
     args = parser.parse_args()
-
     create_data_handlers(args.dir)
+
 
     print args
 
-    app.run(port=int(args.port), debug=not args.nodebug)
+    app.run(port=int(args.port), debug=not args.nodebug, host="0.0.0.0")
+else:
+    create_data_handlers("data")
+    #app.run(debug=False)
