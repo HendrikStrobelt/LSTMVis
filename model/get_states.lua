@@ -59,7 +59,7 @@ Module = nn.Module
 all_hidden = {}
 count = {}
 for i = 1, (2*opt.num_layers) do
-   all_hidden[i] = torch.CudaTensor(data.length * data.batchlength * data.seqlength, opt.rnn_size) 
+   all_hidden[i] = torch.FloatTensor(data.length * data.batchlength * data.seqlength, opt.rnn_size) 
    count[i] = 1
 end
 
