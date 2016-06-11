@@ -104,11 +104,21 @@ function eval_states(data, model)
    end
 end
 
+function construct_index(index) 
+    string_type = ""
+    if index%2 == 1 then
+        string_type = "output"
+    else
+        string_type = "states"
+    end
+    string_index = math.ceil(index/2)
+    return string_type .. string_index
+end
+
 eval_states(data, model)
 
 local f = hdf5.open(opt.output_file, 'w')
-f:write('output1', all_hidden[1]:float())
-f:write('states1', all_hidden[2]:float())
-f:write('output2', all_hidden[3]:float())
-f:write('states2', all_hidden[4]:float())
+for k=1, 2*opt.num_layers do
+   f:write(construct_index(k), all_hidden[k]:float())
+end
 f:close()
