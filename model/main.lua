@@ -82,7 +82,7 @@ function train(data, valid_data, model, criterion)
       local savefile = string.format('%s_epoch%.2f_%.2f.t7', 
                                      opt.savefile, epoch, score)
       if opt.save_cpu > 0 then
-         torch.save(savefile, model:float())
+         torch.save(savefile, model:clone():float())
       else
          torch.save(savefile, model)
       end
