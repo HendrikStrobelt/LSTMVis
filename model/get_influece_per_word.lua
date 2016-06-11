@@ -12,8 +12,7 @@ require 'nngraph'
 
 cmd = torch.CmdLine()
 
-cmd:option('-data_file','data/','data')
-cmd:option('-val_data_file','data/','data directory. Should contain data.hdf5 with input data')
+cmd:option('-data_file','data/','File with data preprocessed in shifting window')
 cmd:option('-gpuid',-1,'which gpu to use. -1 = use CPU')
 cmd:option('-checkpoint_file','checkpoint/','path to model checkpoint file in t7 format')
 cmd:option('-output_file','reads/lstm_grads.h5','path to output LSTM gradients in hdf5 format')

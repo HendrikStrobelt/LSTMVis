@@ -4,19 +4,20 @@ require 'nngraph'
 
 cmd = torch.CmdLine()
 
-cmd:option('-rnn_size', 650, 'size of LSTM internal state')
-cmd:option('-word_vec_size', 650, 'dimensionality of word embeddings')
-cmd:option('-num_layers', 2, 'number of layers in the LSTM')
-cmd:option('-epochs', 10, 'number of training epoch')
-cmd:option('-learning_rate', 1, '')
-cmd:option('-max_grad_norm', 5, 'max l2-norm of concatenation of all gradParam tensors')
-cmd:option('-dropoutProb', 0.5, 'dropoff param')
+cmd:option('-rnn_size', 650, 'Size of LSTM internal state')
+cmd:option('-word_vec_size', 650, 'Dimensionality of word embeddings')
+cmd:option('-num_layers', 2, 'Number of layers in the LSTM')
+cmd:option('-epochs', 10, 'Number of training epochs')
+cmd:option('-learning_rate', 1, 'Initial Learning Rate')
+cmd:option('-max_grad_norm', 5, 'Max l2-norm of concatenation of all gradParam tensors')
+cmd:option('-dropoutProb', 0.5, 'Dropoff param')
 
-cmd:option('-data_file','data/','data directory. Should contain data.hdf5 with input data')
-cmd:option('-val_data_file','data/','data directory. Should contain data.hdf5 with input data')
+cmd:option('-data_file','data/','The h5 file containing the training data')
+cmd:option('-val_data_file','data/','The h5 file containing the validation data')
 cmd:option('-gpuid',-1,'which gpu to use. -1 = use CPU')
-cmd:option('-param_init', 0.05, 'initialize parameters at')
-cmd:option('-savefile', 'lm_word','filename to autosave the checkpont to')
+cmd:option('-param_init', 0.05, 'Initialize parameters at')
+cmd:option('-save_cpu', 0, 'Save the checkpoint files as CPU readable models')
+cmd:option('-savefile', 'lm_word','Filename to autosave the checkpont to')
 
 opt = cmd:parse(arg)
 
@@ -80,7 +81,11 @@ function train(data, valid_data, model, criterion)
       local score = eval(valid_data, model)
       local savefile = string.format('%s_epoch%.2f_%.2f.t7', 
                                      opt.savefile, epoch, score)
-      torch.save(savefile, model)
+      if opt.save_cpu > 0 then
+         torch.save(savefile, model:float())
+      else
+         torch.save(savefile, model)
+      end
       print('saving checkpoint to ' .. savefile)
 
       --If Score did not improve, cut the training rate
