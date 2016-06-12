@@ -490,7 +490,7 @@ PatternFinderVis.prototype.init_gui = function () {
   createButton(that.content_group,
     that.layout.low_pass_button.x, that.layout.low_pass_button.y, //that.layout.query_buttons.cw + 5
     that.layout.low_pass_button.w, that.layout.low_pass_button.h,
-    'low_pass_filter', 'low pass filter',
+    'low_pass_filter', 'length filter',
     function () {that.eventHandler.trigger('low_pass_filter')}
   );
 

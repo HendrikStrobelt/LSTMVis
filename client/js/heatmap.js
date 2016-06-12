@@ -118,7 +118,7 @@ HeatMap.prototype.draw = function (options) {
 
 
   that.opacity = options.opacity || that.opacity;
-  var has_opacity = that.opacity.length > 0;
+  var has_opacity = that.opacity.length > 0 && that.datatype!='scalar';
 
   // --- changing nodes for hmCell
   hmCell.attr({

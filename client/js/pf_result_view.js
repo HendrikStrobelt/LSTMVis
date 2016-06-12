@@ -157,17 +157,17 @@ ResultView.prototype.create_ui = function () {
     'open_query', 'query unique first',
     function () {
       dt.phrase_length = null;
-      that.sort_mode='cells';
+      that.sort_mode = 'cells';
       that.event_handler.trigger('open_query')
     }
   );
-   createButton(that.content_group,
-    that.layout.query_buttons.x, that.layout.query_buttons.y+that.layout.query_buttons.h+5,
+  createButton(that.content_group,
+    that.layout.query_buttons.x, that.layout.query_buttons.y + that.layout.query_buttons.h + 5,
     that.layout.query_buttons.cw, that.layout.query_buttons.h,
     'open_query', 'query precision first',
     function () {
       dt.phrase_length = null;
-      that.sort_mode='precision';
+      that.sort_mode = 'precision';
       that.event_handler.trigger('open_query')
     }
   );
@@ -183,7 +183,7 @@ ResultView.prototype.redraw = function (draw_options_) {
   var background_rect;
 
   function update_hms() {
-    var x_offset = op.xScale(that.left_context + 1 + that.right_context) + 10;
+    var x_offset = op.xScale(that.left_context + 1 + that.right_context) + 30;
     var cell_width = 10;
     var cell_height = that.layout.ch;
     var heatmap_padding = (that.left_context + 1 + that.right_context) * cell_width + 15;
@@ -240,10 +240,11 @@ ResultView.prototype.redraw = function (draw_options_) {
           if (hm_id.startsWith('meta_')) {
             // TODO: get rid of globalInfo
             hm_options.colorScale = globalInfo['info']['meta'][hm_id.substring(5)].vis.color_scale;
+            hm_options.datatype = globalInfo['info']['meta'][hm_id.substring(5)].vis.type;
             hm_options.noAutoColorScale = true;
           }
 
-
+          console.log(that.results[hm_id], '\n-- that.results[hm_id] --');
           var hm = new HeatMap(
             that.result_view_group.node(),
             that.results[hm_id], null,
@@ -293,7 +294,9 @@ ResultView.prototype.redraw = function (draw_options_) {
       y: function (d) {return d.x * that.layout.ch}
     });
 
-    var use_opacity = (rect_hm && that.current.rect_selection != CELL_COUNT_HM_ID);
+    var use_opacity = (rect_hm
+    && that.current.rect_selection != CELL_COUNT_HM_ID
+    && that.heatmaps[that.current.rect_selection].datatype != 'scalar');
     if (options.no_transition) {
       background_rect.style({
         fill: function (d) {return rect_hm ? rect_hm.colorScale(d.value) : 'white';},
@@ -580,7 +583,11 @@ ResultView.prototype.set_cell_count_hm = function (hm) {
 
   var max = _.max(hm.map(function (d) {return _.max(d)}));
   // that.opacity_map = hm.map(function (x) {return x.map(function (y) { return 1. * y / max})})
-  that.opacity_map = hm.map(function (x) {return x.map(function (y, i) { return (y == max || i == that.left_context - 1) ? 1 : 0.1})})
+  that.opacity_map = hm.map(function (x) {
+    return x.map(function (y, i) {
+      return (y == max || i == that.left_context - 1 || (i > 0 && x[i - 1] == max)) ? 1 : 0.1
+    })
+  })
 
 };
 
