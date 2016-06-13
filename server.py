@@ -162,6 +162,7 @@ def closest_sequence():
     data_transform = request.args.get("data_transform", 'tanh')
     phrase_length = int(options.get('phrase_length', 0))
     sort_mode = options.get('sort_mode', 'cells')
+    query_mode = options.get('query_mode', 'fast')
 
     dh = data_handlers[data_handlers.keys()[data_set]]  # type: LSTMDataHandler
 
@@ -173,7 +174,8 @@ def closest_sequence():
                                                data_transform=data_transform,
                                                add_histograms=True,
                                                phrase_length=phrase_length,
-                                               sort_mode=sort_mode)
+                                               sort_mode=sort_mode,
+                                               query_mode=query_mode)
 
     res = {
         'sort_mode': sort_mode,

@@ -15,6 +15,7 @@ function ResultView(parent, x, y, data, options) {
   this.left_context = 2;
   this.right_context = 15;
   this.sort_mode = 'cells';
+  this.query_mode = 'fast';
 
   this.layout = {
     ch: 16,
@@ -152,25 +153,69 @@ ResultView.prototype.create_ui = function () {
   }
 
   createButton(that.content_group,
-    that.layout.query_buttons.x, that.layout.query_buttons.y,
+    that.layout.query_buttons.x, that.layout.query_buttons.y + that.layout.query_buttons.h + 5,
     that.layout.query_buttons.cw, that.layout.query_buttons.h,
-    'open_query', 'query unique first',
+    'open_query', 'query',
     function () {
       dt.phrase_length = null;
       that.sort_mode = 'cells';
       that.event_handler.trigger('open_query')
     }
   );
-  createButton(that.content_group,
-    that.layout.query_buttons.x, that.layout.query_buttons.y + that.layout.query_buttons.h + 5,
-    that.layout.query_buttons.cw, that.layout.query_buttons.h,
-    'open_query', 'query precision first',
-    function () {
-      dt.phrase_length = null;
-      that.sort_mode = 'precision';
-      that.event_handler.trigger('open_query')
+  // createButton(that.content_group,
+  //   that.layout.query_buttons.x, that.layout.query_buttons.y + that.layout.query_buttons.h + 5,
+  //   that.layout.query_buttons.cw, that.layout.query_buttons.h,
+  //   'open_query', 'query precision first',
+  //   function () {
+  //     dt.phrase_length = null;
+  //     that.sort_mode = 'precision';
+  //     that.event_handler.trigger('open_query')
+  //   }
+  // );
+
+
+  function create_radio_state_buttons(parent, x, y, width, height, classes, values, active_value, onFunction) {
+    var qButtonG = parent.append('g').attr({
+      // class: classes + ' svg_select_button',
+      "transform": "translate(" + x + "," + y + ")"
+    });
+
+
+    var all_radios = qButtonG.selectAll('svg_radio_button').data(values);
+    all_radios.exit().remove();
+    var all_radios_enter = all_radios.enter().append('g').attr({
+      class: classes + ' svg_radio_button',
+      "transform": function (d, i) {return "translate(" + (i * width) + "," + 0 + ")";}
+    });
+
+    all_radios_enter.append('rect').attr({
+      class: 'bg',
+      width: width,
+      height: height
+    }).on('click', onFunction);
+
+    all_radios_enter.append('text').attr({
+      x: width / 2,
+      y: height - 3
+    }).text(function (d, i) {return d});
+
+    all_radios.classed('selected', function (d, i) {return d == active_value})
+
+  }
+
+
+  create_radio_state_buttons(that.content_group,
+    that.layout.query_buttons.x, that.layout.query_buttons.y,
+    that.layout.query_buttons.cw / 2, that.layout.query_buttons.h,
+    'query_mode', ['fast', 'precise'], that.query_mode,
+    function (value) {
+      that.query_mode = value;
+      that.content_group.selectAll('.query_mode').classed('selected', function (d, i) { return d == value});
+
     }
-  );
+  )
+
+
 };
 
 
@@ -609,7 +654,8 @@ ResultView.prototype.bind_event_handler = function (event_handler) {
       'threshold=' + dt.threshold,
       'data_set=' + (op.data_set),
       'data_transform=' + (op.source_info.transform),
-      'sort_mode=' + that.sort_mode
+      'sort_mode=' + that.sort_mode,
+      'query_mode=' + that.query_mode
     ];
 
     if (op.source != null) {
