@@ -7,6 +7,7 @@ import resource
 import numpy as np
 import re
 import scipy.signal
+import time
 
 import helper_functions as hf
 from data_structures import State
@@ -460,7 +461,8 @@ class LSTMDataHandler:
         return res
 
     def get_closest_sequences_2(self, cells, source, activation_threshold=.3,
-                                data_transform='tanh', add_histograms=False, phrase_length=0, sort_mode='cells'):
+                                data_transform='tanh', add_histograms=False, phrase_length=0, sort_mode='cells',
+                                query_mode='fast'):
         """ search for the longest sequences given the activation threshold and a set of cells
 
         :param cells: the cells
@@ -472,93 +474,103 @@ class LSTMDataHandler:
         cell_states, data_transformed = self.get_cached_matrix(data_transform, source)
 
         print 'before cs:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
-        # q = np.zeros((length + epsilon_left + epsilon_right, len(cells)))
-        # q[epsilon_right:(epsilon_right + length), :] = 1
-        # q[:epsilon_right, :] = -1
-        # q[epsilon_right + length:epsilon_right + length + epsilon_left, :] = -1
 
         activation_threshold_corrected = activation_threshold
         if not data_transformed:
             activation_threshold_corrected = np.arctanh(activation_threshold)
 
-        # cs = cell_states[:, cells]
-        # cs[cs >= activation_threshold_corrected] = 1
-        # cs[cs < activation_threshold_corrected] = 0
-
-        pos_intersection = None
-        pos_length_map = {}
-        cut_off = 1
+        cut_off = 2
         if phrase_length > 2:
-            cut_off = phrase_length - 1
+            cut_off = phrase_length
 
         print 'out cs 1:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
-        for c in range(0, len(cells)):
-            cs = cell_states[:, cells[c]]
-            cs[cs >= activation_threshold_corrected] = 1
-            cs[cs < activation_threshold_corrected] = 0
 
-            length, pos, value = hf.rle(cs)
-            offset = int(1 - value[0])
-            l = length[offset::2]
-            l2 = np.argwhere(l > cut_off)
-            p = pos[offset::2]
+        if query_mode == "fast":
+            num_of_cells_per_sum = 5  # how many cells are evaluated per batch
+            maximal_length = int(5e5) # only consider the first 500,000 time steps
+        else:  # all time steps but still be memory efficient
+            maximal_length = cell_states.shape[0]
+            num_of_cells_per_sum = np.floor(5e6 / maximal_length)
+            num_of_cells_per_sum = 1 if num_of_cells_per_sum == 0 else num_of_cells_per_sum
 
-            # TODO: could be more memory efficient
-            for ll2 in l2:
-                k = int(p[ll2])
-                a = pos_length_map.get(k)
-                if a is None:
-                    if pos_intersection is None:  # only fill in first run..
-                        pos_length_map[k] = [int(l[ll2])]
-                else:
-                    pos_length_map[k].append(int(l[ll2]))
-
-            if pos_intersection is not None:
-                pos_intersection = np.intersect1d(pos_intersection, p[l2])
+        cs_cand = None
+        # start = time.time()
+        no_slices = int(np.ceil(len(cells) * 1. / num_of_cells_per_sum))
+        for c in range(0, no_slices):
+            cell_range = cells[c * num_of_cells_per_sum:min((c + 1) * num_of_cells_per_sum, len(cells))]
+            c_discrete = cell_states[:maximal_length, cell_range]
+            below_threshold = c_discrete < activation_threshold_corrected
+            c_discrete[:] = 1
+            c_discrete[below_threshold] = 0
+            if num_of_cells_per_sum > 1:
+                c_batch = np.sum(c_discrete, axis=1)
             else:
-                pos_intersection = p[l2]
-            print pos_intersection.shape
-            if pos_intersection.shape[0] == 0:
-                break
+                c_batch = c_discrete
+            if cs_cand is None:
+                cs_cand = c_batch
+            else:
+                cs_cand = cs_cand + c_batch
 
-        # print pos_intersection.shape
-        # print len(pos_length_map)
-        print 'out cs 2:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+            del c_discrete, c_batch
 
-        # print map(lambda x: {'pos': x, 'l': min(pos_length_map[x]), 'lengths': pos_length_map[x]}, pos_intersection)
+        length, pos, value = hf.rle(cs_cand)  # read length encoding
+
+        # filter for positions where all cells turn from off (value=0) to on (value = len(cells))
+        gradient_mask = value[1:] - value[:-1]
+        indices = (np.argwhere(gradient_mask == len(cells)) + 1).flatten()
+        del gradient_mask
+
+        filtered_length = length[indices]
+        if query_mode == 'fast':
+            l2 = np.argwhere(filtered_length >= cut_off)[:1000]
+        else:
+            l2 = np.argwhere(filtered_length >= cut_off)
+        p = pos[indices]
+        del length, pos
+
+        # end = time.time()
+        # print 'query vectors', (end - start)
+        # print 'out cs 2:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 
         res = []
-        all_pos = pos_intersection.flatten()
         if sort_mode == 'cells':
+            # Uniq
             # sort by minimal number of other active cells
-            for p in all_pos:  # all positions where all pivot cells start jointly
-                min_length = np.min(pos_length_map[p])  # max length covered by all cells
+            start = time.time()
 
-                # get the slice of cell states for the range
-                cs = cell_states[p:p + min_length - 1, :]
-                # discretize
-                cs[cs >= activation_threshold_corrected] = 1
-                cs[cs < activation_threshold_corrected] = 0
+            for ll2 in l2:  # positions where all pivot cells start jointly
+                ml = int(filtered_length[ll2])  # maximal length of _all_ pivot cells on
+                pos = int(p[ll2])  # position of the pattern
+                cs = np.array(cell_states[pos - 1:pos + ml + 1, :])  # cell values of _all_ cells for the range
+                hf.threshold_discrete(cs, activation_threshold_corrected, -1, 1)  # discretize
 
-                # build sum
-                cs_sum = np.sum(cs, axis=0)
+                # create pattern mask of form -1 1 1..1 -1 = off on on .. on off
+                mask = np.ones(ml + 2)
+                mask[0] = -1
+                mask[ml + 1] = -1
 
-                # set all pivot cells to zero and discretize again
+                cs_sum = np.dot(mask, cs)
                 cs_sum[cells] = 0
-                cs_sum[cs_sum > 0] = 1
-                res.append([p, np.var(pos_length_map[p]), min_length, float(np.sum(cs_sum))])
+                sum_cell_active = len(np.where(cs_sum == (ml + 2)))  # if the dot product is equal to ml +2
+                # (the two off positions before and afterwards) then it should be counted
+
+                del cs_sum, mask, cs
+
+                res.append([pos, int(value[int(indices[ll2]) + 1]), ml, sum_cell_active])  # Todo: bring variance back
+
+            end = time.time()
+            print 'time:', (end - start)
 
             def key(elem):
-                return -elem[3], -elem[2]
+                return elem[3], -elem[2]
         else:
             # sort by clean cut
-            res = map(lambda xx: [xx, np.var(pos_length_map[xx]), np.min(pos_length_map[xx]), 0], all_pos)
+            # Precision
+            res = map(lambda xx: [int(p[xx]), int(value[int(indices[ll2]) + 1]), int(filtered_length[xx]), 0],
+                      l2)  # todo: add variance back
 
             def key(elem):
                 return elem[1], -elem[2]
-
-        # res.sort(key=lambda x: x[1], reverse=False)
-        # res.sort(key=lambda x: x[2], reverse=True)
 
         meta = {}
         if add_histograms:
@@ -570,9 +582,11 @@ class LSTMDataHandler:
 
         res.sort(key=key)
 
-        res = res[:50]
+        res_50 = list(res[:50])
+        del  res
+        print 'out cs 2:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 
-        return res, meta
+        return res_50, meta
 
     def get_cached_matrix(self, data_transform, source, full_matrix=False):
         """ request the cached full state matrix or a reference to it

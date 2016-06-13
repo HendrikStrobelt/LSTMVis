@@ -107,3 +107,18 @@ def rle(inarray):
         z = np.diff(np.append(-1, i))  # run lengths
         p = np.cumsum(np.append(0, z))[:-1]  # positions
         return z, p, ia[i]
+
+
+def threshold_discrete(arr, threshold, below, above):
+    """
+    thresholds an np.array and assigns new values for below and above/equal
+    :param arr: --
+    :param threshold: --
+    :param below: value assigned if under threshold
+    :param above: value assigned if above threshold
+    :return:
+    """
+
+    all_below_positions = arr < threshold
+    arr[:] = above
+    arr[all_below_positions] = below

@@ -1,8 +1,8 @@
 /**
  * Created by Hendrik Strobelt (hendrik.strobelt.com) on 4/8/16.
  */
-var url = 'http://localhost:8888';
-var hostedURL = 'http://localhost:8888/client/closest_V1.html';
+var url = '';
+var hostedURL = '/client/closest_V1.html';
 var columnWidth = 70;
 
 const Event_list = {
@@ -45,7 +45,7 @@ function all_query_variables_and_defaults() {
   }
 
   // == necessary defaults ==
-  url_parameters.pos = +url_parameters.pos || 100000;
+  url_parameters.pos = +url_parameters.pos || 100;
   url_parameters.data_set = url_parameters.data_set || 0;
 
 }
@@ -76,7 +76,7 @@ function url_string(replace) {
 }
 
 
-//var position = $('#pos').val() || getQueryVariable('pos') || 100000;
+//var position = $('#pos').val() || getQueryVariable('pos') || 100;
 //var mask = getQueryVariable('mask');
 //var itemList = getQueryVariable('items');
 
