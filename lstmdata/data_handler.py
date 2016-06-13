@@ -31,12 +31,12 @@ class LSTMDataHandler:
         self.dicts_id_value = {}
 
         # open all h5 files
-        h5files = {k: v for k, v in config['files'].iteritems() if v.endswith('.h5')}
+        h5files = {k: v for k, v in config['files'].iteritems() if (v.endswith('.h5') or v.endswith('.hdf5'))}
         for key, file_name in h5files.iteritems():
             self.h5_files[key] = h5py.File(os.path.join(directory, file_name), 'r')
 
         # load all dict files of format: value<space>id
-        dict_files = {k: v for k, v in config['files'].iteritems() if v.endswith('.dict')}
+        dict_files = {k: v for k, v in config['files'].iteritems() if (v.endswith('.dict') or v.endswith('.txt'))}
         for name, file_name in dict_files.iteritems():
             kv = {}
             vk = {}
@@ -77,7 +77,7 @@ class LSTMDataHandler:
         if self.config['index']:
             self.config['index_dir'] = os.path.join(directory, 'indexdir')
 
-        if self.config['meta']:
+        if 'meta' in self.config and self.config['meta']:
             for _, m_info in self.config['meta'].iteritems():
                 vis_range = m_info['vis']['range']
                 if vis_range == 'dict':
@@ -487,11 +487,13 @@ class LSTMDataHandler:
 
         if query_mode == "fast":
             num_of_cells_per_sum = 5  # how many cells are evaluated per batch
-            maximal_length = int(5e5) # only consider the first 500,000 time steps
+            maximal_length = int(5e5)  # only consider the first 500,000 time steps
         else:  # all time steps but still be memory efficient
             maximal_length = cell_states.shape[0]
-            num_of_cells_per_sum = np.floor(5e6 / maximal_length)
+            num_of_cells_per_sum = int(np.floor(5e6 / maximal_length))
             num_of_cells_per_sum = 1 if num_of_cells_per_sum == 0 else num_of_cells_per_sum
+
+        print 'num_cells', num_of_cells_per_sum
 
         cs_cand = None
         # start = time.time()
@@ -583,7 +585,7 @@ class LSTMDataHandler:
         res.sort(key=key)
 
         res_50 = list(res[:50])
-        del  res
+        del res
         print 'out cs 2:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 
         return res_50, meta
