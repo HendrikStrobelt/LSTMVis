@@ -89,7 +89,8 @@ class LSTMDataHandler:
         else:
             self.config['meta'] = []
 
-            # print 'init cs:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+        if not ('description' in self.config and self.config['description']):
+            self.config['description'] = self.config['name']
 
     def get_states(self, pos_array, source, left=10, right=0, cell_selection=None, raw=False, round_values=5,
                    data_transform='tanh', activation_threshold=0.3, add_active_cells=False, transpose=False, rle=0):

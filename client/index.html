@@ -60,12 +60,13 @@
 
                 }
 
+                add_info(lis, 'description', function (d, i) {return d.info.description});
                 add_info(lis, 'file', function (d, i) {return d.project});
                 add_info(lis, 'meta', function (d, i) {
                     var keys = Object.keys(d.info.meta);
                     return (keys.length > 0) ? keys.join(', ') : '---'
                 });
-                add_info(lis, 'embedding_size', function (d, i) {return d.info.word_embedding.size.join(' x ')});
+                //add_info(lis, 'embedding_size', function (d, i) {return d.info.word_embedding.size.join(' x ')});
                 add_info(lis, 'sequence_length', function (d, i) {return d.info.word_sequence.size[0]});
 
 
