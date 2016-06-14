@@ -99,8 +99,6 @@ def get_context():
     source = request.args.get("source")
     left = int(request.args.get("left", 10))
     right = int(request.args.get("right", 10))
-    embedding_threshold = float(request.args.get('embedding_threshold', .6))
-    state_threshold = float(request.args.get('state_threshold', .6))
     threshold = float(request.args.get('threshold', .6))
     data_transform = request.args.get("data_transform", 'tanh')
     bit_mask = request.args.get('bitmask', '')
@@ -127,8 +125,6 @@ def get_context():
                             left=left,
                             right=right,
                             dimensions=dimensions,
-                            embedding_threshold=embedding_threshold,
-                            state_threshold=state_threshold,
                             data_transform=data_transform,
                             cells=cells,
                             activation_threshold=threshold,
@@ -139,8 +135,6 @@ def get_context():
     res['source'] = source
     res['left'] = left
     res['right'] = right
-    res['embedding_threshold'] = embedding_threshold
-    res['state_threshold'] = state_threshold
     res['data_transform'] = data_transform
     res['dimensions'] = dimensions
     res['cells'] = cells
@@ -169,13 +163,13 @@ def closest_sequence():
     if not source:
         source = dh.config['states']['types'][0]['path']
 
-    indices, meta = dh.get_closest_sequences_2(cells, source,
-                                               activation_threshold=threshold,
-                                               data_transform=data_transform,
-                                               add_histograms=True,
-                                               phrase_length=phrase_length,
-                                               sort_mode=sort_mode,
-                                               query_mode=query_mode)
+    indices, meta = dh.query_similar_activations(cells, source,
+                                                 activation_threshold=threshold,
+                                                 data_transform=data_transform,
+                                                 add_histograms=True,
+                                                 phrase_length=phrase_length,
+                                                 sort_mode=sort_mode,
+                                                 query_mode=query_mode)
 
     res = {
         'sort_mode': sort_mode,
@@ -187,44 +181,6 @@ def closest_sequence():
         'data': indices,
         'fuzzy_length_histogram': meta['fuzzy_length_histogram'].tolist(),
         'strict_length_histogram': meta['strict_length_histogram'].tolist()
-    }
-
-    return Response(json.dumps(res), mimetype='application/json')
-
-
-@app.route('/api/cell_info/')
-def cell_info():
-    options = request.args
-    data_set = int(request.args.get("data_set", 0))
-    source = request.args.get("source")
-    cell_string = options.get('cells', '')
-    cells = map(lambda x: int(x), cell_string.split(','))
-    data_transform = request.args.get("data_transform", 'tanh')
-    threshold = float(options.get('threshold', 0.3))
-    min_pass = int(options.get('min_pass', 100))
-    add_words = options.get('add_words', False)
-
-    dh = data_handlers[data_handlers.keys()[data_set]]  # type: LSTMDataHandler
-
-    if not source:
-        source = dh.config['states']['types'][0]['path']
-
-    data = dh.get_rle(cells, source,
-                      data_transform=data_transform,
-                      threshold=threshold,
-                      min_pass=min_pass,
-                      add_words=add_words
-                      )
-
-    res = {
-        'threshold': threshold,
-        'min_pass': min_pass,
-        'source': source,
-        'data_transform': data_transform,
-        'cells': cells,
-        'dataset': data_set,
-        'add_words': add_words,
-        'rle': data
     }
 
     return Response(json.dumps(res), mimetype='application/json')
@@ -265,20 +221,6 @@ def search_words():
     return json.dumps(res)
 
 
-@app.route('/api/embedding/')
-def api_embedding():
-    data_set = int(request.args.get("data_set", 0))
-    query = request.args.get('query', "")
-    sort_result = request.args.get('sort', False)
-
-    dh = data_handlers[data_handlers.keys()[data_set]]  # type: LSTMDataHandler
-
-    res, mean = dh.get_embedding_for_string(query, sort_results=sort_result)
-
-    return Response(json.dumps({'query': query, 'data_set': data_set, 'res': res, 'mean': mean}),
-                    mimetype='application/json')
-
-
 # send everything from client as static content
 @app.route('/client/<path:path>')
 def send_static(path):
@@ -311,20 +253,20 @@ def create_data_handlers(directory):
                 index_map[p_dir] = data_handlers[p_dir].config['index_dir']
         i += 1
 
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--nodebug", default=False)
 parser.add_argument("--port", default="8888")
 parser.add_argument("--nocache", default=False)
 parser.add_argument("-dir", type=str, default=os.path.abspath('data'))
 
-if  __name__ == '__main__':
+if __name__ == '__main__':
     args = parser.parse_args()
     create_data_handlers(args.dir)
-
 
     print args
 
     app.run(port=int(args.port), debug=not args.nodebug, host="0.0.0.0")
 else:
     create_data_handlers("data")
-    #app.run(debug=False)
+    # app.run(debug=False)
