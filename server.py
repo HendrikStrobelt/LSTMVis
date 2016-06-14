@@ -5,7 +5,7 @@ import os
 
 import numpy as np
 import yaml
-from flask import Flask, send_from_directory, jsonify, Response
+from flask import Flask, send_from_directory, jsonify, Response, redirect
 from flask import request
 from flask_cors import CORS
 
@@ -29,13 +29,7 @@ def hello_world():
     """
     :return: "hello world"
     """
-    name = request.args.get("name")
-    # print h.heap()
-
-    if name:
-        return 'Hello, ' + name
-    else:
-        return 'Hello World!'
+    return redirect('client/index.html')
 
 
 @app.route('/api/rle_states/<int:pos>')
