@@ -684,7 +684,7 @@ ResultView.prototype.redraw = function (draw_options_) {
       .on('click', function (d, i) {
 
         that.event_handler.trigger(Event_list.new_page,
-          {replace: {pos: d[0], brush: '20,' + (d[2] + 20), padding: '1,0'}}
+          {replace: {pos: d[0], brush: LEFT_CONTEXT+',' + (d[2] + LEFT_CONTEXT), padding: '1,0'}}
         )
 
       })

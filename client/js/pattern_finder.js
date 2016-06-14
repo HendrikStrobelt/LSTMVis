@@ -90,7 +90,10 @@ var cat16colors = ["#3366cc", "#ff9900", "#109618", "#990099", "#0099c6",
   "#6633cc", "#e67300", "#8b0707", "#651067", "#329262", "#5574a6",
   "#3b3eac"].reverse();
 cat16colors = cat16colors.map(function (d) {return d3.rgb(d).brighter()});
-cat16colors = _.concat(cat20colors, cat16colors)
+cat16colors = _.concat(cat20colors, cat16colors).filter(function (d, i) {
+  var c = d3.rgb(d);
+  return ((c.r > c.b * .8) && (c.g > c.b * .7) )
+});
 
 var cat_colors = cat16colors;
 
@@ -105,17 +108,19 @@ var globalInfo = {};
 $('#headline').text('Pattern Finder for Position: '
   + url_parameters.pos);
 
+// var window_w = window.innerWidth;
+// window_w = window_w > 1100 ? window_w : 1100;
 
 var margin = {top: 0, right: 10, bottom: 20, left: 10},
   width = 2500 - margin.left - margin.right,
-  height = 4000 - margin.top - margin.bottom;
+  height = 1400 - margin.top - margin.bottom;
 
 var svg_plain = d3.select("#vis").append("svg")
   .attr("width", width + margin.left + margin.right)
   .attr("height", height + margin.top + margin.bottom)
 
-  svg_plain.append('defs')
-    .html('<filter id="shadow1" x="0" y="0" width="150%" height="150%"> \
+svg_plain.append('defs')
+  .html('<filter id="shadow1" x="0" y="0" width="150%" height="150%"> \
       <feOffset result="offOut" in="SourceAlpha" dx="1" dy="1" /> \
       <feGaussianBlur result="blurOut" in="offOut" stdDeviation="1" /> \
       <feBlend in="SourceGraphic" in2="blurOut" mode="normal" /> \
@@ -123,7 +128,7 @@ var svg_plain = d3.select("#vis").append("svg")
   ')
 
 
-var svg= svg_plain.append("g")
+var svg = svg_plain.append("g")
   .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 var contextVisGroup = svg.append('g').attr({
