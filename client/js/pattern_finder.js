@@ -1,14 +1,14 @@
 /**
  * Created by Hendrik Strobelt (hendrik.strobelt.com) on 4/8/16.
  */
-var url = '';
-var hostedURL = '/client/closest_V1.html';
-var columnWidth = 70;
+
+var url_path = window.location.pathname.split('/').slice(0, -2).join('/');
+var url = window.location.origin + (url_path.length ? '/' + url_path : '');
 
 const Event_list = {
   threshold_update: 'threshold_update',
   cell_hovered: 'cell_hovered',
-  new_page:'new_page'
+  new_page: 'new_page'
 };
 
 
@@ -187,23 +187,21 @@ function createGlobalInformation(info) {
     disabled: globalInfo['info'].index ? null : true
   });
 
-  var all_states = globalInfo.info.states.types.map(function(d,i){return d.file+'::'+ d.path})
-  var sources =  d3.select('#sources').selectAll('option').data(all_states);
+  var all_states = globalInfo.info.states.types.map(function (d, i) {return d.file + '::' + d.path})
+  var sources = d3.select('#sources').selectAll('option').data(all_states);
   sources.exit().remove();
-  sources.enter().append('option').text(function(d,i){return d});
+  sources.enter().append('option').text(function (d, i) {return d});
 
-  document.getElementById('sources').selectedIndex = (url_parameters.source?all_states.indexOf(url_parameters.source):0);
-  d3.select('#sources').on('change',function(){
+  document.getElementById('sources').selectedIndex = (url_parameters.source ? all_states.indexOf(url_parameters.source) : 0);
+  d3.select('#sources').on('change', function () {
     var new_source = all_states[document.getElementById('sources').selectedIndex];
-    window.open(url_string({source: new_source}),'_self')
+    window.open(url_string({source: new_source}), '_self')
 
   })
 
 
-
-
   var meta = globalInfo['info']['meta'];
-  console.log(globalInfo['info']['meta'],'\n-- globalInfo--');
+  console.log(globalInfo['info']['meta'], '\n-- globalInfo--');
   // create scales for meta
   _.forEach(meta, function (m) {
 
@@ -261,7 +259,7 @@ function bind_events() {
 
   });
 
-  event_handler.bind(Event_list.new_page,function(e,d){
+  event_handler.bind(Event_list.new_page, function (e, d) {
     window.open(url_string(d.replace));
   })
 
@@ -284,8 +282,7 @@ $.ajax(url + "/api/info", {
     //}
 
 
-    var pfv = new PatternFinderVis(contextVisGroup.node(), 0, 0,event_handler, url_parameters);
-    
+    var pfv = new PatternFinderVis(contextVisGroup.node(), 0, 0, event_handler, url_parameters);
 
 
     d3.selectAll('#loading').transition().style({
