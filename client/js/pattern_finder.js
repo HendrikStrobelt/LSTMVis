@@ -110,10 +110,20 @@ var margin = {top: 0, right: 10, bottom: 20, left: 10},
   width = 2500 - margin.left - margin.right,
   height = 4000 - margin.top - margin.bottom;
 
-var svg = d3.select("#vis").append("svg")
+var svg_plain = d3.select("#vis").append("svg")
   .attr("width", width + margin.left + margin.right)
   .attr("height", height + margin.top + margin.bottom)
-  .append("g")
+
+  svg_plain.append('defs')
+    .html('<filter id="shadow1" x="0" y="0" width="150%" height="150%"> \
+      <feOffset result="offOut" in="SourceAlpha" dx="1" dy="1" /> \
+      <feGaussianBlur result="blurOut" in="offOut" stdDeviation="1" /> \
+      <feBlend in="SourceGraphic" in2="blurOut" mode="normal" /> \
+    </filter> \
+  ')
+
+
+var svg= svg_plain.append("g")
   .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 var contextVisGroup = svg.append('g').attr({

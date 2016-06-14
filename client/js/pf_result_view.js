@@ -8,7 +8,8 @@ function ResultView(parent, x, y, data, options) {
   });
 
   this.event_list = {
-    heatmap_item_hovered: 'heatmap_item_hovered'
+    heatmap_item_hovered: 'heatmap_item_hovered',
+    circle_hovered: 'circle_hovered'
   };
 
   //=== queries ===
@@ -48,7 +49,8 @@ function ResultView(parent, x, y, data, options) {
       .range([0, this.layout.cw * (this.left_context - this.right_context + 1)])
   };
   this.current = {
-    rect_selection: null
+    rect_selection: null,
+    circle_selection: null
   };
 
   this.all_content_groups = [];
@@ -105,6 +107,10 @@ ResultView.prototype.create_groups = function () {
   this.result_view_group_bg = this.result_view_group.append('g').attr({
     class: 'result_view_group_bg bg',
     opacity: .5
+  });
+
+  this.result_view_group_bg_circle = this.result_view_group.append('g').attr({
+    class: 'result_view_group_bg_circle bg'
   });
 
   this.result_histogram = this.content_group.append('g').attr({
@@ -225,7 +231,6 @@ ResultView.prototype.redraw = function (draw_options_) {
   var op = that.options;
   var dt = that.data;
 
-  var background_rect;
 
   function update_hms() {
     var x_offset = op.xScale(that.left_context + 1 + that.right_context) + 30;
@@ -321,7 +326,7 @@ ResultView.prototype.redraw = function (draw_options_) {
       hm_data = _.flatten(hm_data);
     }
 
-    background_rect = that.result_view_group_bg.selectAll(".background_rect")
+    var background_rect = that.result_view_group_bg.selectAll(".background_rect")
       .data(hm_data);
     background_rect.exit().remove();
 
@@ -342,6 +347,7 @@ ResultView.prototype.redraw = function (draw_options_) {
     var use_opacity = (rect_hm
     && that.current.rect_selection != CELL_COUNT_HM_ID
     && that.heatmaps[that.current.rect_selection].datatype != 'scalar');
+
     if (options.no_transition) {
       background_rect.style({
         fill: function (d) {return rect_hm ? rect_hm.colorScale(d.value) : 'white';},
@@ -363,10 +369,82 @@ ResultView.prototype.redraw = function (draw_options_) {
         that.event_handler.trigger(that.event_list.heatmap_item_hovered, {x: d.x, y: d.y, active: false});
       }
     });
+
+
   }
 
   update_bg_rects();
 
+  function update_bg_circles() {
+    var rect_hm = that.heatmaps[that.current.circle_selection];
+    var hm_data = [];
+    if (rect_hm) {
+      hm_data = rect_hm.data;
+    }
+    // else {
+    //   // fake a heatmap
+    //   hm_data = that.results.words.map(function (d, x) {
+    //     return d.words.map(function (_, y) {
+    //       return {x: x, y: y}
+    //     })
+    //   });
+    //   hm_data = _.flatten(hm_data);
+    // }
+
+    var background_circle = that.result_view_group_bg_circle.selectAll(".background_circle")
+      .data(hm_data);
+    background_circle.exit().remove();
+
+    // --- adding Element to class background_circle
+    background_circle.enter().append("circle").attr({
+      r: 3
+      // width: that.layout.cw - 1,
+      // height: that.layout.ch - 2
+    }).style({
+      fill: function (d) {return rect_hm ? rect_hm.colorScale(d.value) : 'white';},
+      stroke: 'white',
+      'stroke-width':'1',
+      'stroke-opacity':.5
+    });
+
+    background_circle.attr({
+      "class": function (d) {return "background_circle x" + d.x + '_y' + d.y},
+      cx: function (d) {return op.xScale(d.y) + (d.y >= that.left_context ? 5 : 0) + 3},
+      cy: function (d) {return (d.x) * that.layout.ch + 3}
+    });
+
+    var use_opacity = false;
+    // (rect_hm
+    // && that.current.rect_selection != CELL_COUNT_HM_ID
+    // && that.heatmaps[that.current.rect_selection].datatype != 'scalar');
+
+    if (options.no_transition) {
+      background_circle.style({
+        fill: function (d) {return rect_hm ? rect_hm.colorScale(d.value) : 'white';},
+        'fill-opacity': function (d) {return use_opacity ? that.opacity_map[d.x][d.y] : 1}
+      });
+    } else {
+      background_circle.transition().style({
+        fill: function (d) {return rect_hm ? rect_hm.colorScale(d.value) : 'white';},
+        'fill-opacity': function (d) {return use_opacity ? that.opacity_map[d.x][d.y] : 1}
+      });
+    }
+
+    background_circle.on({
+      'mouseover': function (d) {
+        that.event_handler.trigger(that.event_list.circle_hovered, {value: d.value, active: true});
+        that.event_handler.trigger(that.event_list.heatmap_item_hovered, {x: d.x, y: d.y, active: true});
+      },
+      'mouseout': function (d) {
+        that.event_handler.trigger(that.event_list.circle_hovered, {value: d.value, active: false});
+        that.event_handler.trigger(that.event_list.heatmap_item_hovered, {x: d.x, y: d.y, active: false});
+      }
+    });
+
+
+  }
+
+  update_bg_circles();
 
   function update_words() {
     var result_group = that.result_view_group.selectAll(".result_group").data(that.results.words);
@@ -853,6 +931,11 @@ ResultView.prototype.bind_event_handler = function (event_handler) {
     that.redraw({skip_heatmap: true, skip_words: true});
   });
 
+  that.event_handler.bind('heatmap_mapping_circle_selected', function (e, hm_id) {
+    that.current.circle_selection = hm_id;
+    that.redraw({skip_heatmap: true, skip_words: true});
+  });
+
   // TODO: decide if circle is still a thing
   // that.event_handler.bind('heatmap_mapping_circle_selected', function (e, hm_id) {
   //   that.current.heatmap.circle_selection = hm_id;
@@ -863,6 +946,23 @@ ResultView.prototype.bind_event_handler = function (event_handler) {
     var hovered = that.result_view_group_bg.selectAll(".x" + data.x + "_y" + data.y);
     hovered.classed('hovered', data.active);
   });
+
+
+  that.event_handler.bind(that.event_list.circle_hovered, function (e, data) {
+    if (data.active) {
+      that.result_view_group_bg_circle.selectAll('.background_circle').transition()
+        .attr({
+          r: function (d, i) {return d.value == data.value ? 5 : 3},
+          filter: function (d, i) {return d.value == data.value ? 'url(#shadow1)' : null}
+        })
+    } else {
+      that.result_view_group_bg_circle.selectAll('.background_circle').transition()
+        .attr({r: 3, filter: null})
+    }
+
+
+  })
+
 
   // that.event_handler.bind('map_opacity', function () {
   //   that.current.heatmap.map_cell_count_opacity = !that.current.heatmap.map_cell_count_opacity;
