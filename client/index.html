@@ -74,7 +74,7 @@
                     ds.info.states.types.forEach(function (d, i) {
 
                         add_info(that, d.file + ':' + d.path, function () {
-                            return '<a href="pattern_finder.html?data_set=' + ds_id + '&source=' + d.file + '::' + d.path + '">'
+                            return '<a href="pattern_finder.html?data_set=' + ds.project + '&source=' + d.file + '::' + d.path + '">'
                                     + 'layer ' + d.layer + ' ' + d.type
                                     + ' ( size: ' + d.size.join(' x ') + ')'
                                     + (d.unsigned ? ' - <b>unsigned</b>' : '')

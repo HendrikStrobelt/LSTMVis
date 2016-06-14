@@ -46,7 +46,6 @@ function all_query_variables_and_defaults() {
 
   // == necessary defaults ==
   url_parameters.pos = +url_parameters.pos || 100;
-  url_parameters.data_set = url_parameters.data_set || 0;
 
 }
 
@@ -177,7 +176,7 @@ function bindSearchButtons() {
 bindSearchButtons();
 
 function createGlobalInformation(info) {
-  globalInfo = info[url_parameters.data_set];
+  globalInfo = _.find(info, {project: url_parameters.data_set});
 
   $('#headline').html('Pattern Finder for <b>' + (globalInfo.info.name || globalInfo.project) + '</b>'
     + ' (' + url_parameters.pos + ')');
