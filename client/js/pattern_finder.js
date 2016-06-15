@@ -139,13 +139,14 @@ var contextVisGroup = svg.append('g').attr({
 function bindSearchButtons() {
   function search() {
     var value = $("#searchPhrase").val();
+    if (value.length<1) return;
     $.ajax(url + "/api/search_words/?html=true"
       + (url_parameters.data_set ? '&data_set=' + url_parameters.data_set : '')
       + "&query=" + encodeURI(value), {
       dataType: 'json',
       success: function (data) {
 
-        var searchResult = d3.select("#searchResults").selectAll(".searchResult").data(data, function (d) {
+        var searchResult = d3.select("#search_results").selectAll(".searchResult").data(data, function (d) {
           return d.index
         });
         searchResult.exit().remove();
@@ -155,6 +156,7 @@ function bindSearchButtons() {
           "class": "searchResult"
         }).on({
           'click': function (d) {
+            $('#search_results_modal').modal('hide')
             event_handler.trigger('new_pivot_context', {data: d})
           }
         });
@@ -168,6 +170,8 @@ function bindSearchButtons() {
         searchResultEnter.append("td").html(function (d) {
           return d.text
         })
+
+        $('#search_results_modal').modal()        
 
 
       }
@@ -249,7 +253,7 @@ function createGlobalInformation(info) {
 
 function bind_events() {
   event_handler.bind('new_pivot_context', function () {
-    d3.select("#searchResults").selectAll(".searchResult").remove()
+    d3.select("#search_results").selectAll(".searchResult").remove()
 
   })
 
