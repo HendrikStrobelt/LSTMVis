@@ -78,7 +78,7 @@ function PatternFinderVis(parent, x, y, event_handler, options) {
     pos: 1000,
     data_set: 0,
     source: null,
-    brush_extent: [],
+    brush_extent: [0,0],
     zero_left: 1,
     zero_right: 0,
     selection: {
@@ -290,7 +290,7 @@ PatternFinderVis.prototype.bindEvents = function (eventHandler) {
 
     var closestQuery = url + "/api/rle_states/"
       + that.current.pos
-      + '?left='+LEFT_CONTEXT+'&right='+RIGHT_CONTEXT+'&threshold=' + that.current.selection.threshold
+      + '?left=' + LEFT_CONTEXT + '&right=' + RIGHT_CONTEXT + '&threshold=' + that.current.selection.threshold
       + '&rle=' + that.current.selection.low_pass_threshold
       + '&data_set=' + (that.current.data_set)
       + '&data_transform=' + (that.source_info.transform);
