@@ -7,6 +7,7 @@ import resource
 import numpy as np
 import re
 import scipy.signal
+import time
 
 import helper_functions as hf
 from data_structures import State
@@ -30,12 +31,12 @@ class LSTMDataHandler:
         self.dicts_id_value = {}
 
         # open all h5 files
-        h5files = {k: v for k, v in config['files'].iteritems() if v.endswith('.h5')}
+        h5files = {k: v for k, v in config['files'].iteritems() if (v.endswith('.h5') or v.endswith('.hdf5'))}
         for key, file_name in h5files.iteritems():
             self.h5_files[key] = h5py.File(os.path.join(directory, file_name), 'r')
 
         # load all dict files of format: value<space>id
-        dict_files = {k: v for k, v in config['files'].iteritems() if v.endswith('.dict')}
+        dict_files = {k: v for k, v in config['files'].iteritems() if (v.endswith('.dict') or v.endswith('.txt'))}
         for name, file_name in dict_files.iteritems():
             kv = {}
             vk = {}
@@ -88,30 +89,8 @@ class LSTMDataHandler:
         else:
             self.config['meta'] = []
 
-            # print 'init cs:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
-
-    def get_embedding_ref(self):
-        we = self.config['word_embedding']
-        return self.h5_files[we['file']][we['path']]
-
-    def get_embedding_for_string(self, word, sort_results=False):
-        we = self.config['word_embedding']
-        dictionary = self.dicts_value_id[self.config['word_sequence']['dict_file']]
-        emb = self.h5_files[we['file']][we['path']]
-        if 'mean_embedding' not in self.current:
-            self.current['mean_embedding'] = np.median(emb, axis=0)
-        res = np.array([])
-        if word in dictionary:
-            res = emb[dictionary[word], :]
-
-        if sort_results:
-            args = np.argsort(self.current['mean_embedding'])
-            if res.shape[0] > 0:
-                return res[args].tolist(), self.current['mean_embedding'][args].tolist()
-            else:
-                return [], self.current['mean_embedding'][args].tolist()
-        else:
-            return res.tolist(), self.current['mean_embedding'].tolist()
+        if not ('description' in self.config and self.config['description']):
+            self.config['description'] = self.config['name']
 
     def get_states(self, pos_array, source, left=10, right=0, cell_selection=None, raw=False, round_values=5,
                    data_transform='tanh', activation_threshold=0.3, add_active_cells=False, transpose=False, rle=0):
@@ -167,8 +146,7 @@ class LSTMDataHandler:
                 cs_t = np.transpose(np.copy(cs))
                 disc = np.copy(cs_t)
                 cs_t[cs_t < activation_threshold] = 0
-                disc[disc >= activation_threshold] = 1
-                disc[disc < activation_threshold] = 0
+                hf.threshold_discrete(disc, activation_threshold, 0, 1)
 
                 for i in range(0, len(disc)):
                     state = disc[i]
@@ -194,8 +172,7 @@ class LSTMDataHandler:
                 # already tanh applied if necessary
 
                 a = cs
-                a[a >= activation_threshold_corrected] = 1
-                a[a < activation_threshold_corrected] = 0
+                hf.threshold_discrete(a, activation_threshold_corrected, 0, 1)
 
                 sum_active.append(np.sum(a, axis=1).tolist())
 
@@ -275,71 +252,17 @@ class LSTMDataHandler:
 
         return res
 
-    def get_alignment(self, pos_array, source, left, right, state_threshold, embedding_threshold,
-                      data_transform='tanh', cell_selection=None):
-        """aligns ngrams for all pos of pos_array against ngram of pos_array[0]
-
-
-        :param pos_array: list of positions
-        :param source: path in states.h5
-        :param left: length left context
-        :param right: length right context
-        :param cell_selection: selection of cells
-        :param data_transform: 'tanh' (values: 'tanh', 'tanhabs', 'raw')
-        :param state_threshold: default .6
-        :param embedding_threshold: default .6
-        :return: array of alignment information for each pos in pos_array
-        """
-
-        # TODO: implement padding for non-equal length positions
-
-        if cell_selection is None:
-            cell_selection = []
-        states, _ = self.get_states(pos_array, source, left, right,
-                                    raw=True,
-                                    data_transform=data_transform, cell_selection=cell_selection)
-        words_and_embedding = self.get_words(pos_array, left, right,
-                                             raw=True,
-                                             add_embeddings=True)
-
-        res = []
-        s1 = None
-
-        for i in range(0, len(pos_array)):
-            item = {'pos': pos_array[i]}
-            state = states[i]
-            word = words_and_embedding[i]
-
-            if not s1:
-                s1 = [State(w, s, e, state_threshold, embedding_threshold) for w, s, e in
-                      zip(word['words'], state['data'], word['embeddings'])]
-                s1.reverse()
-
-            s2 = [State(w, s, e, state_threshold, embedding_threshold) for w, s, e in
-                  zip(word['words'], state['data'], word['embeddings'])]
-            s2.reverse()
-
-            typ, aligned, diff_order = hf.align_forward(s1, s2)
-
-            item['diff_order'] = diff_order
-            item['align_typ'] = typ
-            item['align_text'] = aligned
-            res.append(item)
-
-        return states, words_and_embedding, res
-
-    def get_dimensions(self, pos_array, source, left, right, dimensions, round_values=5, embedding_threshold=.6,
-                       state_threshold=.6, data_transform='tanh', cells=None, activation_threshold=.3, rle=0):
+    def get_dimensions(self, pos_array, source, left, right, dimensions, round_values=5, data_transform='tanh',
+                       cells=None, activation_threshold=.3, rle=0):
         """ selective information for a sequence
 
+        :param rle: filter length
         :param pos_array: list of positions
         :param source: path in states.h5
         :param left: positions left from pos
         :param right: positions right from pos
         :param dimensions: list of data dimensions to return
         :param round_values: round values to x digits
-        :param embedding_threshold: see :func:`get_alignment`
-        :param state_threshold: see :func:`get_alignment`
         :param data_transform: see :func:`get_alignment`
         :param cells: selection of cells
         :param activation_threshold: threshold for activation
@@ -350,13 +273,6 @@ class LSTMDataHandler:
         res = {}
         states = None
         words_and_embedding = None
-
-        # align already needs states and words.. so why not reuse them :)
-        if 'align' in dimensions:
-            _, words_and_embedding, res['align'] = self.get_alignment(pos_array, source,
-                                                                      left, right,
-                                                                      state_threshold, embedding_threshold,
-                                                                      data_transform, cell_selection=cells)
 
         for dim in dimensions:
             if dim == 'states':
@@ -387,80 +303,9 @@ class LSTMDataHandler:
 
         return res
 
-    def get_rle(self, cells, source, data_transform='tanh', threshold=.3, min_pass=100, add_words=True):
-        cell_states, data_transformed = self.get_cached_matrix(data_transform, source)
-
-        res = []
-        for cell in cells:
-            cell_data = cell_states[:, cell]
-            if not data_transformed:
-                if data_transform == 'tanh':
-                    np.tanh(cell_data, cell_data)
-            z, p, _ = hf.rle(np.where(cell_data > threshold, [1], [-1]))
-            lx = np.where(z >= min_pass)
-            lx_pos = p[lx]
-            lx_length = z[lx].tolist()
-            sub_res = {
-                'cell': cell,
-                'rle_length': lx_length,
-                'rle_pos': lx_pos.tolist()
-            }
-            if add_words:
-                words_start = map(lambda w: w['words'], self.get_words(lx_pos, left=1, right=1))
-                words_end = map(lambda w: w['words'], self.get_words(lx_pos + lx_length, left=1, right=1))
-
-                sub_res['words'] = zip(words_start, words_end)
-
-            res.append(sub_res)
-        return res
-
-    def get_closest_sequences(self, cells, source, length, epsilon_left=0, epsilon_right=0, activation_threshold=.3,
-                              data_transform='tanh'):
-        """ deprecated """
-
-        cell_states, data_transformed = self.get_cached_matrix(data_transform, source)
-
-        print 'before cs:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
-        q = np.zeros((length + epsilon_left + epsilon_right, len(cells)))
-        q[epsilon_right:(epsilon_right + length), :] = 1
-        q[:epsilon_right, :] = -1
-        q[epsilon_right + length:epsilon_right + length + epsilon_left, :] = -1
-
-        activation_threshold_corrected = activation_threshold
-        if not data_transformed:
-            activation_threshold_corrected = np.arctanh(activation_threshold)
-        # print 'cs:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
-        # print 'before 2 cs:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
-
-        cs = cell_states[:, cells]
-        # print 'before 2 cs:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
-        cs[cs >= activation_threshold_corrected] = 1
-        cs[cs < activation_threshold_corrected] = -1
-
-        # print 'subm cs:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
-        out = scipy.signal.convolve2d(cs, q,
-                                      mode="valid").flatten()
-
-        # print 'out cs:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
-        # print 'cs:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
-
-        sorted_indices = np.argsort(out)[-50:][::-1]
-        sorted_values = out[sorted_indices]
-
-        # correct for left offset
-        sorted_indices += epsilon_left
-        res = zip(sorted_indices, sorted_values)
-
-        del out
-        del cs
-        # del sub_matrix
-
-        print 'after-colect cs:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
-
-        return res
-
-    def get_closest_sequences_2(self, cells, source, activation_threshold=.3,
-                                data_transform='tanh', add_histograms=False, phrase_length=0, sort_mode='cells'):
+    def query_similar_activations(self, cells, source, activation_threshold=.3,
+                                  data_transform='tanh', add_histograms=False, phrase_length=0, sort_mode='cells',
+                                  query_mode='fast'):
         """ search for the longest sequences given the activation threshold and a set of cells
 
         :param cells: the cells
@@ -472,93 +317,104 @@ class LSTMDataHandler:
         cell_states, data_transformed = self.get_cached_matrix(data_transform, source)
 
         print 'before cs:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
-        # q = np.zeros((length + epsilon_left + epsilon_right, len(cells)))
-        # q[epsilon_right:(epsilon_right + length), :] = 1
-        # q[:epsilon_right, :] = -1
-        # q[epsilon_right + length:epsilon_right + length + epsilon_left, :] = -1
 
         activation_threshold_corrected = activation_threshold
         if not data_transformed:
             activation_threshold_corrected = np.arctanh(activation_threshold)
 
-        # cs = cell_states[:, cells]
-        # cs[cs >= activation_threshold_corrected] = 1
-        # cs[cs < activation_threshold_corrected] = 0
-
-        pos_intersection = None
-        pos_length_map = {}
-        cut_off = 1
+        cut_off = 2
         if phrase_length > 2:
-            cut_off = phrase_length - 1
+            cut_off = phrase_length
 
         print 'out cs 1:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
-        for c in range(0, len(cells)):
-            cs = cell_states[:, cells[c]]
-            cs[cs >= activation_threshold_corrected] = 1
-            cs[cs < activation_threshold_corrected] = 0
 
-            length, pos, value = hf.rle(cs)
-            offset = int(1 - value[0])
-            l = length[offset::2]
-            l2 = np.argwhere(l > cut_off)
-            p = pos[offset::2]
+        if query_mode == "fast":
+            num_of_cells_per_sum = 5  # how many cells are evaluated per batch
+            maximal_length = int(5e5)  # only consider the first 500,000 time steps
+        else:  # all time steps but still be memory efficient
+            maximal_length = cell_states.shape[0]
+            num_of_cells_per_sum = int(np.floor(5e6 / maximal_length))
+            num_of_cells_per_sum = 1 if num_of_cells_per_sum == 0 else num_of_cells_per_sum
 
-            # TODO: could be more memory efficient
-            for ll2 in l2:
-                k = int(p[ll2])
-                a = pos_length_map.get(k)
-                if a is None:
-                    if pos_intersection is None:  # only fill in first run..
-                        pos_length_map[k] = [int(l[ll2])]
-                else:
-                    pos_length_map[k].append(int(l[ll2]))
+        print 'num_cells', num_of_cells_per_sum
 
-            if pos_intersection is not None:
-                pos_intersection = np.intersect1d(pos_intersection, p[l2])
+        cs_cand = None
+        # start = time.time()
+        no_slices = int(np.ceil(len(cells) * 1. / num_of_cells_per_sum))
+        for c in range(0, no_slices):
+            cell_range = cells[c * num_of_cells_per_sum:min((c + 1) * num_of_cells_per_sum, len(cells))]
+            c_discrete = cell_states[:maximal_length, cell_range]
+            hf.threshold_discrete(c_discrete, activation_threshold_corrected, 0, 1)
+
+            if num_of_cells_per_sum > 1:
+                c_batch = np.sum(c_discrete, axis=1)
             else:
-                pos_intersection = p[l2]
-            print pos_intersection.shape
-            if pos_intersection.shape[0] == 0:
-                break
+                c_batch = c_discrete
+            if cs_cand is None:
+                cs_cand = c_batch
+            else:
+                cs_cand = cs_cand + c_batch
 
-        # print pos_intersection.shape
-        # print len(pos_length_map)
-        print 'out cs 2:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+            del c_discrete, c_batch
 
-        # print map(lambda x: {'pos': x, 'l': min(pos_length_map[x]), 'lengths': pos_length_map[x]}, pos_intersection)
+        length, pos, value = hf.rle(cs_cand)  # read length encoding
+
+        # filter for positions where all cells turn from off (value=0) to on (value = len(cells))
+        gradient_mask = value[1:] - value[:-1]
+        indices = (np.argwhere(gradient_mask == len(cells)) + 1).flatten()
+        del gradient_mask
+
+        filtered_length = length[indices]
+        if query_mode == 'fast':
+            l2 = np.argwhere(filtered_length >= cut_off)[:1000]
+        else:
+            l2 = np.argwhere(filtered_length >= cut_off)
+        p = pos[indices]
+        del length, pos
+
+        # end = time.time()
+        # print 'query vectors', (end - start)
+        # print 'out cs 2:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 
         res = []
-        all_pos = pos_intersection.flatten()
         if sort_mode == 'cells':
+            # Uniq
             # sort by minimal number of other active cells
-            for p in all_pos:  # all positions where all pivot cells start jointly
-                min_length = np.min(pos_length_map[p])  # max length covered by all cells
+            start = time.time()
 
-                # get the slice of cell states for the range
-                cs = cell_states[p:p + min_length - 1, :]
-                # discretize
-                cs[cs >= activation_threshold_corrected] = 1
-                cs[cs < activation_threshold_corrected] = 0
+            for ll2 in l2:  # positions where all pivot cells start jointly
+                ml = int(filtered_length[ll2])  # maximal length of _all_ pivot cells on
+                pos = int(p[ll2])  # position of the pattern
+                cs = np.array(cell_states[pos - 1:pos + ml + 1, :])  # cell values of _all_ cells for the range
+                hf.threshold_discrete(cs, activation_threshold_corrected, -1, 1)  # discretize
 
-                # build sum
-                cs_sum = np.sum(cs, axis=0)
+                # create pattern mask of form -1 1 1..1 -1 = off on on .. on off
+                mask = np.ones(ml + 2)
+                mask[0] = -1
+                mask[ml + 1] = -1
 
-                # set all pivot cells to zero and discretize again
+                cs_sum = np.dot(mask, cs)
                 cs_sum[cells] = 0
-                cs_sum[cs_sum > 0] = 1
-                res.append([p, np.var(pos_length_map[p]), min_length, float(np.sum(cs_sum))])
+                sum_cell_active = len(np.where(cs_sum == (ml + 2)))  # if the dot product is equal to ml +2
+                # (the two off positions before and afterwards) then it should be counted
+
+                del cs_sum, mask, cs
+
+                res.append([pos, int(value[int(indices[ll2]) + 1]), ml, sum_cell_active])  # Todo: bring variance back
+
+            end = time.time()
+            print 'time:', (end - start)
 
             def key(elem):
-                return -elem[3], -elem[2]
+                return elem[3], -elem[2]
         else:
             # sort by clean cut
-            res = map(lambda xx: [xx, np.var(pos_length_map[xx]), np.min(pos_length_map[xx]), 0], all_pos)
+            # Precision
+            res = map(lambda xx: [int(p[xx]), int(value[int(indices[ll2]) + 1]), int(filtered_length[xx]), 0],
+                      l2)  # todo: add variance back
 
             def key(elem):
                 return elem[1], -elem[2]
-
-        # res.sort(key=lambda x: x[1], reverse=False)
-        # res.sort(key=lambda x: x[2], reverse=True)
 
         meta = {}
         if add_histograms:
@@ -570,14 +426,16 @@ class LSTMDataHandler:
 
         res.sort(key=key)
 
-        res = res[:50]
+        res_50 = list(res[:50])
+        del res
+        print 'out cs 2:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 
-        return res, meta
+        return res_50, meta
 
     def get_cached_matrix(self, data_transform, source, full_matrix=False):
         """ request the cached full state matrix or a reference to it
 
-        :param data_transform: 'tanh' (values: 'tanh', 'tanhabs', 'raw')
+        :param data_transform: 'tanh' (values: 'tanh', 'raw')
         :param source: path in states.h5
         :param full_matrix: requires the full matrix to be loaded
         :return: tuple(the matrix [reference], has the matrix been data_transformed)
@@ -587,18 +445,13 @@ class LSTMDataHandler:
         source_file = source.split('::')[0]
         source = source.split('::')[1]
         cache_id = str(source) + '__' + str(data_transform) + '__' + str(source_file)
-        print 'cs:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+        # print 'cs:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 
         if cache_id not in self.cached_matrix and full_matrix:
             cell_states = self.h5_files[source_file][source]
             if data_transform == 'tanh':
                 # x = np.zeros(shape=cell_states.shape)
                 x = np.clip(cell_states, -1, 1)
-                self.cached_matrix[cache_id] = x
-            elif data_transform == 'tanh_abs':
-                # x = np.zeros(shape=cell_states.shape)
-                x = np.clip(cell_states, -1, 1)
-                np.abs(x, x)
                 self.cached_matrix[cache_id] = x
 
         if cache_id in self.cached_matrix:

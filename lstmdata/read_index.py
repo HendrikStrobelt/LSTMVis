@@ -13,7 +13,7 @@ def query_index(_query, no_results=20, htmlFormat=False, dir =''):
     ix = open_dir(dir)
 
     with ix.searcher() as searcher:
-        query = QueryParser("content", ix.schema).parse(_query)
+        query = QueryParser("content", ix.schema).parse('"|| '+_query+'"')
         results = searcher.search(query, limit=no_results)
 
         if htmlFormat:

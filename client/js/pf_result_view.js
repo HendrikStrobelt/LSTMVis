@@ -8,13 +8,15 @@ function ResultView(parent, x, y, data, options) {
   });
 
   this.event_list = {
-    heatmap_item_hovered: 'heatmap_item_hovered'
+    heatmap_item_hovered: 'heatmap_item_hovered',
+    circle_hovered: 'circle_hovered'
   };
 
   //=== queries ===
   this.left_context = 2;
   this.right_context = 15;
   this.sort_mode = 'cells';
+  this.query_mode = 'fast';
 
   this.layout = {
     ch: 16,
@@ -47,7 +49,8 @@ function ResultView(parent, x, y, data, options) {
       .range([0, this.layout.cw * (this.left_context - this.right_context + 1)])
   };
   this.current = {
-    rect_selection: null
+    rect_selection: null,
+    circle_selection: null
   };
 
   this.all_content_groups = [];
@@ -106,6 +109,10 @@ ResultView.prototype.create_groups = function () {
     opacity: .5
   });
 
+  this.result_view_group_bg_circle = this.result_view_group.append('g').attr({
+    class: 'result_view_group_bg_circle bg'
+  });
+
   this.result_histogram = this.content_group.append('g').attr({
     class: 'result_histogram',
     "transform": "translate(" + this.layout.result_histogram.x + "," + this.layout.result_histogram.y + ")"
@@ -152,25 +159,69 @@ ResultView.prototype.create_ui = function () {
   }
 
   createButton(that.content_group,
+    that.layout.query_buttons.x, that.layout.query_buttons.y + that.layout.query_buttons.h + 5,
+    that.layout.query_buttons.cw, that.layout.query_buttons.h,
+    'open_query', 'query',
+    function () {
+      dt.phrase_length = null;
+      that.sort_mode = 'cells';
+      that.event_handler.trigger('open_query')
+    }
+  );
+  // createButton(that.content_group,
+  //   that.layout.query_buttons.x, that.layout.query_buttons.y + that.layout.query_buttons.h + 5,
+  //   that.layout.query_buttons.cw, that.layout.query_buttons.h,
+  //   'open_query', 'query precision first',
+  //   function () {
+  //     dt.phrase_length = null;
+  //     that.sort_mode = 'precision';
+  //     that.event_handler.trigger('open_query')
+  //   }
+  // );
+
+
+  function create_radio_state_buttons(parent, x, y, width, height, classes, values, active_value, onFunction) {
+    var qButtonG = parent.append('g').attr({
+      // class: classes + ' svg_select_button',
+      "transform": "translate(" + x + "," + y + ")"
+    });
+
+
+    var all_radios = qButtonG.selectAll('svg_radio_button').data(values);
+    all_radios.exit().remove();
+    var all_radios_enter = all_radios.enter().append('g').attr({
+      class: classes + ' svg_radio_button',
+      "transform": function (d, i) {return "translate(" + (i * width) + "," + 0 + ")";}
+    });
+
+    all_radios_enter.append('rect').attr({
+      class: 'bg',
+      width: width,
+      height: height
+    }).on('click', onFunction);
+
+    all_radios_enter.append('text').attr({
+      x: width / 2,
+      y: height - 3
+    }).text(function (d, i) {return d});
+
+    all_radios.classed('selected', function (d, i) {return d == active_value})
+
+  }
+
+
+  create_radio_state_buttons(that.content_group,
     that.layout.query_buttons.x, that.layout.query_buttons.y,
-    that.layout.query_buttons.cw, that.layout.query_buttons.h,
-    'open_query', 'query unique first',
-    function () {
-      dt.phrase_length = null;
-      that.sort_mode='cells';
-      that.event_handler.trigger('open_query')
+    that.layout.query_buttons.cw / 2, that.layout.query_buttons.h,
+    'query_mode', ['fast', 'precise'], that.query_mode,
+    function (value) {
+      that.query_mode = value;
+      that.content_group.selectAll('.query_mode').classed('selected', function (d, i) { return d == value});
+
     }
-  );
-   createButton(that.content_group,
-    that.layout.query_buttons.x, that.layout.query_buttons.y+that.layout.query_buttons.h+5,
-    that.layout.query_buttons.cw, that.layout.query_buttons.h,
-    'open_query', 'query precision first',
-    function () {
-      dt.phrase_length = null;
-      that.sort_mode='precision';
-      that.event_handler.trigger('open_query')
-    }
-  );
+  )
+
+
 };
 
 
@@ -180,10 +231,9 @@ ResultView.prototype.redraw = function (draw_options_) {
   var op = that.options;
   var dt = that.data;
 
-  var background_rect;
 
   function update_hms() {
-    var x_offset = op.xScale(that.left_context + 1 + that.right_context) + 10;
+    var x_offset = op.xScale(that.left_context + 1 + that.right_context) + 30;
     var cell_width = 10;
     var cell_height = that.layout.ch;
     var heatmap_padding = (that.left_context + 1 + that.right_context) * cell_width + 15;
@@ -240,10 +290,11 @@ ResultView.prototype.redraw = function (draw_options_) {
           if (hm_id.startsWith('meta_')) {
             // TODO: get rid of globalInfo
             hm_options.colorScale = globalInfo['info']['meta'][hm_id.substring(5)].vis.color_scale;
+            hm_options.datatype = globalInfo['info']['meta'][hm_id.substring(5)].vis.type;
             hm_options.noAutoColorScale = true;
           }
 
-
+          console.log(that.results[hm_id], '\n-- that.results[hm_id] --');
           var hm = new HeatMap(
             that.result_view_group.node(),
             that.results[hm_id], null,
@@ -275,7 +326,7 @@ ResultView.prototype.redraw = function (draw_options_) {
       hm_data = _.flatten(hm_data);
     }
 
-    background_rect = that.result_view_group_bg.selectAll(".background_rect")
+    var background_rect = that.result_view_group_bg.selectAll(".background_rect")
       .data(hm_data);
     background_rect.exit().remove();
 
@@ -293,7 +344,10 @@ ResultView.prototype.redraw = function (draw_options_) {
       y: function (d) {return d.x * that.layout.ch}
     });
 
-    var use_opacity = (rect_hm && that.current.rect_selection != CELL_COUNT_HM_ID);
+    var use_opacity = (rect_hm
+    && that.current.rect_selection != CELL_COUNT_HM_ID
+    && that.heatmaps[that.current.rect_selection].datatype != 'scalar');
+
     if (options.no_transition) {
       background_rect.style({
         fill: function (d) {return rect_hm ? rect_hm.colorScale(d.value) : 'white';},
@@ -315,10 +369,82 @@ ResultView.prototype.redraw = function (draw_options_) {
         that.event_handler.trigger(that.event_list.heatmap_item_hovered, {x: d.x, y: d.y, active: false});
       }
     });
+
+
   }
 
   update_bg_rects();
 
+  function update_bg_circles() {
+    var rect_hm = that.heatmaps[that.current.circle_selection];
+    var hm_data = [];
+    if (rect_hm) {
+      hm_data = rect_hm.data;
+    }
+    // else {
+    //   // fake a heatmap
+    //   hm_data = that.results.words.map(function (d, x) {
+    //     return d.words.map(function (_, y) {
+    //       return {x: x, y: y}
+    //     })
+    //   });
+    //   hm_data = _.flatten(hm_data);
+    // }
+
+    var background_circle = that.result_view_group_bg_circle.selectAll(".background_circle")
+      .data(hm_data);
+    background_circle.exit().remove();
+
+    // --- adding Element to class background_circle
+    background_circle.enter().append("circle").attr({
+      r: 3
+      // width: that.layout.cw - 1,
+      // height: that.layout.ch - 2
+    }).style({
+      fill: function (d) {return rect_hm ? rect_hm.colorScale(d.value) : 'white';},
+      stroke: 'white',
+      'stroke-width':'1',
+      'stroke-opacity':.5
+    });
+
+    background_circle.attr({
+      "class": function (d) {return "background_circle x" + d.x + '_y' + d.y},
+      cx: function (d) {return op.xScale(d.y) + (d.y >= that.left_context ? 5 : 0) + 3},
+      cy: function (d) {return (d.x) * that.layout.ch + 3}
+    });
+
+    var use_opacity = false;
+    // (rect_hm
+    // && that.current.rect_selection != CELL_COUNT_HM_ID
+    // && that.heatmaps[that.current.rect_selection].datatype != 'scalar');
+
+    if (options.no_transition) {
+      background_circle.style({
+        fill: function (d) {return rect_hm ? rect_hm.colorScale(d.value) : 'white';},
+        'fill-opacity': function (d) {return use_opacity ? that.opacity_map[d.x][d.y] : 1}
+      });
+    } else {
+      background_circle.transition().style({
+        fill: function (d) {return rect_hm ? rect_hm.colorScale(d.value) : 'white';},
+        'fill-opacity': function (d) {return use_opacity ? that.opacity_map[d.x][d.y] : 1}
+      });
+    }
+
+    background_circle.on({
+      'mouseover': function (d) {
+        that.event_handler.trigger(that.event_list.circle_hovered, {value: d.value, active: true});
+        that.event_handler.trigger(that.event_list.heatmap_item_hovered, {x: d.x, y: d.y, active: true});
+      },
+      'mouseout': function (d) {
+        that.event_handler.trigger(that.event_list.circle_hovered, {value: d.value, active: false});
+        that.event_handler.trigger(that.event_list.heatmap_item_hovered, {x: d.x, y: d.y, active: false});
+      }
+    });
+
+
+  }
+
+  update_bg_circles();
 
   function update_words() {
     var result_group = that.result_view_group.selectAll(".result_group").data(that.results.words);
@@ -558,7 +684,7 @@ ResultView.prototype.redraw = function (draw_options_) {
       .on('click', function (d, i) {
 
         that.event_handler.trigger(Event_list.new_page,
-          {replace: {pos: d[0], brush: '20,' + (d[2] + 20), padding: '1,0'}}
+          {replace: {pos: d[0], brush: LEFT_CONTEXT+',' + (d[2] + LEFT_CONTEXT), padding: '1,0'}}
         )
 
       })
@@ -580,7 +706,11 @@ ResultView.prototype.set_cell_count_hm = function (hm) {
 
   var max = _.max(hm.map(function (d) {return _.max(d)}));
   // that.opacity_map = hm.map(function (x) {return x.map(function (y) { return 1. * y / max})})
-  that.opacity_map = hm.map(function (x) {return x.map(function (y, i) { return (y == max || i == that.left_context - 1) ? 1 : 0.1})})
+  that.opacity_map = hm.map(function (x) {
+    return x.map(function (y, i) {
+      return (y == max || i == that.left_context - 1 || (i > 0 && x[i - 1] == max)) ? 1 : 0.1
+    })
+  })
 
 };
 
@@ -602,7 +732,8 @@ ResultView.prototype.bind_event_handler = function (event_handler) {
       'threshold=' + dt.threshold,
       'data_set=' + (op.data_set),
       'data_transform=' + (op.source_info.transform),
-      'sort_mode=' + that.sort_mode
+      'sort_mode=' + that.sort_mode,
+      'query_mode=' + that.query_mode
     ];
 
     if (op.source != null) {
@@ -800,6 +931,11 @@ ResultView.prototype.bind_event_handler = function (event_handler) {
     that.redraw({skip_heatmap: true, skip_words: true});
   });
 
+  that.event_handler.bind('heatmap_mapping_circle_selected', function (e, hm_id) {
+    that.current.circle_selection = hm_id;
+    that.redraw({skip_heatmap: true, skip_words: true});
+  });
+
   // TODO: decide if circle is still a thing
   // that.event_handler.bind('heatmap_mapping_circle_selected', function (e, hm_id) {
   //   that.current.heatmap.circle_selection = hm_id;
@@ -810,6 +946,23 @@ ResultView.prototype.bind_event_handler = function (event_handler) {
     var hovered = that.result_view_group_bg.selectAll(".x" + data.x + "_y" + data.y);
     hovered.classed('hovered', data.active);
   });
+
+
+  that.event_handler.bind(that.event_list.circle_hovered, function (e, data) {
+    if (data.active) {
+      that.result_view_group_bg_circle.selectAll('.background_circle').transition()
+        .attr({
+          r: function (d, i) {return d.value == data.value ? 5 : 3},
+          filter: function (d, i) {return d.value == data.value ? 'url(#shadow1)' : null}
+        })
+    } else {
+      that.result_view_group_bg_circle.selectAll('.background_circle').transition()
+        .attr({r: 3, filter: null})
+    }
+
+
+  })
+
 
   // that.event_handler.bind('map_opacity', function () {
   //   that.current.heatmap.map_cell_count_opacity = !that.current.heatmap.map_cell_count_opacity;

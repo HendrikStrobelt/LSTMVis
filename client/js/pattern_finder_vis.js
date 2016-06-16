@@ -4,7 +4,8 @@
 
 
 const CELL_COUNT_HM_ID = 'cell_count';
-
+const LEFT_CONTEXT = 5;
+const RIGHT_CONTEXT = 50;
 
 /**
  * PatternFinder Visualization class
@@ -490,7 +491,7 @@ PatternFinderVis.prototype.init_gui = function () {
   createButton(that.content_group,
     that.layout.low_pass_button.x, that.layout.low_pass_button.y, //that.layout.query_buttons.cw + 5
     that.layout.low_pass_button.w, that.layout.low_pass_button.h,
-    'low_pass_filter', 'low pass filter',
+    'low_pass_filter', 'length filter',
     function () {that.eventHandler.trigger('low_pass_filter')}
   );
 
@@ -815,7 +816,7 @@ PatternFinderVis.prototype.query_context = function (position, data_set, source,
 
   var closestQuery = url + "/api/context/?pos=" + position
     + '&data_set=' + data_set
-    + '&left=20&right=20&dimensions=states,cell_count,words'
+    + '&left=' + LEFT_CONTEXT + '&right=' + RIGHT_CONTEXT + '&dimensions=states,cell_count,words'
     + '&data_transform=' + (that.source_info.transform)
     + "&threshold=" + (that.current.selection.threshold);
   if (source) {
@@ -1140,6 +1141,19 @@ PatternFinderVis.prototype.redraw = function () {
     });
 
     word.select('text').text(function (d) {return d;});
+
+
+    that.label_group.selectAll(".separator_line").data([LEFT_CONTEXT]).enter().append("line").attr({
+      "class": "separator_line",
+      x1: function (d) {return that.brushScale(d)-1},
+      x2: function (d) {return that.brushScale(d)-1},
+      y1: -5,
+      y2: that.layout.cell_selectors.h+5
+    }).style({
+      'pointer-events':'none',
+      'stroke-width':1
+    });
+
 
   }
 

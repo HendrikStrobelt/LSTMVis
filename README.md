@@ -65,11 +65,6 @@ files: # assign files to reference name
   train: rls.h5
   words: rls.dict # dict files have to end in .dict !!
 
-# OPTIONAL: If you have information about word embedding
-# word_embedding:
-#   file: embed
-#   path: weights
-
 word_sequence: # defines the word sequence
   file: train # HDF5 file
   path: words # path to table within HDF5

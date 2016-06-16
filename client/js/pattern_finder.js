@@ -1,14 +1,14 @@
 /**
  * Created by Hendrik Strobelt (hendrik.strobelt.com) on 4/8/16.
  */
-var url = 'http://localhost:8888';
-var hostedURL = 'http://localhost:8888/client/closest_V1.html';
-var columnWidth = 70;
+
+var url_path = window.location.pathname.split('/').slice(0, -2).join('/');
+var url = window.location.origin + (url_path.length ? '/' + url_path : '');
 
 const Event_list = {
   threshold_update: 'threshold_update',
   cell_hovered: 'cell_hovered',
-  new_page:'new_page'
+  new_page: 'new_page'
 };
 
 
@@ -45,8 +45,7 @@ function all_query_variables_and_defaults() {
   }
 
   // == necessary defaults ==
-  url_parameters.pos = +url_parameters.pos || 100000;
-  url_parameters.data_set = url_parameters.data_set || 0;
+  url_parameters.pos = +url_parameters.pos || 100;
 
 }
 
@@ -76,22 +75,25 @@ function url_string(replace) {
 }
 
 
-//var position = $('#pos').val() || getQueryVariable('pos') || 100000;
+//var position = $('#pos').val() || getQueryVariable('pos') || 100;
 //var mask = getQueryVariable('mask');
 //var itemList = getQueryVariable('items');
 
 
 var event_handler = $({});
 
-var cat20colors = d3.scale.category20c().range();
+var cat20colors = d3.scale.category20().range();
 console.log('cat20', cat20colors);
 
 var cat16colors = ["#3366cc", "#ff9900", "#109618", "#990099", "#0099c6",
   "#66aa00", "#316395", "#994499", "#22aa99", "#aaaa11",
   "#6633cc", "#e67300", "#8b0707", "#651067", "#329262", "#5574a6",
   "#3b3eac"].reverse();
-cat16colors = cat16colors.map(function (d) {return d3.rgb(d).brighter().brighter()});
-cat16colors = _.concat(cat16colors, cat20colors)
+cat16colors = cat16colors.map(function (d) {return d3.rgb(d).brighter()});
+cat16colors = _.concat(cat20colors, cat16colors).filter(function (d, i) {
+  var c = d3.rgb(d);
+  return ((c.r > c.b * .8) && (c.g > c.b * .7) )
+});
 
 var cat_colors = cat16colors;
 
@@ -106,15 +108,27 @@ var globalInfo = {};
 $('#headline').text('Pattern Finder for Position: '
   + url_parameters.pos);
 
+// var window_w = window.innerWidth;
+// window_w = window_w > 1100 ? window_w : 1100;
 
 var margin = {top: 0, right: 10, bottom: 20, left: 10},
   width = 2500 - margin.left - margin.right,
-  height = 4000 - margin.top - margin.bottom;
+  height = 1400 - margin.top - margin.bottom;
 
-var svg = d3.select("#vis").append("svg")
+var svg_plain = d3.select("#vis").append("svg")
   .attr("width", width + margin.left + margin.right)
   .attr("height", height + margin.top + margin.bottom)
-  .append("g")
+
+svg_plain.append('defs')
+  .html('<filter id="shadow1" x="0" y="0" width="150%" height="150%"> \
+      <feOffset result="offOut" in="SourceAlpha" dx="1" dy="1" /> \
+      <feGaussianBlur result="blurOut" in="offOut" stdDeviation="1" /> \
+      <feBlend in="SourceGraphic" in2="blurOut" mode="normal" /> \
+    </filter> \
+  ')
+
+
+var svg = svg_plain.append("g")
   .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 var contextVisGroup = svg.append('g').attr({
@@ -125,13 +139,14 @@ var contextVisGroup = svg.append('g').attr({
 function bindSearchButtons() {
   function search() {
     var value = $("#searchPhrase").val();
+    if (value.length<1) return;
     $.ajax(url + "/api/search_words/?html=true"
       + (url_parameters.data_set ? '&data_set=' + url_parameters.data_set : '')
       + "&query=" + encodeURI(value), {
       dataType: 'json',
       success: function (data) {
 
-        var searchResult = d3.select("#searchResults").selectAll(".searchResult").data(data, function (d) {
+        var searchResult = d3.select("#search_results").selectAll(".searchResult").data(data, function (d) {
           return d.index
         });
         searchResult.exit().remove();
@@ -141,6 +156,7 @@ function bindSearchButtons() {
           "class": "searchResult"
         }).on({
           'click': function (d) {
+            $('#search_results_modal').modal('hide')
             event_handler.trigger('new_pivot_context', {data: d})
           }
         });
@@ -154,6 +170,8 @@ function bindSearchButtons() {
         searchResultEnter.append("td").html(function (d) {
           return d.text
         })
+
+        $('#search_results_modal').modal()        
 
 
       }
@@ -177,7 +195,7 @@ function bindSearchButtons() {
 bindSearchButtons();
 
 function createGlobalInformation(info) {
-  globalInfo = info[url_parameters.data_set];
+  globalInfo = _.find(info, {project: url_parameters.data_set});
 
   $('#headline').html('Pattern Finder for <b>' + (globalInfo.info.name || globalInfo.project) + '</b>'
     + ' (' + url_parameters.pos + ')');
@@ -187,22 +205,21 @@ function createGlobalInformation(info) {
     disabled: globalInfo['info'].index ? null : true
   });
 
-  var all_states = globalInfo.info.states.types.map(function(d,i){return d.file+'::'+ d.path})
-  var sources =  d3.select('#sources').selectAll('option').data(all_states);
+  var all_states = globalInfo.info.states.types.map(function (d, i) {return d.file + '::' + d.path})
+  var sources = d3.select('#sources').selectAll('option').data(all_states);
   sources.exit().remove();
-  sources.enter().append('option').text(function(d,i){return d});
+  sources.enter().append('option').text(function (d, i) {return d});
 
-  document.getElementById('sources').selectedIndex = (url_parameters.source?all_states.indexOf(url_parameters.source):0);
-  d3.select('#sources').on('change',function(){
+  document.getElementById('sources').selectedIndex = (url_parameters.source ? all_states.indexOf(url_parameters.source) : 0);
+  d3.select('#sources').on('change', function () {
     var new_source = all_states[document.getElementById('sources').selectedIndex];
-    window.open(url_string({source: new_source}),'_self')
+    window.open(url_string({source: new_source}), '_self')
 
   })
 
 
-
-
   var meta = globalInfo['info']['meta'];
+  console.log(globalInfo['info']['meta'], '\n-- globalInfo--');
   // create scales for meta
   _.forEach(meta, function (m) {
 
@@ -236,7 +253,7 @@ function createGlobalInformation(info) {
 
 function bind_events() {
   event_handler.bind('new_pivot_context', function () {
-    d3.select("#searchResults").selectAll(".searchResult").remove()
+    d3.select("#search_results").selectAll(".searchResult").remove()
 
   })
 
@@ -260,7 +277,7 @@ function bind_events() {
 
   });
 
-  event_handler.bind(Event_list.new_page,function(e,d){
+  event_handler.bind(Event_list.new_page, function (e, d) {
     window.open(url_string(d.replace));
   })
 
@@ -283,8 +300,7 @@ $.ajax(url + "/api/info", {
     //}
 
 
-    var pfv = new PatternFinderVis(contextVisGroup.node(), 0, 0,event_handler, url_parameters);
-    
+    var pfv = new PatternFinderVis(contextVisGroup.node(), 0, 0, event_handler, url_parameters);
 
 
     d3.selectAll('#loading').transition().style({
