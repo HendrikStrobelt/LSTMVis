@@ -47,6 +47,9 @@ function PatternFinderVis(parent, x, y, event_handler, options) {
     low_pass_button: {
       x: 100, y: 3, w: 150, h: 15
     },
+    clear_sel_button: {
+      x: 550, y: 3, w: 150, h: 15
+    },
     low_pass_slider: {
       x: 280, y: 3, w: 150, h: 15
     },
@@ -218,7 +221,8 @@ PatternFinderVis.prototype.update_cell_selection = function () {
 
     return true;
   } else {
-    return false;
+    that.selected_cells_for_query = [];
+    return true; // TODO: used to be false .. but not necessary anymore
   }
 
 };
@@ -286,7 +290,7 @@ PatternFinderVis.prototype.bindEvents = function (eventHandler) {
 
     var closestQuery = url + "/api/rle_states/"
       + that.current.pos
-      + '?left=20&right=20&threshold=' + that.current.selection.threshold
+      + '?left='+LEFT_CONTEXT+'&right='+RIGHT_CONTEXT+'&threshold=' + that.current.selection.threshold
       + '&rle=' + that.current.selection.low_pass_threshold
       + '&data_set=' + (that.current.data_set)
       + '&data_transform=' + (that.source_info.transform);
@@ -326,10 +330,11 @@ PatternFinderVis.prototype.bindEvents = function (eventHandler) {
 
   eventHandler.bind('brush_extent', function (e, d) {
 
+    that.label_group.select(".brushArea").call(that.word_brush.extent(d.value));
+
+    // console.log(d.value,'\n-- d.value --');
     // performance shortcut
     if (_.isEqual(that.current.brush_extent, d.value)) return;
-
-    that.reset_cell_selections();
 
     that.current.selection.cells = null; // no pre-defined cells
 
@@ -339,9 +344,16 @@ PatternFinderVis.prototype.bindEvents = function (eventHandler) {
     }
 
     var brushArea = that.zero_slider_group.select(".brushArea");
-    brushArea.call(that.zero_brush.extent(
-      [that.current.brush_extent[0] - that.current.zero_left,
-        that.current.brush_extent[1] + that.current.zero_right]));
+
+    if (that.current.brush_extent[0] == that.current.brush_extent[1]) {
+      brushArea.call(that.zero_brush.extent([0, 0]));
+
+    } else {
+      brushArea.call(that.zero_brush.extent(
+        [that.current.brush_extent[0] - that.current.zero_left,
+          that.current.brush_extent[1] + that.current.zero_right]));
+    }
+
 
     that.zero_slider_ov_rect.attr({
       x: function () {return that.brushScale(that.current.brush_extent[0])},
@@ -496,6 +508,14 @@ PatternFinderVis.prototype.init_gui = function () {
   );
 
 
+  createButton(that.content_group,
+    that.layout.clear_sel_button.x, that.layout.clear_sel_button.y, //that.layout.query_buttons.cw + 5
+    that.layout.clear_sel_button.w, that.layout.clear_sel_button.h,
+    'clear_sel_button', 'clear selection',
+    function () {that.eventHandler.trigger('brush_extent', {value: [0, 0]})}
+  );
+
+
   function createSelectorButton(parent, x, y, width, height, classes, text, value, onFunction) {
     var qButtonG = parent.append('g').attr({
       class: classes + ' svg_select_button',
@@ -615,7 +635,7 @@ PatternFinderVis.prototype.draw_low_pass_slider = function () {
 PatternFinderVis.prototype.draw_word_slider = function () {
   var that = this;
 
-  var brush = d3.svg.brush()
+  that.word_brush = d3.svg.brush()
     .x(that.brushScale)
     .on("brush", brushed);
 
@@ -628,14 +648,14 @@ PatternFinderVis.prototype.draw_word_slider = function () {
     "class": "brushArea brush"
   });
 
-  brushAreaEnter.call(brush);
+  brushAreaEnter.call(that.word_brush);
   brushAreaEnter.selectAll('rect').attr({
     height: 15
   });
 
 
   if (that.current.brush_extent[0] != that.current.brush_extent[1]) {
-    brushArea.call(brush.extent([
+    brushArea.call(that.word_brush.extent([
       that.current.brush_extent[0],
       that.current.brush_extent[1]
     ]));
@@ -650,7 +670,7 @@ PatternFinderVis.prototype.draw_word_slider = function () {
 
 
   function brushed() {
-    var extent0 = brush.extent(),
+    var extent0 = that.word_brush.extent(),
       extent1;
     var d0, d1;
 
@@ -670,9 +690,6 @@ PatternFinderVis.prototype.draw_word_slider = function () {
 
     }
     //
-
-
-    d3.select(this).call(brush.extent(extent1));
 
     that.eventHandler.trigger('brush_extent', {value: extent1})
 
@@ -1145,13 +1162,13 @@ PatternFinderVis.prototype.redraw = function () {
 
     that.label_group.selectAll(".separator_line").data([LEFT_CONTEXT]).enter().append("line").attr({
       "class": "separator_line",
-      x1: function (d) {return that.brushScale(d)-1},
-      x2: function (d) {return that.brushScale(d)-1},
+      x1: function (d) {return that.brushScale(d) - 1},
+      x2: function (d) {return that.brushScale(d) - 1},
       y1: -5,
-      y2: that.layout.cell_selectors.h+5
+      y2: that.layout.cell_selectors.h + 5
     }).style({
-      'pointer-events':'none',
-      'stroke-width':1
+      'pointer-events': 'none',
+      'stroke-width': 1
     });
 
 

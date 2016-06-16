@@ -8,7 +8,8 @@ var url = window.location.origin + (url_path.length ? '/' + url_path : '');
 const Event_list = {
   threshold_update: 'threshold_update',
   cell_hovered: 'cell_hovered',
-  new_page: 'new_page'
+  new_page: 'new_page',
+  clear_selection:'clear_selection'
 };
 
 
