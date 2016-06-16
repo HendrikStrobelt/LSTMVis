@@ -77,7 +77,7 @@ class LSTMDataHandler:
         if self.config['index']:
             self.config['index_dir'] = os.path.join(directory, 'indexdir')
 
-        if 'meta' in self.config and self.config['meta']:
+        if self.config.get('meta', False):
             for _, m_info in self.config['meta'].iteritems():
                 vis_range = m_info['vis']['range']
                 if vis_range == 'dict':
