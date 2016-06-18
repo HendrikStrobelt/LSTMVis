@@ -151,8 +151,8 @@ def closest_sequence():
     phrase_length = int(options.get('phrase_length', 0))
     sort_mode = options.get('sort_mode', 'cells')
     query_mode = options.get('query_mode', 'fast')
-    constrain_left = options.get('constrain_left', False)
-    constrain_right = options.get('constrain_right', False)
+    constrain_left = True if (int(options.get('constrain_left', 0)) == 1) else False
+    constrain_right = True if (int(options.get('constrain_right', 0)) == 1) else False
 
     dh = data_handlers[data_set]  # type: LSTMDataHandler
 

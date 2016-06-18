@@ -416,13 +416,14 @@ class LSTMDataHandler:
 
                 penalize = sum_cell_active + left_right_error
 
-                res.append([pos, int(value[int(indices[ll2]) + 1]), ml, penalize])  # Todo: bring variance back
+                res.append([pos, int(value[int(indices[ll2]) + 1]), ml, sum_cell_active,
+                            left_right_error])  # Todo: bring variance back
 
             end = time.time()
             print 'time:', (end - start)
 
             def key(elem):
-                return elem[3], -elem[2]
+                return elem[4] + elem[3], -elem[2]
         else:
             # sort by clean cut
             # Precision
@@ -443,6 +444,10 @@ class LSTMDataHandler:
         res.sort(key=key)
 
         res_50 = list(res[:50])
+
+        for r in res_50:
+            print r
+
         del res
         print 'out cs 2:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 
