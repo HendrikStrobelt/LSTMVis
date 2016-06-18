@@ -357,7 +357,7 @@ class LSTMDataHandler:
 
             del c_discrete, c_batch
 
-        length, pos, value = hf.rle(cs_cand)  # read length encoding
+        length, positions, value = hf.rle(cs_cand)  # read length encoding
 
         # filter for positions where all cells turn from off (value=0) to on (value = len(cells))
 
@@ -373,8 +373,8 @@ class LSTMDataHandler:
             l2 = np.argwhere(filtered_length >= cut_off)[:1000]
         else:
             l2 = np.argwhere(filtered_length >= cut_off)
-        p = pos[indices]
-        del length, pos
+        p = positions[indices]
+        del length
 
         # end = time.time()
         # print 'query vectors', (end - start)
@@ -406,24 +406,33 @@ class LSTMDataHandler:
 
                 sum_cell_active = len(np.where(cs_sum == test_pattern_length))
 
-                del cs_sum, mask, cs
+                del cs_sum, mask
 
                 left_right_error = 0
                 # add number of cells active before range as lr_error if constrained:
-                left_right_error += int(value[int(indices[ll2]) - 1]) if constrain_left else 0
-                # same for right side constrain:
-                left_right_error += int(value[int(indices[ll2]) + 1]) if constrain_right else 0
-
-                penalize = sum_cell_active + left_right_error
+                if constrain_left and not constrain_right:
+                    left_right_error = int(value[int(indices[ll2]) - 1])
+                if not constrain_left and constrain_right:
+                    left_right_error = int(value[int(indices[ll2]) + 1])
+                if constrain_left and constrain_right:
+                    # build union of cells active before and after candidate range
+                    before_and_after = cs[:, cells][[0, ml + 1], :]
+                    # encode off ranges as zero
+                    before_and_after[before_and_after == -1] = 0
+                    # build union
+                    union = np.multiply(before_and_after[0], before_and_after[1])
+                    # cardinality of intersection
+                    left_right_error = int(np.sum(union))
 
                 res.append([pos, int(value[int(indices[ll2]) + 1]), ml, sum_cell_active,
                             left_right_error])  # Todo: bring variance back
 
-            end = time.time()
-            print 'time:', (end - start)
+                end = time.time()
+                print 'time:', (end - start)
 
             def key(elem):
-                return elem[4] + elem[3], -elem[2]
+                # Jaccard
+                return -1. * (cell_count - elem[4]) / (elem[3] + cell_count), -elem[2]
         else:
             # sort by clean cut
             # Precision
