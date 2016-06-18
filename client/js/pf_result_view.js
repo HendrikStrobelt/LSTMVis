@@ -161,7 +161,7 @@ ResultView.prototype.create_ui = function () {
   createButton(that.content_group,
     that.layout.query_buttons.x, that.layout.query_buttons.y + that.layout.query_buttons.h + 5,
     that.layout.query_buttons.cw, that.layout.query_buttons.h,
-    'open_query', 'query',
+    'open_query', 'match',
     function () {
       dt.phrase_length = null;
       that.sort_mode = 'cells';
@@ -250,7 +250,7 @@ ResultView.prototype.redraw = function (draw_options_) {
       var hm_options = {
         cellWidth: cell_width,
         cellHeight: cell_height,
-        title: 'cell count',
+        title: 'match count',
         id: CELL_COUNT_HM_ID
 
       };
@@ -282,7 +282,7 @@ ResultView.prototype.redraw = function (draw_options_) {
           var hm_options = {
             cellWidth: cell_width,
             cellHeight: cell_height,
-            title: hm_id,
+            title: hm_id.replace('meta_',''),
             id: hm_id
 
           };

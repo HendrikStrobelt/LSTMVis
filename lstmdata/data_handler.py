@@ -445,7 +445,7 @@ class LSTMDataHandler:
         meta = {}
         if add_histograms:
             meta['fuzzy_length_histogram'] = np.bincount([x[2] for x in res])
-            meta['strict_length_histogram'] = np.bincount([x[2] for x in res if x[1] == 0])
+            meta['strict_length_histogram'] = np.bincount([x[2] for x in res if x[4] == 0])
 
         if phrase_length > 1:
             res = [x for x in res if x[2] == phrase_length]

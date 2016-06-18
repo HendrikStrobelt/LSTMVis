@@ -261,7 +261,7 @@ PatternFinderVis.prototype.discretize_data = function () {
       }
     })
   });
-}
+};
 
 PatternFinderVis.prototype.reset_cell_selections = function (reset_pre_selected, reset_excluded) {
   var that = this;
@@ -528,14 +528,6 @@ PatternFinderVis.prototype.init_gui = function () {
     }).text(text);
   }
 
-  //createButton(that.query_button_group,
-  //  0, 0,
-  //  that.layout.query_buttons.cw, that.layout.query_buttons.h,
-  //  'exact_query', 'query exact length',
-  //  function () {that.eventHandler.trigger('exact_query')}
-  //);
-
-
   createButton(that.content_group,
     that.layout.low_pass_button.x, that.layout.low_pass_button.y, //that.layout.query_buttons.cw + 5
     that.layout.low_pass_button.w, that.layout.low_pass_button.h,
@@ -550,41 +542,6 @@ PatternFinderVis.prototype.init_gui = function () {
     'clear_sel_button', 'clear selection',
     function () {that.eventHandler.trigger('brush_extent', {value: [0, 0]})}
   );
-
-
-  function createSelectorButton(parent, x, y, width, height, classes, text, value, onFunction) {
-    var qButtonG = parent.append('g').attr({
-      class: classes + ' svg_select_button',
-      "transform": "translate(" + x + "," + y + ")"
-    });
-
-    qButtonG.append('text').attr({
-      class: 'selector',
-      x: width,
-      y: Math.floor(height / 2 + 7)
-    }).style({
-      'text-anchor': 'end'
-    }).text(function () {return value ? '\uf046' : '\uf096'}).on({
-      'click': onFunction
-    });
-
-    qButtonG.append('text').attr({
-      class: 'label_text',
-      x: width - 18,
-      y: Math.floor(height / 2 + 5)
-    }).style({
-      'text-anchor': 'end'
-    }).text(text)
-
-  }
-
-
-  //createSelectorButton(that.query_button_group,
-  //  that.layout.query_buttons.cw + 5, 0, //that.layout.query_buttons.cw + 5
-  //  that.layout.query_buttons.cw, that.layout.query_buttons.h,
-  //  'map_opacity', 'map opacity', that.current.heatmap.map_cell_count_opacity,
-  //  function () {that.eventHandler.trigger('map_opacity')});
-
 
   // navigation buttons
   that.content_group.append('text').attr({
@@ -951,7 +908,7 @@ PatternFinderVis.prototype.redraw = function () {
   var discretized_cell_data = that.selected_cells_for_query.map(function (cell_index) {
     return {index: cell_index, values: that.discrete_states[cell_index]}
   });
-  var selected_cell_corrected = _.difference(that.selected_cells_for_query, that.current.selection.excluded_cells)
+  var selected_cell_corrected = _.difference(that.selected_cells_for_query, that.current.selection.excluded_cells);
 
   //   selected_cell_data.map(function (d) {
   //   var v = d.values.map(function (x) {return x >= that.current.selection.threshold ? 1 : 0});
@@ -961,13 +918,13 @@ PatternFinderVis.prototype.redraw = function () {
 
   function update_mini_preview() {
     var max = 0;
-    var aggregated_data = that.cell_active_per_timestep.map(function (ac, i) {
+    var aggregated_data = that.cell_active_per_timestep.map(function (ac) {
       var active_cells = ac[1];
       // console.log(active_cells,selected_cell_corrected,'\n-- active_cells,selected_cell_corrected --');
       // console.log(active_cells,'\n-- active_cells --');
       var intersection = _.intersection(active_cells, selected_cell_corrected);
       var union = _.union(active_cells, selected_cell_corrected);
-      var res = (1. * intersection.length) / union.length
+      var res = (1. * intersection.length) / union.length;
       max = Math.max(max, res);
       return res
     });
@@ -979,25 +936,6 @@ PatternFinderVis.prototype.redraw = function () {
       .y0(function (d) {return discrete_scale(d);})
       .y1(that.layout.mini_preview.h)
       .interpolate('step-after');
-
-
-
-
-    // console.log(aggregated_data);
-
-
-    // var aggregated_data = [];
-    // if (selected_cell_data.length > 0) {
-    //
-    //   var agg_data = discretized_cell_data.filter(function (d) {return !_.includes(that.current.selection.excluded_cells, d.index)});
-    //   aggregated_data = selected_cell_data[0].values.map(function (nothing, x_index) {
-    //     return _.sum(agg_data.map(function (d) {return d.values[x_index]}));
-    //     //return _.sum(selected_cell_data.map(function (d) {return d.values[x_index] >= that.threshold ? 1 : 0}))
-    //   });
-    //
-    //   aggregated_data = [aggregated_data]
-    //
-    // }
 
     var pc_line_discrete = that.mini_preview.selectAll(".pc_area_discrete").data([aggregated_data]);
     pc_line_discrete.exit().remove();
@@ -1207,7 +1145,7 @@ PatternFinderVis.prototype.redraw = function () {
 
     word.select('text')
       .attr({
-        "transform": function (d, i) {
+        "transform": function (d) {
           that.text_length_tester.text(d);
           var tl = that.text_length_tester[0][0].getComputedTextLength();
 
