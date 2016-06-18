@@ -733,7 +733,9 @@ ResultView.prototype.bind_event_handler = function (event_handler) {
       'data_set=' + (op.data_set),
       'data_transform=' + (op.source_info.transform),
       'sort_mode=' + that.sort_mode,
-      'query_mode=' + that.query_mode
+      'query_mode=' + that.query_mode,
+      'constrain_left=' + (that.options.zero_left>0),
+      'constrain_right=' + (that.options.zero_right>0)
     ];
 
     if (op.source != null) {

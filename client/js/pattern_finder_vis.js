@@ -78,7 +78,7 @@ function PatternFinderVis(parent, x, y, event_handler, options) {
     pos: 1000,
     data_set: 0,
     source: null,
-    brush_extent: [0,0],
+    brush_extent: [0, 0],
     zero_left: 1,
     zero_right: 0,
     selection: {
@@ -127,7 +127,9 @@ function PatternFinderVis(parent, x, y, event_handler, options) {
       data_set: options.data_set,
       source: options.source,
       source_info: this.source_info,
-      url: url
+      url: url,
+      zero_left: this.current.zero_left,
+      zero_right: this.current.zero_right
     });
   this.result_view.bind_event_handler(event_handler);
 
@@ -876,10 +878,13 @@ PatternFinderVis.prototype.redraw = function () {
   var draw_data = that.data.draw_data;
 
   that.result_view.update({
-    threshold: this.current.selection.threshold,
-    selected_cells: this.selected_cells_for_query,
-    excluded_cells: this.current.selection.excluded_cells
-  }, {});
+    threshold: that.current.selection.threshold,
+    selected_cells: that.selected_cells_for_query,
+    excluded_cells: that.current.selection.excluded_cells
+  }, {
+    zero_left: that.current.zero_left,
+    zero_right: that.current.zero_right
+  });
 
   function update_pc_lines() {
     if (that.pc_plots.length < 1) {

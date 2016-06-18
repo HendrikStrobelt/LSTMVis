@@ -305,7 +305,7 @@ class LSTMDataHandler:
 
     def query_similar_activations(self, cells, source, activation_threshold=.3,
                                   data_transform='tanh', add_histograms=False, phrase_length=0, sort_mode='cells',
-                                  query_mode='fast'):
+                                  query_mode='fast', constrain_left=False, constrain_right=False):
         """ search for the longest sequences given the activation threshold and a set of cells
 
         :param cells: the cells
@@ -360,9 +360,13 @@ class LSTMDataHandler:
         length, pos, value = hf.rle(cs_cand)  # read length encoding
 
         # filter for positions where all cells turn from off (value=0) to on (value = len(cells))
-        gradient_mask = value[1:] - value[:-1]
-        indices = (np.argwhere(gradient_mask == len(cells)) + 1).flatten()
-        del gradient_mask
+
+        ## old method.. only time steps are candidates that have all cells off before a range
+        # gradient_mask = value[1:] - value[:-1]
+        # indices = (np.argwhere(gradient_mask == len(cells)) + 1).flatten()
+        # del gradient_mask
+        cell_count = len(cells)
+        indices = np.argwhere(value == cell_count).flatten()
 
         filtered_length = length[indices]
         if query_mode == 'fast':
@@ -390,17 +394,29 @@ class LSTMDataHandler:
 
                 # create pattern mask of form -1 1 1..1 -1 = off on on .. on off
                 mask = np.ones(ml + 2)
-                mask[0] = -1
-                mask[ml + 1] = -1
+                mask[0] = -1 if constrain_left else 0  # ignore if not constraint
+                mask[ml + 1] = -1 if constrain_right else 0  # ignore if not constraint
 
                 cs_sum = np.dot(mask, cs)
                 cs_sum[cells] = 0
-                sum_cell_active = len(np.where(cs_sum == (ml + 2)))  # if the dot product is equal to ml +2
-                # (the two off positions before and afterwards) then it should be counted
+
+                test_pattern_length = ml  # defines the length of the relevant pattern
+                test_pattern_length += 1 if constrain_left else 0
+                test_pattern_length += 1 if constrain_right else 0
+
+                sum_cell_active = len(np.where(cs_sum == test_pattern_length))
 
                 del cs_sum, mask, cs
 
-                res.append([pos, int(value[int(indices[ll2]) + 1]), ml, sum_cell_active])  # Todo: bring variance back
+                left_right_error = 0
+                # add number of cells active before range as lr_error if constrained:
+                left_right_error += int(value[int(indices[ll2]) - 1]) if constrain_left else 0
+                # same for right side constrain:
+                left_right_error += int(value[int(indices[ll2]) + 1]) if constrain_right else 0
+
+                penalize = sum_cell_active + left_right_error
+
+                res.append([pos, int(value[int(indices[ll2]) + 1]), ml, penalize])  # Todo: bring variance back
 
             end = time.time()
             print 'time:', (end - start)
