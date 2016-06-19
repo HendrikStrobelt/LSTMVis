@@ -1,9 +1,3 @@
-# LSTMVis
-Visualization Toolbox for Long Short Term Memory networks (LSTMs)
-
-![Alt text](client/assets/example3.png)
-
-
 ## Getting started
 
 Install python requirements in your virtual environment:
@@ -80,9 +74,3 @@ states:
   ]
 
 ```
-
-
-
-## Credits
-
-LSTMVis is a collaborative project of Hendrik Strobelt, Sebastian Gehrmann, Bernd Huber, Hanspeter Pfister, and Alexander Rush at Harvard SEAS.
