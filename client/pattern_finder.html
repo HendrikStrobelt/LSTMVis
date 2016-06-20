@@ -28,11 +28,20 @@
             shape-rendering: crispEdges;
         }
 
-        .brush .extent, .overlayBrushAreaZero rect {
-            /*stroke: #000;*/
+        .brush .extent {
+            stroke: #3fb391;
+            stroke-width: 2;
+            fill: none;
+            rx:2;
+            ry:2;
+            /*fill-opacity: .25;*/
+            /*shape-rendering: crispEdges;*/
+        }
+
+        .overlayBrushAreaZero rect{
+            stroke: none;
             fill: #3fb391;
             fill-opacity: .25;
-            shape-rendering: crispEdges;
         }
 
         .brush_zero .extent {
@@ -339,6 +348,10 @@
             stroke: none;
             fill: #676767;
 
+        }
+        .wordBG{
+            opacity: .5;
+            pointer-events: none;
         }
 
 

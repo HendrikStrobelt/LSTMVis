@@ -79,6 +79,8 @@ class LSTMDataHandler:
 
         if self.config.get('meta', False):
             for _, m_info in self.config['meta'].iteritems():
+                m_info['index'] = m_info.get('index', 'self')
+                m_info['vis']['range'] = m_info['vis'].get('range', '0...100')
                 vis_range = m_info['vis']['range']
                 if vis_range == 'dict':
                     m_info['vis']['range'] = self.dicts_value_id[m_info['dict']].keys()
@@ -305,7 +307,7 @@ class LSTMDataHandler:
 
     def query_similar_activations(self, cells, source, activation_threshold=.3,
                                   data_transform='tanh', add_histograms=False, phrase_length=0, sort_mode='cells',
-                                  query_mode='fast'):
+                                  query_mode='fast', constrain_left=False, constrain_right=False):
         """ search for the longest sequences given the activation threshold and a set of cells
 
         :param cells: the cells
@@ -357,69 +359,67 @@ class LSTMDataHandler:
 
             del c_discrete, c_batch
 
-        length, pos, value = hf.rle(cs_cand)  # read length encoding
+        length, positions, value = hf.rle(cs_cand)  # read length encoding
 
         # filter for positions where all cells turn from off (value=0) to on (value = len(cells))
-        gradient_mask = value[1:] - value[:-1]
-        indices = (np.argwhere(gradient_mask == len(cells)) + 1).flatten()
-        del gradient_mask
 
-        filtered_length = length[indices]
+        ## old method.. only time steps are candidates that have all cells off before a range
+        # gradient_mask = value[1:] - value[:-1]
+        # indices = (np.argwhere(gradient_mask == len(cells)) + 1).flatten()
+        # del gradient_mask
+        cell_count = len(cells)
+
         if query_mode == 'fast':
+            indices = np.argwhere(value == cell_count).flatten()
+            filtered_length = length[indices]
             l2 = np.argwhere(filtered_length >= cut_off)[:1000]
         else:
+            indices = np.argwhere(value >= .75 * cell_count).flatten()
+            filtered_length = length[indices]
             l2 = np.argwhere(filtered_length >= cut_off)
-        p = pos[indices]
-        del length, pos
+        p = positions[indices]
+        del length
 
         # end = time.time()
         # print 'query vectors', (end - start)
         # print 'out cs 2:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 
         res = []
-        if sort_mode == 'cells':
-            # Uniq
-            # sort by minimal number of other active cells
-            start = time.time()
 
-            for ll2 in l2:  # positions where all pivot cells start jointly
-                ml = int(filtered_length[ll2])  # maximal length of _all_ pivot cells on
-                pos = int(p[ll2])  # position of the pattern
-                cs = np.array(cell_states[pos - 1:pos + ml + 1, :])  # cell values of _all_ cells for the range
-                hf.threshold_discrete(cs, activation_threshold_corrected, -1, 1)  # discretize
+        for ll2 in l2:  # positions where all pivot cells start jointly
+            ml = int(filtered_length[ll2])  # maximal length of _all_ pivot cells on
+            pos = int(p[ll2])  # position of the pattern
+            cs = np.array(cell_states[pos - 1:pos + ml + 1, :])  # cell values of _all_ cells for the range
+            hf.threshold_discrete(cs, activation_threshold_corrected, -1, 1)  # discretize
 
-                # create pattern mask of form -1 1 1..1 -1 = off on on .. on off
-                mask = np.ones(ml + 2)
-                mask[0] = -1
-                mask[ml + 1] = -1
+            # create pattern mask of form -1 1 1..1 -1 = off on on .. on off
+            mask = np.ones(ml + 2)
+            mask[0] = -1 if constrain_left else 0  # ignore if not constraint
+            mask[ml + 1] = -1 if constrain_right else 0  # ignore if not constraint
 
-                cs_sum = np.dot(mask, cs)
-                cs_sum[cells] = 0
-                sum_cell_active = len(np.where(cs_sum == (ml + 2)))  # if the dot product is equal to ml +2
-                # (the two off positions before and afterwards) then it should be counted
+            cs_sum = np.dot(mask, cs)
+            # cs_sum[cells] = 0
 
-                del cs_sum, mask, cs
+            test_pattern_length = ml  # defines the length of the relevant pattern
+            test_pattern_length += 1 if constrain_left else 0
+            test_pattern_length += 1 if constrain_right else 0
 
-                res.append([pos, int(value[int(indices[ll2]) + 1]), ml, sum_cell_active])  # Todo: bring variance back
+            all_active_cells = np.where(cs_sum == test_pattern_length)[0]  # all cells  that are active for range
 
-            end = time.time()
-            print 'time:', (end - start)
+            intersect = np.intersect1d(all_active_cells, cells)  # intersection with selected cells
+            union = np.union1d(all_active_cells, cells)  # union with selected cells
 
-            def key(elem):
-                return elem[3], -elem[2]
-        else:
-            # sort by clean cut
-            # Precision
-            res = map(lambda xx: [int(p[xx]), int(value[int(indices[ll2]) + 1]), int(filtered_length[xx]), 0],
-                      l2)  # todo: add variance back
+            res.append([pos, int(value[int(indices[ll2]) + 1]), ml,
+                        (float(len(intersect)) / float(len(union))),  # Jaccard
+                        cell_count - len(intersect)])  # how many selected cells are not active
 
-            def key(elem):
-                return elem[1], -elem[2]
+        def key(elem):
+            return -elem[3], -elem[2]
 
         meta = {}
         if add_histograms:
             meta['fuzzy_length_histogram'] = np.bincount([x[2] for x in res])
-            meta['strict_length_histogram'] = np.bincount([x[2] for x in res if x[1] == 0])
+            meta['strict_length_histogram'] = np.bincount([x[2] for x in res if x[4] == 0])
 
         if phrase_length > 1:
             res = [x for x in res if x[2] == phrase_length]
@@ -427,6 +427,10 @@ class LSTMDataHandler:
         res.sort(key=key)
 
         res_50 = list(res[:50])
+
+        for r in res_50:
+            print r
+
         del res
         print 'out cs 2:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 

@@ -161,7 +161,7 @@ ResultView.prototype.create_ui = function () {
   createButton(that.content_group,
     that.layout.query_buttons.x, that.layout.query_buttons.y + that.layout.query_buttons.h + 5,
     that.layout.query_buttons.cw, that.layout.query_buttons.h,
-    'open_query', 'query',
+    'open_query', 'match',
     function () {
       dt.phrase_length = null;
       that.sort_mode = 'cells';
@@ -250,7 +250,7 @@ ResultView.prototype.redraw = function (draw_options_) {
       var hm_options = {
         cellWidth: cell_width,
         cellHeight: cell_height,
-        title: 'cell count',
+        title: 'match count',
         id: CELL_COUNT_HM_ID
 
       };
@@ -282,7 +282,7 @@ ResultView.prototype.redraw = function (draw_options_) {
           var hm_options = {
             cellWidth: cell_width,
             cellHeight: cell_height,
-            title: hm_id,
+            title: hm_id.replace('meta_',''),
             id: hm_id
 
           };
@@ -703,10 +703,12 @@ ResultView.prototype.set_cell_count_hm = function (hm) {
   var that = this;
 
   that.cell_count_hm_data = hm;
+  console.log(hm,'\n-- hm --'); 
 
-  var max = _.max(hm.map(function (d) {return _.max(d)}));
-  // that.opacity_map = hm.map(function (x) {return x.map(function (y) { return 1. * y / max})})
-  that.opacity_map = hm.map(function (x) {
+  var max_per_row = hm.map(function (d) {return d[that.left_context]});
+
+  that.opacity_map = hm.map(function (x, row_id) {
+    var max = max_per_row[row_id];
     return x.map(function (y, i) {
       return (y == max || i == that.left_context - 1 || (i > 0 && x[i - 1] == max)) ? 1 : 0.1
     })
@@ -733,7 +735,9 @@ ResultView.prototype.bind_event_handler = function (event_handler) {
       'data_set=' + (op.data_set),
       'data_transform=' + (op.source_info.transform),
       'sort_mode=' + that.sort_mode,
-      'query_mode=' + that.query_mode
+      'query_mode=' + that.query_mode,
+      'constrain_left=' + ((that.options.zero_left>0)?1:0),
+      'constrain_right=' + ((that.options.zero_right>0)?1:0)
     ];
 
     if (op.source != null) {

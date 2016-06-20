@@ -47,6 +47,9 @@ function PatternFinderVis(parent, x, y, event_handler, options) {
     low_pass_button: {
       x: 100, y: 3, w: 150, h: 15
     },
+    clear_sel_button: {
+      x: 550, y: 3, w: 150, h: 15
+    },
     low_pass_slider: {
       x: 280, y: 3, w: 150, h: 15
     },
@@ -75,7 +78,7 @@ function PatternFinderVis(parent, x, y, event_handler, options) {
     pos: 1000,
     data_set: 0,
     source: null,
-    brush_extent: [],
+    brush_extent: [0, 0],
     zero_left: 1,
     zero_right: 0,
     selection: {
@@ -124,7 +127,9 @@ function PatternFinderVis(parent, x, y, event_handler, options) {
       data_set: options.data_set,
       source: options.source,
       source_info: this.source_info,
-      url: url
+      url: url,
+      zero_left: this.current.zero_left,
+      zero_right: this.current.zero_right
     });
   this.result_view.bind_event_handler(event_handler);
 
@@ -189,40 +194,74 @@ PatternFinderVis.prototype.update_cell_selection = function () {
   var that = this;
   var left = that.current.brush_extent[0];
   var right = that.current.brush_extent[1];
+  var zero_left = that.current.zero_left;
+  var zero_right = that.current.zero_right;
+
+  that.discretize_data();
   if (left != right) {
+    // var start = new Date().getTime();
 
-    that.selected_cells_for_query = [];
+    var length_pattern = right - left + zero_left + zero_right;
+    // var test_pattern = _.range(length_pattern)
+    //   .map(function (d, i) {return ((i < zero_left) || i > length_pattern - 1 - zero_right) ? 0 : 1});
+    //
+    // that.selected_cells_for_query = [];
+    //
+    // that.discrete_states.forEach(function (cell, cell_index) {
+    //   if (_.isEqual(_.slice(cell, left - zero_left, right + zero_right), test_pattern)) {
+    //     that.selected_cells_for_query.push(cell_index);
+    //   }
+    // });
 
+    // var time = new Date().getTime() - start;
+    // console.log('matrix: '+time);
+    // start = new Date().getTime();
 
-    //var epsilon = 3;
-    that.data.states[0].data.forEach(function (cell, cell_index) {
-      var accept = true;
-      cell.forEach(function (value, pos) {
-        var evaluate = (
-        (_.inRange(pos, left - that.current.zero_left, left) && value < that.current.selection.threshold) ||
-        (_.inRange(pos, right, right + that.current.zero_right) && value < that.current.selection.threshold) ||
-        (_.inRange(pos, left, right) && value >= that.current.selection.threshold) ||
-        (pos < (left - that.current.zero_left)) || pos >= (right + that.current.zero_right));
-        accept = accept && evaluate;
+    var sel_cells_slice = _.range(left - zero_left, right + zero_right).map(
+      function (time_step, i) {
+        // console.log(that.cell_active_per_timestep[time_step], time_step,'\n-- that.cell_active_per_timestep[time_step], time_step --');
+        if (i < zero_left || i > length_pattern - 1 - zero_right) return that.cell_active_per_timestep[time_step][0];
+        else return that.cell_active_per_timestep[time_step][1];
+      }
+    );
 
-      });
+    // console.log(sel_cells_slice,'\n-- sel_cells_slice --');
 
-      if (accept) that.selected_cells_for_query.push(cell_index)
+    that.selected_cells_for_query = _.intersection.apply(this, sel_cells_slice);
 
+    // time = new Date().getTime() - start;
+    // console.log('matrix: '+time);
 
-    });
+    // console.log(_.isEqual(that.selected_cells_for_query, sel_cells), that.selected_cells_for_query, sel_cells);
 
-    if (that.selected_cells_for_query.length == that.data.states[0].data.length) {
-      that.selected_cells_for_query = [];
-    } // TODO: a bit of a hack :)
 
     return true;
   } else {
-    return false;
+    that.selected_cells_for_query = [];
+    return true; // TODO: used to be false .. but not necessary anymore
   }
 
 };
 
+PatternFinderVis.prototype.discretize_data = function () {
+  var that = this;
+  var threshold = that.current.selection.threshold;
+
+  that.cell_active_per_timestep = that.data.states[0].data[0].map(function () {return [[], []]});
+  that.discrete_states = that.data.states[0].data.map(function (cell, cell_index) {
+    return cell.map(function (value, time_step) {
+      if (value < threshold) {
+        // off
+        that.cell_active_per_timestep[time_step][0].push(cell_index);
+        return 0;
+      } else {
+        // on
+        that.cell_active_per_timestep[time_step][1].push(cell_index);
+        return 1;
+      }
+    })
+  });
+};
 
 PatternFinderVis.prototype.reset_cell_selections = function (reset_pre_selected, reset_excluded) {
   var that = this;
@@ -237,7 +276,7 @@ PatternFinderVis.prototype.reset_cell_selections = function (reset_pre_selected,
 
   if (reset_excluded) {
     that.current.selection.excluded_cells = [];
-    that.eventHandler.trigger('replace_url', {ex_cells: null})
+    that.eventHandler.trigger('replace_url', {ex_cell: null})
   }
 
 
@@ -286,7 +325,7 @@ PatternFinderVis.prototype.bindEvents = function (eventHandler) {
 
     var closestQuery = url + "/api/rle_states/"
       + that.current.pos
-      + '?left=20&right=20&threshold=' + that.current.selection.threshold
+      + '?left=' + LEFT_CONTEXT + '&right=' + RIGHT_CONTEXT + '&threshold=' + that.current.selection.threshold
       + '&rle=' + that.current.selection.low_pass_threshold
       + '&data_set=' + (that.current.data_set)
       + '&data_transform=' + (that.source_info.transform);
@@ -326,11 +365,13 @@ PatternFinderVis.prototype.bindEvents = function (eventHandler) {
 
   eventHandler.bind('brush_extent', function (e, d) {
 
+    that.label_group.select(".brushArea").call(that.word_brush.extent(d.value));
+
+    // console.log(d.value,'\n-- d.value --');
     // performance shortcut
     if (_.isEqual(that.current.brush_extent, d.value)) return;
 
     that.reset_cell_selections();
-
     that.current.selection.cells = null; // no pre-defined cells
 
     that.current.brush_extent = d.value;
@@ -339,9 +380,16 @@ PatternFinderVis.prototype.bindEvents = function (eventHandler) {
     }
 
     var brushArea = that.zero_slider_group.select(".brushArea");
-    brushArea.call(that.zero_brush.extent(
-      [that.current.brush_extent[0] - that.current.zero_left,
-        that.current.brush_extent[1] + that.current.zero_right]));
+
+    if (that.current.brush_extent[0] == that.current.brush_extent[1]) {
+      brushArea.call(that.zero_brush.extent([0, 0]));
+
+    } else {
+      brushArea.call(that.zero_brush.extent(
+        [that.current.brush_extent[0] - that.current.zero_left,
+          that.current.brush_extent[1] + that.current.zero_right]));
+    }
+
 
     that.zero_slider_ov_rect.attr({
       x: function () {return that.brushScale(that.current.brush_extent[0])},
@@ -480,14 +528,6 @@ PatternFinderVis.prototype.init_gui = function () {
     }).text(text);
   }
 
-  //createButton(that.query_button_group,
-  //  0, 0,
-  //  that.layout.query_buttons.cw, that.layout.query_buttons.h,
-  //  'exact_query', 'query exact length',
-  //  function () {that.eventHandler.trigger('exact_query')}
-  //);
-
-
   createButton(that.content_group,
     that.layout.low_pass_button.x, that.layout.low_pass_button.y, //that.layout.query_buttons.cw + 5
     that.layout.low_pass_button.w, that.layout.low_pass_button.h,
@@ -496,39 +536,12 @@ PatternFinderVis.prototype.init_gui = function () {
   );
 
 
-  function createSelectorButton(parent, x, y, width, height, classes, text, value, onFunction) {
-    var qButtonG = parent.append('g').attr({
-      class: classes + ' svg_select_button',
-      "transform": "translate(" + x + "," + y + ")"
-    });
-
-    qButtonG.append('text').attr({
-      class: 'selector',
-      x: width,
-      y: Math.floor(height / 2 + 7)
-    }).style({
-      'text-anchor': 'end'
-    }).text(function () {return value ? '\uf046' : '\uf096'}).on({
-      'click': onFunction
-    });
-
-    qButtonG.append('text').attr({
-      class: 'label_text',
-      x: width - 18,
-      y: Math.floor(height / 2 + 5)
-    }).style({
-      'text-anchor': 'end'
-    }).text(text)
-
-  }
-
-
-  //createSelectorButton(that.query_button_group,
-  //  that.layout.query_buttons.cw + 5, 0, //that.layout.query_buttons.cw + 5
-  //  that.layout.query_buttons.cw, that.layout.query_buttons.h,
-  //  'map_opacity', 'map opacity', that.current.heatmap.map_cell_count_opacity,
-  //  function () {that.eventHandler.trigger('map_opacity')});
-
+  createButton(that.content_group,
+    that.layout.clear_sel_button.x, that.layout.clear_sel_button.y, //that.layout.query_buttons.cw + 5
+    that.layout.clear_sel_button.w, that.layout.clear_sel_button.h,
+    'clear_sel_button', 'clear selection',
+    function () {that.eventHandler.trigger('brush_extent', {value: [0, 0]})}
+  );
 
   // navigation buttons
   that.content_group.append('text').attr({
@@ -615,7 +628,7 @@ PatternFinderVis.prototype.draw_low_pass_slider = function () {
 PatternFinderVis.prototype.draw_word_slider = function () {
   var that = this;
 
-  var brush = d3.svg.brush()
+  that.word_brush = d3.svg.brush()
     .x(that.brushScale)
     .on("brush", brushed);
 
@@ -628,14 +641,14 @@ PatternFinderVis.prototype.draw_word_slider = function () {
     "class": "brushArea brush"
   });
 
-  brushAreaEnter.call(brush);
+  brushAreaEnter.call(that.word_brush);
   brushAreaEnter.selectAll('rect').attr({
     height: 15
   });
 
 
   if (that.current.brush_extent[0] != that.current.brush_extent[1]) {
-    brushArea.call(brush.extent([
+    brushArea.call(that.word_brush.extent([
       that.current.brush_extent[0],
       that.current.brush_extent[1]
     ]));
@@ -650,7 +663,7 @@ PatternFinderVis.prototype.draw_word_slider = function () {
 
 
   function brushed() {
-    var extent0 = brush.extent(),
+    var extent0 = that.word_brush.extent(),
       extent1;
     var d0, d1;
 
@@ -670,9 +683,6 @@ PatternFinderVis.prototype.draw_word_slider = function () {
 
     }
     //
-
-
-    d3.select(this).call(brush.extent(extent1));
 
     that.eventHandler.trigger('brush_extent', {value: extent1})
 
@@ -797,17 +807,11 @@ PatternFinderVis.prototype.data_wrangling = function (data) {
     cell_id_mapper = function (d) {return that.data.cells[d]};
   }
 
-  // that.data.draw_data = that.data.states[0].data.map(function (d, i) {
-  //   return {index: cell_id_mapper(i), values: d};
-  // });
-
   that.data.draw_data = that.data.states[0].data.map(function (d, i) {
     return {index: cell_id_mapper(i), values: d};
   }).filter(function (d) {return _.sum(d.values) != 0});
-  //// clear variables:
-  //that.selected_cells_by_threshold = [];
-  //that.selected_cells_for_query = [];
 
+  that.discretize_data();
 
 };
 
@@ -859,10 +863,13 @@ PatternFinderVis.prototype.redraw = function () {
   var draw_data = that.data.draw_data;
 
   that.result_view.update({
-    threshold: this.current.selection.threshold,
-    selected_cells: this.selected_cells_for_query,
-    excluded_cells: this.current.selection.excluded_cells
-  }, {});
+    threshold: that.current.selection.threshold,
+    selected_cells: that.selected_cells_for_query,
+    excluded_cells: that.current.selection.excluded_cells
+  }, {
+    zero_left: that.current.zero_left,
+    zero_right: that.current.zero_right
+  });
 
   function update_pc_lines() {
     if (that.pc_plots.length < 1) {
@@ -898,19 +905,31 @@ PatternFinderVis.prototype.redraw = function () {
 
 
   var selected_cell_data = draw_data.filter(function (d) {return _.includes(that.selected_cells_for_query, d.index)});
-  var discretized_cell_data = selected_cell_data.map(function (d) {
-    var v = d.values.map(function (x) {return x >= that.current.selection.threshold ? 1 : 0});
-    return {index: d.index, values: v}
-
+  var discretized_cell_data = that.selected_cells_for_query.map(function (cell_index) {
+    return {index: cell_index, values: that.discrete_states[cell_index]}
   });
+  var selected_cell_corrected = _.difference(that.selected_cells_for_query, that.current.selection.excluded_cells);
+
+  //   selected_cell_data.map(function (d) {
+  //   var v = d.values.map(function (x) {return x >= that.current.selection.threshold ? 1 : 0});
+  //   return {index: d.index, values: v}
+  //
+  // });
 
   function update_mini_preview() {
-    var discrete_scale = d3.scale.linear().domain([0, that.selected_cells_for_query.length]).range([that.layout.mini_preview.h, 0]);
+    var max = 0;
+    var aggregated_data = that.cell_active_per_timestep.map(function (ac) {
+      var active_cells = ac[1];
+      // console.log(active_cells,selected_cell_corrected,'\n-- active_cells,selected_cell_corrected --');
+      // console.log(active_cells,'\n-- active_cells --');
+      var intersection = _.intersection(active_cells, selected_cell_corrected);
+      var union = _.union(active_cells, selected_cell_corrected);
+      var res = (1. * intersection.length) / union.length;
+      max = Math.max(max, res);
+      return res
+    });
 
-    //var discrete_line = d3.svg.line()
-    //  .x(function (d, i) {return that.xScale(i)})
-    //  .y(function (d) {return discrete_scale(d);})
-    //.interpolate('step-before');
+    var discrete_scale = d3.scale.linear().domain([0, max]).range([that.layout.mini_preview.h, 0]);
 
     var discrete_line = d3.svg.area()
       .x(function (d, i) {return that.brushScale(i)})
@@ -918,21 +937,7 @@ PatternFinderVis.prototype.redraw = function () {
       .y1(that.layout.mini_preview.h)
       .interpolate('step-after');
 
-
-    var aggregated_data = [];
-    if (selected_cell_data.length > 0) {
-
-      var agg_data = discretized_cell_data.filter(function (d) {return !_.includes(that.current.selection.excluded_cells, d.index)});
-      aggregated_data = selected_cell_data[0].values.map(function (nothing, x_index) {
-        return _.sum(agg_data.map(function (d) {return d.values[x_index]}));
-        //return _.sum(selected_cell_data.map(function (d) {return d.values[x_index] >= that.threshold ? 1 : 0}))
-      });
-
-      aggregated_data = [aggregated_data]
-
-    }
-
-    var pc_line_discrete = that.mini_preview.selectAll(".pc_area_discrete").data(aggregated_data);
+    var pc_line_discrete = that.mini_preview.selectAll(".pc_area_discrete").data([aggregated_data]);
     pc_line_discrete.exit().remove();
 
     // --- adding Element to class pc_line_discrete
@@ -1110,6 +1115,7 @@ PatternFinderVis.prototype.redraw = function () {
 
 
   function update_words() {
+
     var word = that.label_group.selectAll(".word").data(that.data.words[0].words);
     word.exit().remove();
 
@@ -1117,6 +1123,12 @@ PatternFinderVis.prototype.redraw = function () {
     var wordEnter = word.enter().append("g").attr({
       "class": "word"
     });
+
+    wordEnter.append('rect').attr({
+      class: 'wordBG',
+      width: that.layout.cell_width,
+      height: 15
+    }).style({fill: 'white', stroke: 'none'});
 
     wordEnter.append('text').attr({
       class: 'noselect',
@@ -1127,31 +1139,58 @@ PatternFinderVis.prototype.redraw = function () {
     // --- changing nodes for word
     word.attr({
       "transform": function (d, i) {
-        that.text_length_tester.text(d);
-        var tl = that.text_length_tester[0][0].getComputedTextLength();
-
-
-        if (tl > (that.layout.cell_width - 1)) {
-          return "translate(" + that.brushScale(i) + "," + 0 + ")scale(" + (that.layout.cell_width - 1) / tl + ",1)";
-        } else {
-          return "translate(" + that.brushScale(i) + "," + 0 + ")";
-        }
-
+        return "translate(" + (that.brushScale(i)) + "," + 0 + ")";
       }
     });
 
-    word.select('text').text(function (d) {return d;});
+    word.select('text')
+      .attr({
+        "transform": function (d) {
+          that.text_length_tester.text(d);
+          var tl = that.text_length_tester[0][0].getComputedTextLength();
+
+          if (tl > (that.layout.cell_width - 3)) {
+            return "translate(2,0)scale(" + (that.layout.cell_width - 3) / tl + ",1)";
+          } else {
+            return "translate(2,0)";
+          }
+
+        }
+      })
+      .text(function (d) {return d;});
+
+    var wordBG = word.select('.wordBG');
+    // update word backgrounds w.r.t. selection:
+    if (selected_cell_data.length > 0) {
+
+      var discrete_scale = d3.scale.linear()
+        .domain([0, that.selected_cells_for_query.length - that.current.selection.excluded_cells.length])
+        .range(['#f7f7f7', '#0571b0']);
+
+
+      var agg_data = discretized_cell_data.filter(function (d) {return !_.includes(that.current.selection.excluded_cells, d.index)});
+      var aggregated_data = selected_cell_data[0].values.map(function (nothing, x_index) {
+        return _.sum(agg_data.map(function (d) {return d.values[x_index]}));
+        //return _.sum(selected_cell_data.map(function (d) {return d.values[x_index] >= that.threshold ? 1 : 0}))
+      });
+
+      wordBG.style({fill: function (d, i) {return discrete_scale(aggregated_data[i])}})
+
+
+    } else {
+      wordBG.style({fill: 'white'})
+    }
 
 
     that.label_group.selectAll(".separator_line").data([LEFT_CONTEXT]).enter().append("line").attr({
       "class": "separator_line",
-      x1: function (d) {return that.brushScale(d)-1},
-      x2: function (d) {return that.brushScale(d)-1},
+      x1: function (d) {return that.brushScale(d) - 1},
+      x2: function (d) {return that.brushScale(d) - 1},
       y1: -5,
-      y2: that.layout.cell_selectors.h+5
+      y2: that.layout.cell_selectors.h + 5
     }).style({
-      'pointer-events':'none',
-      'stroke-width':1
+      'pointer-events': 'none',
+      'stroke-width': 1
     });
 
 

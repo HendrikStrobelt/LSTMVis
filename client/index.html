@@ -16,6 +16,12 @@
 <div class="container">
     <!--<div class="row">-->
     <h1 class="text-center "><img src="assets/logo.png" height="40"> - Visualization for LSTMs</h1>
+    <p>
+        Lorem ipsum dolor sit amet, consectetur adipisicing elit. Consequatur consequuntur dolor et incidunt
+        necessitatibus omnis quibusdam sit temporibus vel. Ad culpa deserunt doloribus, natus nulla pariatur quae quas
+        sit suscipit!
+
+    </p>
     <!--</div>-->
     <!--<h2>Datasets:</h2>-->
     <!--<ul class="list-group" id="ds_list">-->
@@ -33,48 +39,55 @@
         success: function (info) {
             console.log(info);
 
-            d3.text('assets/schema_interactive.svg', function (e_, schema_svg) {
-
-//                console.log(schema_svg);
-
+//            d3.text('assets/schema_interactive.svg', function (e_, schema_svg) {
 
                 var lis = d3.select('#ds_list').selectAll('div').data(info)
                         .enter().append('div')
                         .attr({
-                            class: "row"
+                            class: "col-md-4 col-sm-6"
+                        })
+                        .style({
+                            'height': '300px',
+                            'overflow-y': 'auto'
+                        }).append('div').attr({
+                            'background-color': '#dddddd',
+                            'margin': '10pt'
                         });
 
-                lis.append('h3').text(function (d, i) {return d.info.name});
                 lis.append('hr');
+                lis.append('h4').text(function (d, i) {return d.info.name}).style({'font-weight': 500});
+                lis.append('hr');
+
+                lis.append('p').html(function (d, i) {return d.info.description})
+
+
+                info_p = lis.append('p').attr({class: 'row'})
 
                 function add_info(parent, title, accesor) {
                     parent.append('div').attr({
-                        class: 'col-md-2 col-xs-3 text-right'
+                        class: 'col-xs-2 text-left'
                     }).style({
                         'font-weight': 'bold'
                     }).html(title);
 
                     parent.append('div').attr({
-                        class: 'col-md-10 col-xs-9 text-left'
+                        class: 'col-xs-10 text-left'
                     }).html(function (d) {return accesor(d)});
 
                 }
 
-                add_info(lis, 'description', function (d, i) {return d.info.description});
-                add_info(lis, 'file', function (d, i) {return d.project});
-                add_info(lis, 'meta', function (d, i) {
+                add_info(info_p, 'meta', function (d, i) {
                     var keys = Object.keys(d.info.meta);
                     return (keys.length > 0) ? keys.join(', ') : '---'
                 });
-                //add_info(lis, 'embedding_size', function (d, i) {return d.info.word_embedding.size.join(' x ')});
-                add_info(lis, 'sequence_length', function (d, i) {return d.info.word_sequence.size[0]});
-
+                add_info(info_p, 'index', function (d, i) {return d.info.index});
+                add_info(info_p, 'length', function (d, i) {return d.info.word_sequence.size[0]});
 
                 lis.each(function (ds, ds_id) {
                     var that = d3.select(this);
+                    that = that.append('p').attr({class: 'row'})
                     ds.info.states.types.forEach(function (d, i) {
-
-                        add_info(that, d.file + ':' + d.path, function () {
+                        that.append('div').attr({class: 'col-xs-12'}).html(function () {
                             return '<a href="pattern_finder.html?data_set=' + ds.project + '&source=' + d.file + '::' + d.path + '">'
                                     + 'layer ' + d.layer + ' ' + d.type
                                     + ' ( size: ' + d.size.join(' x ') + ')'
@@ -83,57 +96,9 @@
                         })
                     });
 
-//                    var no_layers = d3.max(ds.info.states.types.map(function (d, i) {return d.layer})) + 1;
-//                    var all_data_subsets = ds.info.states.types.map(function (d, i) {return d.layer + d.type});
-//                    var all_subset_paths = ds.info.states.types.map(function (d, i) {return d.path});
-//
-//                    var svgs = that.append('p').attr({class: 'text-center'});
-//
-//                    _.range(1, no_layers).forEach(function (layer_x) {
-//
-//                        var span = svgs.append('p').html(schema_svg);
-//                        span.select('.picto_states').attr({
-//                            hidden: function () {
-//                                return _.includes(all_data_subsets, layer_x + 'state') ? null : true;
-//                            }
-//                        }).on('click', function (d) {
-//                            var i = _.indexOf(all_data_subsets, layer_x + 'state');
-//                            window.open('pattern_finder.html?data_set='+ds_id+'&source='+all_subset_paths[i])
-//                            console.log(ds_id, layer_x, all_subset_paths[i]);
-//                        });
-//                        span.select('.picto_output').attr({
-//                            hidden: function () {
-//                                return _.includes(all_data_subsets, layer_x + 'output') ? null : true;
-//                            }
-//                        }).on('click', function (d) {
-//                            var i = _.indexOf(all_data_subsets, layer_x + 'output');
-//                            window.open('pattern_finder.html?data_set='+ds_id+'&source='+all_subset_paths[i])
-//
-//
-//                            console.log(ds_id, layer_x, all_subset_paths[i]);
-//                        });
-//
-//                    })
-
 
                 });
 
-            })
-
-
-//<div class="panel panel-success">
-//  <div class="panel-heading">
-//    <h3 class="panel-title">Panel success</h3>
-//  </div>
-//  <div class="panel-body">
-//    Panel content
-//  </div>
-//</div>
-
-//            info.forEach(function(ds){
-//
-//
-//
 //            })
 
 
