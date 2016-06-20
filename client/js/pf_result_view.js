@@ -282,7 +282,7 @@ ResultView.prototype.redraw = function (draw_options_) {
           var hm_options = {
             cellWidth: cell_width,
             cellHeight: cell_height,
-            title: hm_id.replace('meta_',''),
+            title: hm_id.replace('meta_', ''),
             id: hm_id
 
           };
@@ -294,7 +294,7 @@ ResultView.prototype.redraw = function (draw_options_) {
             hm_options.noAutoColorScale = true;
           }
 
-          console.log(that.results[hm_id], '\n-- that.results[hm_id] --');
+          // console.log(that.results[hm_id], '\n-- that.results[hm_id] --');
           var hm = new HeatMap(
             that.result_view_group.node(),
             that.results[hm_id], null,
@@ -403,8 +403,8 @@ ResultView.prototype.redraw = function (draw_options_) {
     }).style({
       fill: function (d) {return rect_hm ? rect_hm.colorScale(d.value) : 'white';},
       stroke: 'white',
-      'stroke-width':'1',
-      'stroke-opacity':.5
+      'stroke-width': '1',
+      'stroke-opacity': .5
     });
 
     background_circle.attr({
@@ -684,7 +684,7 @@ ResultView.prototype.redraw = function (draw_options_) {
       .on('click', function (d, i) {
 
         that.event_handler.trigger(Event_list.new_page,
-          {replace: {pos: d[0], brush: LEFT_CONTEXT+',' + (d[2] + LEFT_CONTEXT), padding: '1,0'}}
+          {replace: {pos: d[0], brush: LEFT_CONTEXT + ',' + (d[2] + LEFT_CONTEXT), padding: '1,0'}}
         )
 
       })
@@ -699,20 +699,32 @@ ResultView.prototype.redraw = function (draw_options_) {
 };
 
 
-ResultView.prototype.set_cell_count_hm = function (hm) {
+ResultView.prototype.set_cell_count_hm = function (hm, hm_name) {
   var that = this;
 
   that.cell_count_hm_data = hm;
-  console.log(hm,'\n-- hm --'); 
 
-  var max_per_row = hm.map(function (d) {return d[that.left_context]});
+  if (hm_name == CELL_COUNT_HM_ID) {
+    var lengths = that.results.index_query.data.map(function (d, i) {return [that.left_context-1,d[2]+that.left_context+2]})
+    that.opacity_map =lengths.map(function(l){
+      return _.range(0,that.left_context+that.right_context+1).map(function(d,i){
+        return _.inRange(i, l[0], l[1])?1:.1
+      })
 
-  that.opacity_map = hm.map(function (x, row_id) {
-    var max = max_per_row[row_id];
-    return x.map(function (y, i) {
-      return (y == max || i == that.left_context - 1 || (i > 0 && x[i - 1] == max)) ? 1 : 0.1
     })
-  })
+
+
+  } else {
+    var max_per_row = hm.map(function (d) {return d[that.left_context]});
+
+    that.opacity_map = hm.map(function (x, row_id) {
+      var max = max_per_row[row_id];
+      return x.map(function (y, i) {
+        return (y == max || i == that.left_context - 1 || (i > 0 && x[i - 1] == max)) ? 1 : 0.1
+      })
+    })
+  }
+
 
 };
 
@@ -736,8 +748,8 @@ ResultView.prototype.bind_event_handler = function (event_handler) {
       'data_transform=' + (op.source_info.transform),
       'sort_mode=' + that.sort_mode,
       'query_mode=' + that.query_mode,
-      'constrain_left=' + ((that.options.zero_left>0)?1:0),
-      'constrain_right=' + ((that.options.zero_right>0)?1:0)
+      'constrain_left=' + ((that.options.zero_left > 0) ? 1 : 0),
+      'constrain_right=' + ((that.options.zero_right > 0) ? 1 : 0)
     ];
 
     if (op.source != null) {
@@ -802,7 +814,7 @@ ResultView.prototype.bind_event_handler = function (event_handler) {
                 that.selected_cells_in_results = [];
 
                 that.cummulative_heatmap_for_selected_cells = [];
-                that.set_cell_count_hm(that.results[CELL_COUNT_HM_ID]);
+                that.set_cell_count_hm(that.results[CELL_COUNT_HM_ID], CELL_COUNT_HM_ID);
 
                 that.redraw({});
 
@@ -833,7 +845,7 @@ ResultView.prototype.bind_event_handler = function (event_handler) {
       });
 
 
-      that.set_cell_count_hm(hm_data);
+      that.set_cell_count_hm(hm_data, '');
       //that.heatmaps[hm_id].updateData(hm_data, null, {});
       //that.heatmaps[hm_id].draw();
 
@@ -841,12 +853,12 @@ ResultView.prototype.bind_event_handler = function (event_handler) {
     }
     else if (use_bias) {
 
-      that.set_cell_count_hm(that.cummulative_heatmap_for_selected_cells);
+      that.set_cell_count_hm(that.cummulative_heatmap_for_selected_cells, '');
       //that.heatmaps[hm_id].updateData(that.cummulative_heatmap_for_selected_cells, null, {});
       //that.heatmaps[hm_id].draw();
     }
     else {
-      that.set_cell_count_hm(that.results[hm_id]);
+      that.set_cell_count_hm(that.results[hm_id], hm_id);
 
       //that.heatmaps[hm_id].updateData(that.results[hm_id], null, {});
       //that.heatmaps[hm_id].draw();
@@ -892,14 +904,14 @@ ResultView.prototype.bind_event_handler = function (event_handler) {
       });
 
 
-      that.set_cell_count_hm(that.cummulative_heatmap_for_selected_cells);
+      that.set_cell_count_hm(that.cummulative_heatmap_for_selected_cells, '');
 
       //that.heatmaps[hm_id].updateData(that.cummulative_heatmap_for_selected_cells, null, {});
       //that.heatmaps[hm_id].draw();
 
     } else {
       that.cummulative_heatmap_for_selected_cells = [];
-      that.set_cell_count_hm(that.results[CELL_COUNT_HM_ID]);
+      that.set_cell_count_hm(that.results[CELL_COUNT_HM_ID], CELL_COUNT_HM_ID);
 
       //that.heatmaps[hm_id].updateData(that.results[hm_id], null, {});
       //that.heatmaps[hm_id].draw();
