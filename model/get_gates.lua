@@ -4,7 +4,7 @@ require 'nngraph'
 require 'hdf5'
 
 ----------------------------------------------------------------
--- Extracts the hidden state of a trained model
+-- Extracts the gate values of a trained model
 -- at each point of a data set.
 ----------------------------------------------------------------
 
@@ -54,39 +54,48 @@ end
 local data = data.new(opt.data_file)
 model = torch.load(opt.checkpoint_file)
 
-k = 1
+k = 1 --keeps track of current layer
 currentbatch = 1
-Module = nn.Module
+all_input = {}
 all_hidden = {}
+all_forget = {}
+
 count = {}
-for i = 1, (2*opt.num_layers) do
-   all_hidden[i] = torch.FloatTensor(data.length * data.batchlength * data.seqlength, opt.rnn_size) 
+for i = 1, opt.num_layers do
+   all_input[i] = torch.FloatTensor(data.length * data.batchlength * data.seqlength, opt.rnn_size):zero() 
+   all_hidden[i] = torch.FloatTensor(data.length * data.batchlength * data.seqlength, opt.rnn_size):zero() 
+   all_forget[i] = torch.FloatTensor(data.length * data.batchlength * data.seqlength, opt.rnn_size):zero() 
    count[i] = 1
 end
 
--- Function to recursively extract output and hidden state of the LSTM
+-- Function to recursively extract the gate values of the LSTM
+-- The values are stored in paralleltable in the order: input, hidden, forget, output
+
+m = 0 --only look at the second parallelTable in the model
+Module = nn.Module
 function Module:get_states()
    if self.modules then
       for i,module in ipairs(self.modules) do
          if torch.type(module) == "nn.FastLSTM" then
-            if module.output ~= nil then
-               all_hidden[k][count[k]]:copy(module.output[currentbatch])
-               count[k] = count[k] + 1
-               k = k + 1
-            end
-            if module.cell ~= nil then
-               all_hidden[k][count[k]]:copy(module.cell[currentbatch])
-               count[k] = count[k] + 1
-               k = k + 1
-            end
-         else
-            module:get_states()
+            -- print(module.i2g.output)
+         elseif torch.type(module) == "nn.ParallelTable" then
+         	m = m+ 1 
+         	if m == 2 then
+         	  	--we are now in the correct module, extract values
+                all_input[k][count[k]]:copy(module.output[1][currentbatch])
+                all_hidden[k][count[k]]:copy(module.output[2][currentbatch])
+                all_forget[k][count[k]]:copy(module.output[3][currentbatch])
+                count[k] = count[k] + 1
+                k = k + 1
+         		m=0
+         	end
          end
+         module:get_states()
       end
    end
 end
 
--- Runs over the Data Set and computes the current hidden states
+-- Runs over the Data Set and computes the current gates
 function eval_states(data, model)
    model:forget()
    model:evaluate()
@@ -105,21 +114,12 @@ function eval_states(data, model)
    end
 end
 
-function construct_index(index) 
-    string_type = ""
-    if index%2 == 1 then
-        string_type = "output"
-    else
-        string_type = "states"
-    end
-    string_index = math.ceil(index/2)
-    return string_type .. string_index
-end
-
 eval_states(data, model)
 
 local f = hdf5.open(opt.output_file, 'w')
-for k=1, 2*opt.num_layers do
-   f:write(construct_index(k), all_hidden[k]:float())
+for k=1, opt.num_layers do
+   f:write("input" .. k, all_input[k]:float())
+   f:write("hidden" .. k, all_hidden[k]:float())
+   f:write("forget" .. k, all_forget[k]:float())
 end
 f:close()
