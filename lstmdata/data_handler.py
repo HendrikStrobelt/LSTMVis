@@ -79,6 +79,8 @@ class LSTMDataHandler:
 
         if self.config.get('meta', False):
             for _, m_info in self.config['meta'].iteritems():
+                m_info['index'] = m_info.get('index', 'self')
+                m_info['vis']['range'] = m_info['vis'].get('range', '0...100')
                 vis_range = m_info['vis']['range']
                 if vis_range == 'dict':
                     m_info['vis']['range'] = self.dicts_value_id[m_info['dict']].keys()
