@@ -703,10 +703,12 @@ ResultView.prototype.set_cell_count_hm = function (hm) {
   var that = this;
 
   that.cell_count_hm_data = hm;
+  console.log(hm,'\n-- hm --'); 
 
-  var max = _.max(hm.map(function (d) {return _.max(d)}));
-  // that.opacity_map = hm.map(function (x) {return x.map(function (y) { return 1. * y / max})})
-  that.opacity_map = hm.map(function (x) {
+  var max_per_row = hm.map(function (d) {return d[that.left_context]});
+
+  that.opacity_map = hm.map(function (x, row_id) {
+    var max = max_per_row[row_id];
     return x.map(function (y, i) {
       return (y == max || i == that.left_context - 1 || (i > 0 && x[i - 1] == max)) ? 1 : 0.1
     })

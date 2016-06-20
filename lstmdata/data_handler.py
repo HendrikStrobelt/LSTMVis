@@ -383,49 +383,36 @@ class LSTMDataHandler:
         # print 'out cs 2:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 
         res = []
-        if sort_mode == 'cells':
-            # Uniq
-            # sort by minimal number of other active cells
-            # start = time.time()
 
-            for ll2 in l2:  # positions where all pivot cells start jointly
-                ml = int(filtered_length[ll2])  # maximal length of _all_ pivot cells on
-                pos = int(p[ll2])  # position of the pattern
-                cs = np.array(cell_states[pos - 1:pos + ml + 1, :])  # cell values of _all_ cells for the range
-                hf.threshold_discrete(cs, activation_threshold_corrected, -1, 1)  # discretize
+        for ll2 in l2:  # positions where all pivot cells start jointly
+            ml = int(filtered_length[ll2])  # maximal length of _all_ pivot cells on
+            pos = int(p[ll2])  # position of the pattern
+            cs = np.array(cell_states[pos - 1:pos + ml + 1, :])  # cell values of _all_ cells for the range
+            hf.threshold_discrete(cs, activation_threshold_corrected, -1, 1)  # discretize
 
-                # create pattern mask of form -1 1 1..1 -1 = off on on .. on off
-                mask = np.ones(ml + 2)
-                mask[0] = -1 if constrain_left else 0  # ignore if not constraint
-                mask[ml + 1] = -1 if constrain_right else 0  # ignore if not constraint
+            # create pattern mask of form -1 1 1..1 -1 = off on on .. on off
+            mask = np.ones(ml + 2)
+            mask[0] = -1 if constrain_left else 0  # ignore if not constraint
+            mask[ml + 1] = -1 if constrain_right else 0  # ignore if not constraint
 
-                cs_sum = np.dot(mask, cs)
-                # cs_sum[cells] = 0
+            cs_sum = np.dot(mask, cs)
+            # cs_sum[cells] = 0
 
-                test_pattern_length = ml  # defines the length of the relevant pattern
-                test_pattern_length += 1 if constrain_left else 0
-                test_pattern_length += 1 if constrain_right else 0
+            test_pattern_length = ml  # defines the length of the relevant pattern
+            test_pattern_length += 1 if constrain_left else 0
+            test_pattern_length += 1 if constrain_right else 0
 
-                all_active_cells = np.where(cs_sum == test_pattern_length)[0]  # all cells  that are active for range
+            all_active_cells = np.where(cs_sum == test_pattern_length)[0]  # all cells  that are active for range
 
-                intersect = np.intersect1d(all_active_cells, cells)  # intersection with selected cells
-                union = np.union1d(all_active_cells, cells)  # union with selected cells
+            intersect = np.intersect1d(all_active_cells, cells)  # intersection with selected cells
+            union = np.union1d(all_active_cells, cells)  # union with selected cells
 
-                res.append([pos, int(value[int(indices[ll2]) + 1]), ml,
-                            (float(len(intersect)) / float(len(union))),  # Jaccard
-                            cell_count - len(intersect)])  # how many selected cells are not active
+            res.append([pos, int(value[int(indices[ll2]) + 1]), ml,
+                        (float(len(intersect)) / float(len(union))),  # Jaccard
+                        cell_count - len(intersect)])  # how many selected cells are not active
 
-            def key(elem):
-
-                return -elem[3], -elem[2]
-        else:
-            # sort by clean cut
-            # Precision
-            res = map(lambda xx: [int(p[xx]), int(value[int(indices[ll2]) + 1]), int(filtered_length[xx]), 0],
-                      l2)  # todo: add variance back
-
-            def key(elem):
-                return elem[1], -elem[2]
+        def key(elem):
+            return -elem[3], -elem[2]
 
         meta = {}
         if add_histograms:
