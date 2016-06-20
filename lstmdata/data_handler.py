@@ -366,13 +366,12 @@ class LSTMDataHandler:
         # indices = (np.argwhere(gradient_mask == len(cells)) + 1).flatten()
         # del gradient_mask
         cell_count = len(cells)
-        indices = np.argwhere(value == cell_count).flatten()
 
-        filtered_length = length[indices]
         if query_mode == 'fast':
+            indices = np.argwhere(value == cell_count).flatten()
+            filtered_length = length[indices]
             l2 = np.argwhere(filtered_length >= cut_off)[:1000]
         else:
-            #co = cut_off - 1 if cut_off > 2 else cut_off
             l2 = np.argwhere(filtered_length >= cut_off)
         p = positions[indices]
         del length
@@ -382,66 +381,36 @@ class LSTMDataHandler:
         # print 'out cs 2:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 
         res = []
-        if sort_mode == 'cells':
-            # Uniq
-            # sort by minimal number of other active cells
-            start = time.time()
 
-            for ll2 in l2:  # positions where all pivot cells start jointly
-                ml = int(filtered_length[ll2])  # maximal length of _all_ pivot cells on
-                pos = int(p[ll2])  # position of the pattern
-                cs = np.array(cell_states[pos - 1:pos + ml + 1, :])  # cell values of _all_ cells for the range
-                hf.threshold_discrete(cs, activation_threshold_corrected, -1, 1)  # discretize
+        for ll2 in l2:  # positions where all pivot cells start jointly
+            ml = int(filtered_length[ll2])  # maximal length of _all_ pivot cells on
+            pos = int(p[ll2])  # position of the pattern
+            cs = np.array(cell_states[pos - 1:pos + ml + 1, :])  # cell values of _all_ cells for the range
+            hf.threshold_discrete(cs, activation_threshold_corrected, -1, 1)  # discretize
 
-                # create pattern mask of form -1 1 1..1 -1 = off on on .. on off
-                mask = np.ones(ml + 2)
-                mask[0] = -1 if constrain_left else 0  # ignore if not constraint
-                mask[ml + 1] = -1 if constrain_right else 0  # ignore if not constraint
+            # create pattern mask of form -1 1 1..1 -1 = off on on .. on off
+            mask = np.ones(ml + 2)
+            mask[0] = -1 if constrain_left else 0  # ignore if not constraint
+            mask[ml + 1] = -1 if constrain_right else 0  # ignore if not constraint
 
-                cs_sum = np.dot(mask, cs)
-                cs_sum[cells] = 0
+            cs_sum = np.dot(mask, cs)
+            # cs_sum[cells] = 0
 
-                test_pattern_length = ml  # defines the length of the relevant pattern
-                test_pattern_length += 1 if constrain_left else 0
-                test_pattern_length += 1 if constrain_right else 0
+            test_pattern_length = ml  # defines the length of the relevant pattern
+            test_pattern_length += 1 if constrain_left else 0
+            test_pattern_length += 1 if constrain_right else 0
 
-                sum_cell_active = len(np.where(cs_sum == test_pattern_length))
+            all_active_cells = np.where(cs_sum == test_pattern_length)[0]  # all cells  that are active for range
 
-                del cs_sum, mask
+            intersect = np.intersect1d(all_active_cells, cells)  # intersection with selected cells
+            union = np.union1d(all_active_cells, cells)  # union with selected cells
 
-                left_right_error = 0
-                # add number of cells active before range as lr_error if constrained:
-                if constrain_left and not constrain_right:
-                    left_right_error = int(value[int(indices[ll2]) - 1])
-                elif not constrain_left and constrain_right:
-                    left_right_error = int(value[int(indices[ll2]) + 1])
-                elif constrain_left and constrain_right:
-                    # build union of cells active before and after candidate range
-                    before_and_after = cs[:, cells][[0, ml + 1], :]
-                    # encode off ranges as zero
-                    before_and_after[before_and_after == -1] = 0
-                    # build union
-                    union = np.multiply(before_and_after[0], before_and_after[1])
-                    # cardinality of intersection
-                    left_right_error = int(np.sum(union))
+            res.append([pos, int(value[int(indices[ll2]) + 1]), ml,
+                        (float(len(intersect)) / float(len(union))),  # Jaccard
+                        cell_count - len(intersect)])  # how many selected cells are not active
 
-                res.append([pos, int(value[int(indices[ll2]) + 1]), ml, sum_cell_active,
-                            left_right_error])  # Todo: bring variance back
-
-                end = time.time()
-                print 'time:', (end - start)
-
-            def key(elem):
-                # Jaccard
-                return -1. * (cell_count - elem[4]) / float(elem[3] + cell_count), -elem[2]
-        else:
-            # sort by clean cut
-            # Precision
-            res = map(lambda xx: [int(p[xx]), int(value[int(indices[ll2]) + 1]), int(filtered_length[xx]), 0],
-                      l2)  # todo: add variance back
-
-            def key(elem):
-                return elem[1], -elem[2]
+        def key(elem):
+            return -elem[3], -elem[2]
 
         meta = {}
         if add_histograms:
