@@ -372,6 +372,7 @@ class LSTMDataHandler:
         if query_mode == 'fast':
             l2 = np.argwhere(filtered_length >= cut_off)[:1000]
         else:
+            #co = cut_off - 1 if cut_off > 2 else cut_off
             l2 = np.argwhere(filtered_length >= cut_off)
         p = positions[indices]
         del length
@@ -412,9 +413,9 @@ class LSTMDataHandler:
                 # add number of cells active before range as lr_error if constrained:
                 if constrain_left and not constrain_right:
                     left_right_error = int(value[int(indices[ll2]) - 1])
-                if not constrain_left and constrain_right:
+                elif not constrain_left and constrain_right:
                     left_right_error = int(value[int(indices[ll2]) + 1])
-                if constrain_left and constrain_right:
+                elif constrain_left and constrain_right:
                     # build union of cells active before and after candidate range
                     before_and_after = cs[:, cells][[0, ml + 1], :]
                     # encode off ranges as zero
@@ -432,7 +433,7 @@ class LSTMDataHandler:
 
             def key(elem):
                 # Jaccard
-                return -1. * (cell_count - elem[4]) / (elem[3] + cell_count), -elem[2]
+                return -1. * (cell_count - elem[4]) / float(elem[3] + cell_count), -elem[2]
         else:
             # sort by clean cut
             # Precision
@@ -454,9 +455,9 @@ class LSTMDataHandler:
 
         res_50 = list(res[:50])
 
-        for r in res_50:
-            print r
-
+        for elem in res_50:
+            print elem, cell_count, -1. * (cell_count - elem[4]) / float(elem[3] + cell_count)
+        print(constrain_left, constrain_right)
         del res
         print 'out cs 2:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 
