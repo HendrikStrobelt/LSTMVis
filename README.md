@@ -1,4 +1,4 @@
-# <img src="docs/img/logo.png" style="height: 30px;"/> Visual Analysis for State Changes in RNNs
+# ![](docs/img/logo_sm.png) Visual Analysis for State Changes in RNNs
 
 More information about LSTMVis, an introduction video, and the link to the live demo can be found at **[lstm.seas.harvard.edu](http://lstm.seas.harvard.edu)**
 
