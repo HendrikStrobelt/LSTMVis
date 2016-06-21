@@ -2,6 +2,8 @@
 
 """
 Create the input data for the LSTM.
+
+Usage: python preprocess.py TRAIN.txt TEST.txt batch seqlength outputfile
 """
 
 import os
@@ -60,8 +62,7 @@ def get_data(args):
             words += target_sent
 
         # plus 1 for torch.
-        targ_output = numpy.array(words[1:] + \
-                                      [target_indexer.convert("</s>")])
+        targ_output = numpy.array(words[1:] + [target_indexer.convert("</s>")])
         words = numpy.array(words)
         print (words.shape, "shape of the word array before preprocessing")
         # Write output.
