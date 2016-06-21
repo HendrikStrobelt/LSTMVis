@@ -3,10 +3,13 @@ require 'rnn'
 require 'nngraph'
 require 'hdf5'
 
-----------------------------------------------------------------
--- Extracts the hidden state of a trained model
--- at each point of a data set.
-----------------------------------------------------------------
+
+--[[
+Extracts the hidden state and output of a trained model 
+at each time step of a data set.
+
+Author: Sebastian Gehrmann
+--]]
 
 cmd = torch.CmdLine()
 cmd:option('-rnn_size', 650, 'size of LSTM internal state')
