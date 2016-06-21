@@ -1,7 +1,10 @@
-# LSTMVis
-Visualization Toolbox for Long Short Term Memory networks (LSTMs)
+# <img src="docs/img/logo.png" style="height: 30px;"/> Visual Analysis for State Changes in RNNs
 
-![Alt text](client/assets/example3.png)
+More information about LSTMVis, an introduction video, and the link to the live demo can be found at **[lstm.seas.harvard.edu](http://lstm.seas.harvard.edu)**
+
+<div style='text-align:center'>
+<img src="docs/img/teaser_V2_small.png" />
+</div>
 
 
 ## Install
