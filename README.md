@@ -53,7 +53,7 @@ A schematic representation of the data:
 ![Data Format](docs/img/docu_data.png)
 
 
-*If you don't have these filesyet, but a .txt file of your training data instead, check out our [text conversion tool](...)
+*If you don't have these files yet, but a space-separated `.txt` file of your training data instead, check out our [text conversion tool](...)
 
 
 ### Data Directory
@@ -73,7 +73,7 @@ A typical `<datadir>` might look like this:
 
 ### Config File
 
-a simple example of `lstm.yml` is:
+a simple example of an `lstm.yml` is:
 
 ```yaml
 name: children books  # project name
@@ -101,11 +101,11 @@ states: # section to define which states of your model you want to look at
 
 ## Intrigued ? Here is more.. 
 
-Browse our documentation for:
+Check out our documents about:
 
-* adding annotation files for result heatmaps
-* training a model with torch
-* tools that make your life easier
+* [adding annotation files for result heatmaps](docs/chapter/meta.md)
+* [training a model with torch](docs/chapter/train.md)
+* [tools that make your life easier](docs/chapter/tools.md)
 
 
 

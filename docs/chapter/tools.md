@@ -1,6 +1,8 @@
 ## Tools
 
-LSTMVis comes with some data tools that allow enriching the experience. All the tools can be found in the `tools/` folder.
+LSTMVis comes with some data manipulation tools that should ease your life. All the tools can be found in the `tools/` folder.
+
+
 
 
 ### Create a Search Index
