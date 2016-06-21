@@ -106,6 +106,7 @@ states: # section to define which states of your model you want to look at
 
 Check out our documents about:
 
+* [details about configuring the states file input](docs/chapter/config_states.md)
 * [adding annotation files for result heatmaps](docs/chapter/meta.md)
 * [training a model with torch](docs/chapter/train.md)
 * [tools that make your life easier](docs/chapter/tools.md)
