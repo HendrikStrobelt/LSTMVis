@@ -2,6 +2,13 @@ require 'rnn'
 require 'hdf5'
 require 'nngraph'
 
+--[[
+A simple script to create and train an LSTM model.
+
+Author: Sebastian Gehrmann and Alexander Rush
+--]]
+
+
 cmd = torch.CmdLine()
 
 cmd:option('-rnn_size', 650, 'Size of LSTM internal state')

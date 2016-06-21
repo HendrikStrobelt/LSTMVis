@@ -2,9 +2,11 @@ require 'rnn'
 require 'hdf5'
 require 'nngraph'
 
-----------------------------------------------------------------
--- Stores the top k predictions for every point in a data set. 
-----------------------------------------------------------------
+--[[
+Stores the top k predictions for every time step in a data set. 
+
+Author: Sebastian Gehrmann
+--]]
 
 cmd = torch.CmdLine()
 
@@ -50,13 +52,13 @@ end
 function top_k(data, model)
    local all_tops = torch.CudaTensor(data.length * data.batchlength, opt.k) 
    local all_scores = torch.CudaTensor(data.length * data.batchlength, opt.k)
-   model:training()
+   -- model:training()
    for i = 1, data:size() do
       if i%100 == 0 or i==2 then
          print(i, "current batch")
       end
-      model:forget()
-      model:zeroGradParameters()
+      -- model:forget() 
+      -- model:zeroGradParameters() 
       local d = data[i]
       input, goal = d[1], d[2]
       --- 1. forward
@@ -66,6 +68,7 @@ function top_k(data, model)
       local res, ind = out:topk(opt.k, true)
 
       for cbatch=1, data.batchlength do
+         -- Compute index in storage file. 
          local batchbonus = (cbatch-1) * data.length 
          local new_index = i + data.batchlength * (i-1) + batchbonus
          all_tops[new_index]:copy(ind:narrow(2, cbatch, 1))
@@ -86,7 +89,6 @@ function main()
    opt = cmd:parse(arg)
    
    if opt.gpuid >= 0 then
-
       print('using CUDA on GPU ' .. opt.gpuid .. '...')
       require 'cutorch'
       require 'cunn'

@@ -13,6 +13,8 @@ import numpy
 import h5py
 import itertools
 
+__author__ = 'Sebastian Gehrmann'
+
 
 class Indexer:
     def __init__(self):

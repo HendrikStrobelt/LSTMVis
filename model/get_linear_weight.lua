@@ -3,10 +3,13 @@ require 'rnn'
 require 'nngraph'
 require 'hdf5'
 
-----------------------------------------------------------------
--- Reads the weights of a linear layer of a trained model.
--- The standard value points to the last linear layer of our model.
-----------------------------------------------------------------
+--[[
+Reads the weights of a linear layer of a trained model.
+The standard value points to the last linear layer of our model.
+
+Author: Sebastian Gehrmann
+--]]
+
 
 cmd = torch.CmdLine()
 cmd:option('-checkpoint_file','checkpoint/','path to model checkpoint file in t7 format')
