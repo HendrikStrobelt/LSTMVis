@@ -3,13 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <title>LSTM Vis</title>
-    <script src="bower_components/jquery/dist/jquery.min.js"></script>
-    <script src="bower_components/d3/d3.min.js"></script>
-    <script src="bower_components/lodash/dist/lodash.min.js"></script>
-    <script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+    <!--<script src="bower_components/jquery/dist/jquery.min.js"></script>-->
+    <!--<script src="bower_components/d3/d3.min.js"></script>-->
+    <!--<script src="bower_components/lodash/dist/lodash.min.js"></script>-->
+    <!--<script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>-->
+
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"
+            integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+    <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.13.1/lodash.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
 
     <link rel="stylesheet" type="text/css" href="bower_components/bootswatch/cosmo/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="bower_components/font-awesome/css/font-awesome.min.css">
+
+
 
 </head>
 <body>
@@ -41,63 +50,63 @@
 
 //            d3.text('assets/schema_interactive.svg', function (e_, schema_svg) {
 
-                var lis = d3.select('#ds_list').selectAll('div').data(info)
-                        .enter().append('div')
-                        .attr({
-                            class: "col-md-4 col-sm-6"
-                        })
-                        .style({
-                            'height': '300px',
-                            'overflow-y': 'auto'
-                        }).append('div').attr({
-                            'background-color': '#dddddd',
-                            'margin': '10pt'
-                        });
-
-                lis.append('hr');
-                lis.append('h4').text(function (d, i) {return d.info.name}).style({'font-weight': 500});
-                lis.append('hr');
-
-                lis.append('p').html(function (d, i) {return d.info.description})
-
-
-                info_p = lis.append('p').attr({class: 'row'})
-
-                function add_info(parent, title, accesor) {
-                    parent.append('div').attr({
-                        class: 'col-xs-2 text-left'
-                    }).style({
-                        'font-weight': 'bold'
-                    }).html(title);
-
-                    parent.append('div').attr({
-                        class: 'col-xs-10 text-left'
-                    }).html(function (d) {return accesor(d)});
-
-                }
-
-                add_info(info_p, 'meta', function (d, i) {
-                    var keys = Object.keys(d.info.meta);
-                    return (keys.length > 0) ? keys.join(', ') : '---'
-                });
-                add_info(info_p, 'index', function (d, i) {return d.info.index});
-                add_info(info_p, 'length', function (d, i) {return d.info.word_sequence.size[0]});
-
-                lis.each(function (ds, ds_id) {
-                    var that = d3.select(this);
-                    that = that.append('p').attr({class: 'row'})
-                    ds.info.states.types.forEach(function (d, i) {
-                        that.append('div').attr({class: 'col-xs-12'}).html(function () {
-                            return '<a href="pattern_finder.html?data_set=' + ds.project + '&source=' + d.file + '::' + d.path + '">'
-                                    + 'layer ' + d.layer + ' ' + d.type
-                                    + ' ( size: ' + d.size.join(' x ') + ')'
-                                    + (d.unsigned ? ' - <b>unsigned</b>' : '')
-                                    + '</a>'
-                        })
+            var lis = d3.select('#ds_list').selectAll('div').data(info)
+                    .enter().append('div')
+                    .attr({
+                        class: "col-md-4 col-sm-6"
+                    })
+                    .style({
+                        'height': '300px',
+                        'overflow-y': 'auto'
+                    }).append('div').attr({
+                        'background-color': '#dddddd',
+                        'margin': '10pt'
                     });
 
+            lis.append('hr');
+            lis.append('h4').text(function (d, i) {return d.info.name}).style({'font-weight': 500});
+            lis.append('hr');
 
+            lis.append('p').html(function (d, i) {return d.info.description})
+
+
+            info_p = lis.append('p').attr({class: 'row'})
+
+            function add_info(parent, title, accesor) {
+                parent.append('div').attr({
+                    class: 'col-xs-2 text-left'
+                }).style({
+                    'font-weight': 'bold'
+                }).html(title);
+
+                parent.append('div').attr({
+                    class: 'col-xs-10 text-left'
+                }).html(function (d) {return accesor(d)});
+
+            }
+
+            add_info(info_p, 'meta', function (d, i) {
+                var keys = Object.keys(d.info.meta);
+                return (keys.length > 0) ? keys.join(', ') : '---'
+            });
+            add_info(info_p, 'index', function (d, i) {return d.info.index});
+            add_info(info_p, 'length', function (d, i) {return d.info.word_sequence.size[0]});
+
+            lis.each(function (ds, ds_id) {
+                var that = d3.select(this);
+                that = that.append('p').attr({class: 'row'})
+                ds.info.states.types.forEach(function (d, i) {
+                    that.append('div').attr({class: 'col-xs-12'}).html(function () {
+                        return '<a href="pattern_finder.html?data_set=' + ds.project + '&source=' + d.file + '::' + d.path + '">'
+                                + 'layer ' + d.layer + ' ' + d.type
+                                + ' ( size: ' + d.size.join(' x ') + ')'
+                                + (d.unsigned ? ' - <b>unsigned</b>' : '')
+                                + '</a>'
+                    })
                 });
+
+
+            });
 
 //            })
 

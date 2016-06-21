@@ -2,11 +2,17 @@
 <html>
 <head>
     <title></title>
-    <script src="bower_components/jquery/dist/jquery.min.js"></script>
-    <script src="bower_components/d3/d3.min.js"></script>
-    <script src="bower_components/lodash/dist/lodash.min.js"></script>
-    <script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
-    <!--<script src="bower_components/bootstrap-select/dist/js/bootstrap-select.min.js"></script>-->
+    <!--<script src="bower_components/jquery/dist/jquery.min.js"></script>-->
+    <!--<script src="bower_components/d3/d3.min.js"></script>-->
+    <!--<script src="bower_components/lodash/dist/lodash.min.js"></script>-->
+    <!--<script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>-->
+
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"
+            integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+    <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.13.1/lodash.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
 
     <script src="js/heatmap.js"></script>
     <script src="js/pf_pc_plot.js"></script>
@@ -32,13 +38,13 @@
             stroke: #3fb391;
             stroke-width: 2;
             fill: none;
-            rx:2;
-            ry:2;
+            rx: 2;
+            ry: 2;
             /*fill-opacity: .25;*/
             /*shape-rendering: crispEdges;*/
         }
 
-        .overlayBrushAreaZero rect{
+        .overlayBrushAreaZero rect {
             stroke: none;
             fill: #3fb391;
             fill-opacity: .25;
@@ -100,7 +106,12 @@
             stroke: none;
             text-anchor: middle;
             pointer-events: none;
-        {#            font-weight: bold;#}
+
+        {
+            # font-weight: bold
+        ;
+            #
+        }
 
         }
 
@@ -349,7 +360,8 @@
             fill: #676767;
 
         }
-        .wordBG{
+
+        .wordBG {
             opacity: .5;
             pointer-events: none;
         }
