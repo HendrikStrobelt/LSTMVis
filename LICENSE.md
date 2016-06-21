@@ -1,4 +1,4 @@
-Copyright (c) 2016, Hendrik Strobelt
+Copyright (c) 2016, Hendrik Strobelt, Sebastian Gehrmann, Bernd Huber, Hanspeter Pfister, Alexander M. Rush
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
