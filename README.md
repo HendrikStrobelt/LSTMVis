@@ -56,7 +56,7 @@ A schematic representation of the data:
 ![Data Format](docs/img/docu_data.png)
 
 
-*If you don't have these files yet, but a space-separated `.txt` file of your training data instead, check out our [text conversion tool](...)
+*If you don't have these files yet, but a space-separated `.txt` file of your training data instead, check out our [text conversion tool](docs/chapter/tools.md#convert-.txt-to-.h5-and-.dict)
 
 
 ### Data Directory

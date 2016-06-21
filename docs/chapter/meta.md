@@ -24,6 +24,7 @@ meta:
     path: pos # path within HDF5 file
     vis:
       type: discrete # we have discrete values
+  any_other_measure: ...
 ```
 
 This configuration will interpret the values in `pos.h5` as numerical value. To make it more interesting, you can add a dictionary to convert the values into text:
@@ -33,13 +34,13 @@ meta:
   part_of_speech: # name of the annotation 
     file: pos # reference to HDF5 file
     path: pos # path within HDF5 file
-    dict: pos_dict # NEW: use the dictionary file 
+    dict: pos_dict # **NEW** use the dictionary file 
     vis:
       type: discrete # we have discrete values
-      range: dict # NEW: use the dictionary texts to map colors.
+      range: dict # **NEW** use the dictionary texts to map colors. [required !!]
 ```
 
-**Pro Tipp:** If you have your annotation data in a space separated `.txt` file you can use our conversion tool to create the HDF5+Dict files.
+**Tipp:** If you have your annotation data in a space separated `.txt` file you can use our [text conversion tool](tools.md#convert-.txt-to-.h5-and-.dict) to create the HDF5+Dict files.
 
 
 ### Scalar Annotations
