@@ -2,12 +2,14 @@ require 'rnn'
 require 'hdf5'
 require 'nngraph'
 
-----------------------------------------------------------------
--- Computes the influece of each word in a context on the final 
--- prediction and saves it. This is NOT the saliency 
--- The data should be formatted in a shifting window. each word 
--- should be the last word of a context once.
-----------------------------------------------------------------
+--[[
+Computes the influece of each word in a context on the final 
+prediction and saves it. This is NOT the saliency 
+The data should be formatted in a shifting window. each word 
+should be the last word of a context once.
+
+Author: Sebastian Gehrmann
+--]]
 
 
 cmd = torch.CmdLine()

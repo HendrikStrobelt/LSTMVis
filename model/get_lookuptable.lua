@@ -3,10 +3,13 @@ require 'rnn'
 require 'nngraph'
 require 'hdf5'
 
-----------------------------------------------------------------
--- Reads the weights of a Lookuptable of a trained model.
--- In our model, this table holds the word embeddings.
-----------------------------------------------------------------
+
+--[[
+Reads the weights of a Lookuptable of a trained model.
+In our model, this table holds the word embeddings.
+
+Author: Sebastian Gehrmann
+--]]
 
 cmd = torch.CmdLine()
 cmd:option('-checkpoint_file','checkpoint/','path to model checkpoint file in t7 format')

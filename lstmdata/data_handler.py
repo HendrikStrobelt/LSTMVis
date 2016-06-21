@@ -79,6 +79,8 @@ class LSTMDataHandler:
 
         if self.config.get('meta', False):
             for _, m_info in self.config['meta'].iteritems():
+                m_info['index'] = m_info.get('index', 'self')
+                m_info['vis']['range'] = m_info['vis'].get('range', '0...100')
                 vis_range = m_info['vis']['range']
                 if vis_range == 'dict':
                     m_info['vis']['range'] = self.dicts_value_id[m_info['dict']].keys()
@@ -323,18 +325,18 @@ class LSTMDataHandler:
             activation_threshold_corrected = np.arctanh(activation_threshold)
 
         cut_off = 2
-        if phrase_length > 2:
-            cut_off = phrase_length
 
         print 'out cs 1:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 
         if query_mode == "fast":
             num_of_cells_per_sum = 5  # how many cells are evaluated per batch
             maximal_length = int(5e5)  # only consider the first 500,000 time steps
+            num_candidates = 1000
         else:  # all time steps but still be memory efficient
             maximal_length = cell_states.shape[0]
             num_of_cells_per_sum = int(np.floor(5e6 / maximal_length))
             num_of_cells_per_sum = 1 if num_of_cells_per_sum == 0 else num_of_cells_per_sum
+            num_candidates = 10000
 
         print 'num_cells', num_of_cells_per_sum
 
@@ -357,34 +359,37 @@ class LSTMDataHandler:
 
             del c_discrete, c_batch
 
-        length, positions, value = hf.rle(cs_cand)  # read length encoding
+        test_cell_number = len(cells)
+        test_discrete = np.copy(cs_cand)
+        all_candidates = set([])
+        # start = time.time()
+        while test_cell_number > 0 and len(all_candidates) < num_candidates:
+            if test_cell_number != len(cells):
+                test_discrete[test_discrete > test_cell_number] = test_cell_number
+            length, positions, value = hf.rle(test_discrete)
+            # positions = np.array(positions)
+            if phrase_length > 0:
+                indices = np.argwhere((value == test_cell_number) & (length == phrase_length))
+            else:
+                indices = np.argwhere((value == test_cell_number) & (length >= cut_off))
+            len_pos = set(zip(length[indices].flatten().tolist(), positions[indices].flatten().tolist()))
 
-        # filter for positions where all cells turn from off (value=0) to on (value = len(cells))
+            all_candidates = all_candidates | len_pos
 
-        ## old method.. only time steps are candidates that have all cells off before a range
-        # gradient_mask = value[1:] - value[:-1]
-        # indices = (np.argwhere(gradient_mask == len(cells)) + 1).flatten()
-        # del gradient_mask
+            test_cell_number -= 1
+
+        all_candidates = list(all_candidates)[:num_candidates]
+
+        # print time.time() - start, 'ms'
+
+
         cell_count = len(cells)
-
-        if query_mode == 'fast':
-            indices = np.argwhere(value == cell_count).flatten()
-            filtered_length = length[indices]
-            l2 = np.argwhere(filtered_length >= cut_off)[:1000]
-        else:
-            l2 = np.argwhere(filtered_length >= cut_off)
-        p = positions[indices]
-        del length
-
-        # end = time.time()
-        # print 'query vectors', (end - start)
-        # print 'out cs 2:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 
         res = []
 
-        for ll2 in l2:  # positions where all pivot cells start jointly
-            ml = int(filtered_length[ll2])  # maximal length of _all_ pivot cells on
-            pos = int(p[ll2])  # position of the pattern
+        for cand in all_candidates:  # positions where all pivot cells start jointly
+            ml = cand[0]  # maximal length of _all_ pivot cells on
+            pos = cand[1]  # position of the pattern
             cs = np.array(cell_states[pos - 1:pos + ml + 1, :])  # cell values of _all_ cells for the range
             hf.threshold_discrete(cs, activation_threshold_corrected, -1, 1)  # discretize
 
@@ -405,7 +410,7 @@ class LSTMDataHandler:
             intersect = np.intersect1d(all_active_cells, cells)  # intersection with selected cells
             union = np.union1d(all_active_cells, cells)  # union with selected cells
 
-            res.append([pos, int(value[int(indices[ll2]) + 1]), ml,
+            res.append([pos, 0, ml,  # int(value[int(indices[ll2]) + 1])
                         (float(len(intersect)) / float(len(union))),  # Jaccard
                         cell_count - len(intersect)])  # how many selected cells are not active
 

@@ -2,6 +2,13 @@ require 'rnn'
 require 'hdf5'
 require 'nngraph'
 
+--[[
+A simple script to create and train an LSTM model.
+
+Author: Sebastian Gehrmann and Alexander Rush
+--]]
+
+
 cmd = torch.CmdLine()
 
 cmd:option('-rnn_size', 650, 'Size of LSTM internal state')
@@ -43,9 +50,12 @@ function data.__index(self, idx)
    local input, target
    if type(idx) == "string" then
       return data[idx]
-   else      
+   elseif opt.gpuid > -1 then      
       input = self.target[idx]:transpose(1, 2):float():cuda()
       target = nn.SplitTable(2):forward(self.target_output[idx]:float():cuda())
+   else
+      input = self.target[idx]:transpose(1, 2):float()
+      target = nn.SplitTable(2):forward(self.target_output[idx]:float())
    end
    return {input, target}
 end
