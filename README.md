@@ -19,6 +19,9 @@ Install python (server-side) requirements using [pip](https://pip.pypa.io/en/sta
 
 ```bash
 pip install -r requirements.txt
+
+on OSX 10.11 (El Capitan):
+pip install --user -r requirements.txt
 ```
 
 <!--Install [bower](https://bower.io/) (client side) requirements:
