@@ -436,10 +436,11 @@ class LSTMDataHandler:
 
             res.append([pos, 0, ml,  # int(value[int(indices[ll2]) + 1])
                         (float(len(intersect)) / float(len(union))),  # Jaccard
-                        cell_count - len(intersect)])  # how many selected cells are not active
+                        cell_count - len(intersect), len(union),
+                       len(intersect)])  # how many selected cells are not active
 
         def key(elem):
-            return -elem[3], -elem[2]
+            return -elem[6], elem[5], -elem[2]  # largest intersection, smallest union, longest phrase
 
         meta = {}
         if add_histograms:
