@@ -384,7 +384,7 @@ class LSTMDataHandler:
             elif constrain_left and constrain_right:
 
                 len_pos = set(zip(length[indices].flatten().tolist(), positions[indices].flatten().tolist(),
-                                  (test_cell_number - value[indices + 1] + value[indices - 1]).flatten().astype(
+                                  (test_cell_number - value[indices + 1] - value[indices - 1]).flatten().astype(
                                       int).tolist()))
             else:
                 len_pos = set(zip(length[indices].flatten().tolist(), positions[indices].flatten().tolist(),
@@ -399,7 +399,14 @@ class LSTMDataHandler:
 
         all_candidates = list(collect_all_candidates.values())
         all_candidates.sort(key=lambda kk: kk[2], reverse=True)
+        # for k, v in enumerate(all_candidates):
+        #     if v[1] < 1000:
+        #         print 'x', v, k
         all_candidates = all_candidates[:num_candidates]
+        # print 'fff'
+        # for k, v in enumerate(all_candidates):
+        #     if v[1] < 1000:
+        #         print 'x', v, k
 
         cell_count = len(cells)
 
