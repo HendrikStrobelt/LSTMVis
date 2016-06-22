@@ -21,11 +21,11 @@ Install python (server-side) requirements using [pip](https://pip.pypa.io/en/sta
 pip install -r requirements.txt
 ```
 
-Install [bower](https://bower.io/) (client side) requirements:
+<!--Install [bower](https://bower.io/) (client side) requirements:
 
 ```bash
 cd client; bower install; cd ..
-```
+```-->
 
 Download & Unzip example dataset(s):
 
