@@ -401,12 +401,6 @@ class LSTMDataHandler:
         all_candidates.sort(key=lambda kk: kk[2], reverse=True)
         all_candidates = all_candidates[:num_candidates]
 
-        # print '...'
-        # for index, s in enumerate(all_candidates):
-        #     # print index, s
-        #     if s[1] <= 1000 or s[1] == 196607:
-        #         print test_cell_number, index, s, type(s[2]), type(s[1])
-
         cell_count = len(cells)
 
         res = []
@@ -424,11 +418,6 @@ class LSTMDataHandler:
             mask[ml + 1] = -1 if constrain_right else 0  # ignore if not constraint
 
             cs_sum = np.dot(mask, cs)
-            # cs_sum[cells] = 0
-
-            if pos == 483721 or pos == 110:
-                print pos, ml, cs.shape, mask, cs_sum
-
             test_pattern_length = ml  # defines the length of the relevant pattern
             test_pattern_length += 1 if constrain_left else 0
             test_pattern_length += 1 if constrain_right else 0
