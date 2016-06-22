@@ -27,11 +27,9 @@ Install [bower](https://bower.io/) (client side) requirements:
 cd client; bower install; cd ..
 ```
 
-Download example dataset(s):
+Download & Unzip example dataset(s):
 
-```bash
-wget <xxx>; unzip <xxx>
-```
+[Wall Street Journal - Shallow Grammar](https://goo.gl/oHF9q5) - 2.2 GB
 
 
 start server:
