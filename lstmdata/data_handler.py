@@ -361,9 +361,9 @@ class LSTMDataHandler:
 
         test_cell_number = len(cells)
         test_discrete = np.copy(cs_cand)
-        all_candidates = set([])
+        collect_all_candidates = {}
         # start = time.time()
-        while test_cell_number > 0 and len(all_candidates) < num_candidates:
+        while test_cell_number > 0 and len(collect_all_candidates) < num_candidates:
             if test_cell_number != len(cells):
                 test_discrete[test_discrete > test_cell_number] = test_cell_number
             length, positions, value = hf.rle(test_discrete)
@@ -372,16 +372,40 @@ class LSTMDataHandler:
                 indices = np.argwhere((value == test_cell_number) & (length == phrase_length))
             else:
                 indices = np.argwhere((value == test_cell_number) & (length >= cut_off))
-            len_pos = set(zip(length[indices].flatten().tolist(), positions[indices].flatten().tolist()))
 
-            all_candidates = all_candidates | len_pos
+            if constrain_left and not constrain_right:
+
+                len_pos = set(zip(length[indices].flatten().tolist(), positions[indices].flatten().tolist(),
+                                  (test_cell_number - value[indices - 1]).flatten().astype(int).tolist()))
+            elif not constrain_left and constrain_right:
+
+                len_pos = set(zip(length[indices].flatten().tolist(), positions[indices].flatten().tolist(),
+                                  (test_cell_number - value[indices + 1]).flatten().astype(int).tolist()))
+            elif constrain_left and constrain_right:
+
+                len_pos = set(zip(length[indices].flatten().tolist(), positions[indices].flatten().tolist(),
+                                  (test_cell_number - value[indices + 1] + value[indices - 1]).flatten().astype(
+                                      int).tolist()))
+            else:
+                len_pos = set(zip(length[indices].flatten().tolist(), positions[indices].flatten().tolist(),
+                                  np.zeros(len(indices)).astype(int).tolist()))
+
+            for lp in len_pos:
+                key = '{0}_{1}'.format(lp[0], lp[1])
+                llp = collect_all_candidates.get(key, lp)
+                collect_all_candidates[key] = llp
 
             test_cell_number -= 1
 
-        all_candidates = list(all_candidates)[:num_candidates]
+        all_candidates = list(collect_all_candidates.values())
+        all_candidates.sort(key=lambda kk: kk[2], reverse=True)
+        all_candidates = all_candidates[:num_candidates]
 
-        # print time.time() - start, 'ms'
-
+        # print '...'
+        # for index, s in enumerate(all_candidates):
+        #     # print index, s
+        #     if s[1] <= 1000 or s[1] == 196607:
+        #         print test_cell_number, index, s, type(s[2]), type(s[1])
 
         cell_count = len(cells)
 
@@ -390,6 +414,7 @@ class LSTMDataHandler:
         for cand in all_candidates:  # positions where all pivot cells start jointly
             ml = cand[0]  # maximal length of _all_ pivot cells on
             pos = cand[1]  # position of the pattern
+
             cs = np.array(cell_states[pos - 1:pos + ml + 1, :])  # cell values of _all_ cells for the range
             hf.threshold_discrete(cs, activation_threshold_corrected, -1, 1)  # discretize
 
@@ -400,6 +425,9 @@ class LSTMDataHandler:
 
             cs_sum = np.dot(mask, cs)
             # cs_sum[cells] = 0
+
+            if pos == 483721 or pos == 110:
+                print pos, ml, cs.shape, mask, cs_sum
 
             test_pattern_length = ml  # defines the length of the relevant pattern
             test_pattern_length += 1 if constrain_left else 0

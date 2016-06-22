@@ -705,7 +705,7 @@ ResultView.prototype.set_cell_count_hm = function (hm, hm_name) {
   that.cell_count_hm_data = hm;
 
   if (hm_name == CELL_COUNT_HM_ID) {
-    var lengths = that.results.index_query.data.map(function (d, i) {return [that.left_context-1,d[2]+that.left_context+2]})
+    var lengths = that.results.index_query.data.map(function (d, i) {return [that.left_context-1,d[2]+that.left_context+1]})
     that.opacity_map =lengths.map(function(l){
       return _.range(0,that.left_context+that.right_context+1).map(function(d,i){
         return _.inRange(i, l[0], l[1])?1:.1
