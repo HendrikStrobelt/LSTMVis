@@ -268,8 +268,8 @@ if __name__ == '__main__':
 
     app.run(port=int(args.port), debug=not args.nodebug, host="0.0.0.0")
 else:
-    args = parser.parse_args()
-    create_data_handlers(args.dir)
+    #args = parser.parse_args()
+    create_data_handlers(".")
 
     # create_data_handlers("data")
     # app.run(debug=False)

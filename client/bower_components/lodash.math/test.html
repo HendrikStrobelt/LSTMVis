@@ -1,0 +1,169 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-git.css" type="text/css" media="screen" />
+<script src="http://code.jquery.com/jquery-latest.js"></script>
+<script src="http://code.jquery.com/qunit/qunit-git.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/lodash.js/1.2.1/lodash.min.js"></script>
+<script src="lodash.math.js"></script>
+<script>
+$(document).ready(function(){
+
+module("Sum");
+
+test("Arrays", function() {
+  expect(4);
+  equal( _.sum([1, 2, 3]), 6, "Easy" );
+  equal( _.sum([0.2, 0.1, Math.PI]), Math.PI + 0.3, "Math.PI" );
+  equal( _.sum([0, 14, 0.2]), 14.2, "Zero" );
+  equal( _.sum([-1, -2, -3]), -6, "Negative" );
+});
+
+test("Objects", function() {
+  expect(3);
+  equal( _.sum([{value:1}, {value:2}, {value:3}]), 6, "Array of objects" );
+  equal( _.sum([{a:1}, {a:2,b:5}, {a:3}], 'a'), 6, "Specify plucked key" );
+  equal( _.sum({one:{a:1}, two:{a:2}, three:{a:3}}, 'a'), 6, "Over values of an object with specified key" );
+});
+
+module("Mean");
+
+test("Arrays", function() {
+  expect(3);
+  equal( _.mean([0, 0.5, 1]), 0.5, "Easy" );
+  equal( _.mean([0, 1, 2]), 1, "Another easy one" );
+  equal( _.average([0, 1, 2]), 1, "Another easy one" );
+});
+
+test("Objects", function() {
+  expect(2);
+  equal( _.mean([{a:-Math.PI}, {a:Math.PI}], 'a'), 0, "Array of objects, specified key" );
+  equal( _.mean({one:{a:-Math.PI}, two:{a:1}}, 'a'), (1-Math.PI)/2, "OVer values of an object with specified key" );
+});
+
+module("Scale");
+
+test("Arrays", function() {
+  expect(3);
+  deepEqual( _.scale([1, 2, 5], 1), [0.2, 0.4, 1], "Scale to 1" );
+  deepEqual( _.scale([1, 2, 5], 5), [1, 2, 5], "Scale to 5" );
+  deepEqual( _.scale([1, 2, 5], 1), [0.2, 0.4, 1], "Implied 1" );
+});
+
+module("Numeric Sort");
+
+test("Arrays", function() {
+  expect(2);
+  deepEqual( _.sort([0, 4, 7, -1]), [-1, 0, 4, 7], "Digits, negative, zero" );
+  deepEqual( _.sort([0, 4, 7, -1, 12, 21, 122]), [-1, 0, 4, 7, 12, 21, 122], "Double digits" );
+});
+
+module("Slope");
+
+test("Two points", function() {
+  expect(4);
+  equal( _.slope([0, 0], [5, 5]), 1, "Slope of 1" );
+  equal( _.slope([0, 0], [1, 10]), 10, "Slope of 10" );
+  equal( _.slope([0, 0], [0, 10]), Infinity, "Infinite slope" );
+  equal( _.slope([0, 0], [10, 0]), 0, "Slope of 0" );
+});
+
+module("Median");
+
+test("Arrays", function() {
+  expect(5);
+  equal( _.median([0, 0, 0, 0, 5]), 0, "Median of 0" );
+  equal( _.median([0, 0, 1, 2, 5]), 1, "Median of 5 numbers" );
+  equal( _.median([0, 0, 1, 2]), 0.5, "(0 + 1)/2" );
+  equal( _.median([0, 0, 1, 2, 3, 4]), 1.5, "(1 + 2)/2" );
+
+  var noMutate = [4, 3, 2, 1];
+  _.median(noMutate);
+  deepEqual( noMutate, [4, 3, 2, 1], "Original array not mutated" );
+});
+
+module("Variance");
+
+test("Arrays", function() {
+  expect(1);
+  equal( _.variance([1, 2, 3]), 2/3, "Variance of [1,2,3]" );
+});
+
+module("Standard Deviation");
+
+test("Arrays", function() {
+  expect(1);
+  equal( _.stdDeviation([1, 2, 3]), Math.sqrt(2/3), "Variance of [1,2,3]" );
+});
+
+module("Z Score");
+
+test("Arrays", function() {
+  expect(1);
+  deepEqual( _([1, 2, 3]).zscore().map(function(d) { return d.toPrecision(4); }).value(), ["-1.225", "0.000", "1.225"], "Z Score of [1,2,3]" );
+});
+
+test("Objects", function() {
+  expect(1);
+  deepEqual( _([{a:1}, {a:2}, {a:3}]).zscore('a').map(function(d) { return d.toPrecision(4); }).value(), ["-1.225", "0.000", "1.225"], "Z Score of [1,2,3]" );
+});
+
+module("Transpose");
+
+test("Arrays", function() {
+  expect(1);
+  deepEqual( _.transpose([[1, 2, 3],
+                          [4, 5, 6],
+                          [7, 8, 9]]),
+                         [[1, 4, 7],
+                          [2, 5, 8],
+                          [3, 6, 9]],
+            "Tranpose 3x3" );
+});
+
+module("Power (Exponent)");
+
+test("Numbers", function() {
+  expect(3);
+  equal( _.pow(2, 5), 32, "2^5 = 32" );
+  equal( _.pow(0.5, 2), 0.25, "0.5^2 = 0.25" );
+  equal( _.power(0.5, 2), 0.25, "0.5^2 = 0.25" );
+});
+
+test("Arrays", function() {
+  expect(1);
+  deepEqual( _.pow([2, 3, 4], 2), [4 ,9, 16], "[2,3,4] -> [4,9,16]" );
+});
+
+test("Moving Average", function() {
+  expect(2);
+  deepEqual( _.movingAvg([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 3), [2, 3, 4, 5, 6, 7, 8, 9] );
+  deepEqual( _.movingAverage([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 3), [2, 3, 4, 5, 6, 7, 8, 9] );
+});
+
+test("Moving Average", function() {
+  expect(2);
+  deepEqual( _.movingAvg([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 4), [2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5]);
+  deepEqual( _.movingAvg([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 3), [2, 3, 4, 5, 6, 7, 8, 9]);
+});
+
+test("Round", function() {
+  expect(4);
+  equal( _.round(12345.6789, 1), 12345.7);
+  equal( _.round(12345.6789, 2), 12345.68);
+  equal( _.round(12345.6, 2), 12345.6);
+  equal( _.round(12345, 2), 12345);
+});
+
+});
+</script>
+</head>
+<body>
+  <h1 id="qunit-header">QUnit example</h1>
+  <h2 id="qunit-banner"></h2>
+  <div id="qunit-testrunner-toolbar"></div>
+  <h2 id="qunit-userAgent"></h2>
+  <ol id="qunit-tests"></ol>
+  <div id="qunit-fixture">test markup, will be hidden</div>
+</body>
+</html>

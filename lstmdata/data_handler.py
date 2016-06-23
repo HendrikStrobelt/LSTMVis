@@ -361,9 +361,9 @@ class LSTMDataHandler:
 
         test_cell_number = len(cells)
         test_discrete = np.copy(cs_cand)
-        all_candidates = set([])
+        collect_all_candidates = {}
         # start = time.time()
-        while test_cell_number > 0 and len(all_candidates) < num_candidates:
+        while test_cell_number > 0 and len(collect_all_candidates) < num_candidates:
             if test_cell_number != len(cells):
                 test_discrete[test_discrete > test_cell_number] = test_cell_number
             length, positions, value = hf.rle(test_discrete)
@@ -372,15 +372,41 @@ class LSTMDataHandler:
                 indices = np.argwhere((value == test_cell_number) & (length == phrase_length))
             else:
                 indices = np.argwhere((value == test_cell_number) & (length >= cut_off))
-            len_pos = set(zip(length[indices].flatten().tolist(), positions[indices].flatten().tolist()))
 
-            all_candidates = all_candidates | len_pos
+            if constrain_left and not constrain_right:
+
+                len_pos = set(zip(length[indices].flatten().tolist(), positions[indices].flatten().tolist(),
+                                  (test_cell_number - value[indices - 1]).flatten().astype(int).tolist()))
+            elif not constrain_left and constrain_right:
+
+                len_pos = set(zip(length[indices].flatten().tolist(), positions[indices].flatten().tolist(),
+                                  (test_cell_number - value[indices + 1]).flatten().astype(int).tolist()))
+            elif constrain_left and constrain_right:
+
+                len_pos = set(zip(length[indices].flatten().tolist(), positions[indices].flatten().tolist(),
+                                  (test_cell_number - value[indices + 1] - value[indices - 1]).flatten().astype(
+                                      int).tolist()))
+            else:
+                len_pos = set(zip(length[indices].flatten().tolist(), positions[indices].flatten().tolist(),
+                                  np.zeros(len(indices)).astype(int).tolist()))
+
+            for lp in len_pos:
+                key = '{0}_{1}'.format(lp[0], lp[1])
+                llp = collect_all_candidates.get(key, lp)
+                collect_all_candidates[key] = llp
 
             test_cell_number -= 1
 
-        all_candidates = list(all_candidates)[:num_candidates]
-
-        # print time.time() - start, 'ms'
+        all_candidates = list(collect_all_candidates.values())
+        all_candidates.sort(key=lambda kk: kk[2], reverse=True)
+        # for k, v in enumerate(all_candidates):
+        #     if v[1] < 1000:
+        #         print 'x', v, k
+        all_candidates = all_candidates[:num_candidates]
+        # print 'fff'
+        # for k, v in enumerate(all_candidates):
+        #     if v[1] < 1000:
+        #         print 'x', v, k
 
         cell_count = len(cells)
 
@@ -389,6 +415,7 @@ class LSTMDataHandler:
         for cand in all_candidates:  # positions where all pivot cells start jointly
             ml = cand[0]  # maximal length of _all_ pivot cells on
             pos = cand[1]  # position of the pattern
+
             cs = np.array(cell_states[pos - 1:pos + ml + 1, :])  # cell values of _all_ cells for the range
             hf.threshold_discrete(cs, activation_threshold_corrected, -1, 1)  # discretize
 
@@ -398,8 +425,6 @@ class LSTMDataHandler:
             mask[ml + 1] = -1 if constrain_right else 0  # ignore if not constraint
 
             cs_sum = np.dot(mask, cs)
-            # cs_sum[cells] = 0
-
             test_pattern_length = ml  # defines the length of the relevant pattern
             test_pattern_length += 1 if constrain_left else 0
             test_pattern_length += 1 if constrain_right else 0
@@ -411,10 +436,11 @@ class LSTMDataHandler:
 
             res.append([pos, 0, ml,  # int(value[int(indices[ll2]) + 1])
                         (float(len(intersect)) / float(len(union))),  # Jaccard
-                        cell_count - len(intersect)])  # how many selected cells are not active
+                        cell_count - len(intersect), len(union),
+                       len(intersect)])  # how many selected cells are not active
 
         def key(elem):
-            return -elem[3], -elem[2]
+            return -elem[6], elem[5], -elem[2]  # largest intersection, smallest union, longest phrase
 
         meta = {}
         if add_histograms:
@@ -428,9 +454,9 @@ class LSTMDataHandler:
 
         res_50 = list(res[:50])
 
-        for r in res_50:
-            print r
-
+        for elem in res_50:
+            print elem, cell_count, -1. * (cell_count - elem[4]) / float(elem[3] + cell_count)
+        print(constrain_left, constrain_right)
         del res
         print 'out cs 2:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 

@@ -19,19 +19,20 @@ Install python (server-side) requirements using [pip](https://pip.pypa.io/en/sta
 
 ```bash
 pip install -r requirements.txt
+
+on OSX 10.11 (El Capitan):
+pip install --user -r requirements.txt
 ```
 
-Install [bower](https://bower.io/) (client side) requirements:
+<!--Install [bower](https://bower.io/) (client side) requirements:
 
 ```bash
 cd client; bower install; cd ..
-```
+```-->
 
-Download example dataset(s):
+Download & Unzip example dataset(s):
 
-```bash
-wget <xxx>; unzip <xxx>
-```
+[Wall Street Journal - Shallow Grammar](https://goo.gl/oHF9q5) - 2.2 GB
 
 
 start server:
@@ -106,6 +107,7 @@ states: # section to define which states of your model you want to look at
 
 Check out our documents about:
 
+* [details about configuring the states file input](docs/chapter/config_states.md)
 * [adding annotation files for result heatmaps](docs/chapter/meta.md)
 * [training a model with torch](docs/chapter/train.md)
 * [tools that make your life easier](docs/chapter/tools.md)
