@@ -32,7 +32,7 @@ cd client; bower install; cd ..
 
 Download & Unzip example dataset(s):
 
-[Wall Street Journal - Shallow Grammar](https://goo.gl/oHF9q5) - 2.2 GB
+[Children Book - Gutenberg](https://drive.google.com/file/d/0B542UFSlrvMjMHcxWHluNzh3clU/view?usp=sharing) - 2.2 GB
 
 
 start server:
