@@ -5,7 +5,7 @@
 
 const CELL_COUNT_HM_ID = 'cell_count';
 const LEFT_CONTEXT = 5;
-const RIGHT_CONTEXT = 50;
+RIGHT_CONTEXT = 50;
 
 /**
  * PatternFinder Visualization class
@@ -48,8 +48,12 @@ function PatternFinderVis(parent, x, y, event_handler, options) {
       x: 100, y: 3, w: 150, h: 15
     },
     clear_sel_button: {
-      x: 550, y: 3, w: 150, h: 15
+      x: 600, y: 3, w: 150, h: 15
     },
+    small_sel_button: {
+      x: 775, y: 3, w: 50, h: 15
+    },
+
     low_pass_slider: {
       x: 280, y: 3, w: 150, h: 15
     },
@@ -60,7 +64,7 @@ function PatternFinderVis(parent, x, y, event_handler, options) {
   };
 
   //noinspection JSUnresolvedVariable
-  this.yScale = d3.scale.linear().domain([this.source_info.unsigned ? 0 : -1, 1]).range([this.layout.pc.h - 6, 3]);
+  this.yScale = d3.scale.linear().domain([this.source_info.unsigned ? 0 : -0.5, 0.5]).range([this.layout.pc.h - 6, 3]);
   this.xScale = d3.scale.linear();
   this.brushScale = d3.scale.linear();
 
@@ -79,6 +83,7 @@ function PatternFinderVis(parent, x, y, event_handler, options) {
     data_set: 0,
     source: null,
     brush_extent: [0, 0],
+      cell_width: 35,  
     zero_left: 1,
     zero_right: 0,
     selection: {
@@ -95,9 +100,11 @@ function PatternFinderVis(parent, x, y, event_handler, options) {
     }
   };
 
-
   this.sync_options_and_states(true);
 
+    console.log(this.current.cell_width);
+    console.log(this.layout.cell_width)
+  this.layout.cell_width = this.current.cell_width;
 
   // == helper ===
   this.text_length_tester = this.content_group.append('text').attr({
@@ -149,7 +156,18 @@ PatternFinderVis.prototype.sync_options_and_states = function (update_states) {
   var options = that.options;
 
   if (update_states) {
-    current.pos = options.pos || current.pos;
+      current.pos = options.pos || current.pos;
+      current.cell_width = options.cell_width || current.cell_width;
+      if (current.cell_width <= 20) {
+          RIGHT_CONTEXT = 100;
+      }
+      if (current.cell_width <= 15) {
+          RIGHT_CONTEXT = 150;
+      }
+      if (current.cell_width <= 10) {
+          RIGHT_CONTEXT = 200;
+      }
+
     current.data_set = options.data_set || current.data_set;
     current.selection.low_pass_threshold = +options.low_pass || current.selection.low_pass_threshold;
     current.selection.threshold = +options.threshold || current.selection.threshold;
@@ -319,6 +337,14 @@ PatternFinderVis.prototype.bindEvents = function (eventHandler) {
 
   });
 
+    eventHandler.bind('small', function () {
+        that.current.cell_width = 15;
+        that.eventHandler.trigger('replace_url', {
+            cell_width: that.current.cell_width
+        });
+        location.reload();
+        
+    });
 
   eventHandler.bind('low_pass_filter', function () {
 
@@ -543,10 +569,29 @@ PatternFinderVis.prototype.init_gui = function () {
     function () {that.eventHandler.trigger('brush_extent', {value: [0, 0]})}
   );
 
-  // navigation buttons
+    createButton(that.content_group,
+                 that.layout.small_sel_button.x, that.layout.small_sel_button.y, //that.layout.query_buttons.cw + 5
+                 that.layout.small_sel_button.w, that.layout.small_sel_button.h,
+                 'small_sel_button', 'small',
+                 function () {that.eventHandler.trigger('small', {value: [0, 0]})}
+                );
+
+    // navigation buttons
+    that.content_group.append('text').attr({
+    class: 'navigation_button',
+    "transform": "translate(" + (that.layout.navigation_buttons.x ) + "," + (that.layout.navigation_buttons.y) + ")"
+  }).text(function () {
+    return '\u29c0';
+  }).on({
+    click: function () {
+      that.eventHandler.trigger('navigate', -50);
+    }
+  })
+
+    
   that.content_group.append('text').attr({
     class: 'navigation_button',
-    "transform": "translate(" + that.layout.navigation_buttons.x + "," + (that.layout.navigation_buttons.y) + ")"
+      "transform": "translate(" + (that.layout.navigation_buttons.x +25) + "," + (that.layout.navigation_buttons.y) + ")"
   }).text(function () {
     return '\uf190';
   }).on({
@@ -554,9 +599,11 @@ PatternFinderVis.prototype.init_gui = function () {
       that.eventHandler.trigger('navigate', -5);
     }
   });
-  that.content_group.append('text').attr({
+
+    
+    that.content_group.append('text').attr({
     class: 'navigation_button',
-    "transform": "translate(" + (that.layout.navigation_buttons.x + 25) + "," + (that.layout.navigation_buttons.y) + ")"
+    "transform": "translate(" + (that.layout.navigation_buttons.x + 50) + "," + (that.layout.navigation_buttons.y) + ")"
   }).text(function () {
     return '\uf18e';
   }).on({
@@ -564,6 +611,19 @@ PatternFinderVis.prototype.init_gui = function () {
       that.eventHandler.trigger('navigate', +5);
     }
   })
+
+  that.content_group.append('text').attr({
+    class: 'navigation_button',
+    "transform": "translate(" + (that.layout.navigation_buttons.x + 75) + "," + (that.layout.navigation_buttons.y) + ")"
+  }).text(function () {
+    return '\u29c1';
+  }).on({
+    click: function () {
+      that.eventHandler.trigger('navigate', +50);
+    }
+  })
+
+
 
 
 };
@@ -796,8 +856,9 @@ PatternFinderVis.prototype.data_wrangling = function (data) {
   //that.data.cell_states = data.cell_states.map(function (d, i) {return d.map(Math.abs)});
 
   var l = data.states[0].right - data.states[0].left + 1;
+    that.xScale.domain([0, (l - 1)]).range([that.layout.cell_width / 2, l * that.layout.cell_width - that.layout.cell_width / 2]);
 
-  that.xScale.domain([0, l - 1]).range([that.layout.cell_width / 2, l * that.layout.cell_width - that.layout.cell_width / 2]);
+    
   that.brushScale.domain([0, l]).range([0, l * that.layout.cell_width]);
   that.line_opacity = .5 / (Math.log(l + 1) + 1);
 
@@ -829,7 +890,7 @@ PatternFinderVis.prototype.query_context = function (position, data_set, source,
   if (rle) {
     closestQuery += '&rle=' + rle
   }
-
+    console.log(closestQuery);
   $.ajax(closestQuery, {
     dataType: 'json',
     success: function (data) {
