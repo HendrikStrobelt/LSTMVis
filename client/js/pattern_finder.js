@@ -203,7 +203,7 @@ function createGlobalInformation(info) {
   //+ (url_parameters.mask ? ' (masked)' : ''));
 
   d3.select('#searchPhrase').attr({
-    disabled: globalInfo['info'].index ? null : true
+    disabled: globalInfo['info']['is_searchable']? null : true
   });
 
   var all_states = globalInfo.info.states.types.map(function (d, i) {return d.file + '::' + d.path})

@@ -64,7 +64,7 @@ function PatternFinderVis(parent, x, y, event_handler, options) {
   };
 
   //noinspection JSUnresolvedVariable
-  this.yScale = d3.scale.linear().domain([this.source_info.unsigned ? 0 : -0.5, 0.5]).range([this.layout.pc.h - 6, 3]);
+  this.yScale = d3.scale.linear().domain([this.source_info.unsigned ? 0 : -1, 1]).range([this.layout.pc.h - 6, 3]);
   this.xScale = d3.scale.linear();
   this.brushScale = d3.scale.linear();
 
