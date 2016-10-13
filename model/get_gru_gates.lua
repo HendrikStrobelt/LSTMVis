@@ -55,43 +55,40 @@ end
 --Load the Data
 local data = data.new(opt.data_file)
 model = torch.load(opt.checkpoint_file)
-
 print(model)
 
 k = 1 --keeps track of current layer
-currentbatch = 1
-all_input = {}
-all_hidden = {}
-all_forget = {}
+
+all_reset_no_sigmoid = {}
+all_skip_no_sigmoid = {}
 
 count = {}
 for i = 1, opt.num_layers do
-    all_input[i] = torch.FloatTensor(data.length * data.batchlength * data.seqlength, opt.rnn_size):zero()
-    all_hidden[i] = torch.FloatTensor(data.length * data.batchlength * data.seqlength, opt.rnn_size):zero()
-    all_forget[i] = torch.FloatTensor(data.length * data.batchlength * data.seqlength, opt.rnn_size):zero()
+    all_reset_no_sigmoid[i] = torch.FloatTensor(data.length * data.batchlength * data.seqlength, opt.rnn_size):zero()
+    all_skip_no_sigmoid[i] = torch.FloatTensor(data.length * data.batchlength * data.seqlength, opt.rnn_size):zero()
     count[i] = 1
 end
 
 -- Function to recursively extract the gate values of the LSTM
--- The values are stored in paralleltable in the order: input, hidden, forget, output
+-- The values are stored in paralleltable in the order: reset, skip
 
-m = 0 --only look at the second parallelTable in the model
+s = 0 --only look at the second and third SplitTable in the model
 Module = nn.Module
 function Module:get_states()
     if self.modules then
         for i, module in ipairs(self.modules) do
             if torch.type(module) == "nn.FastLSTM" then
                 -- print(module.i2g.output)
-            elseif torch.type(module) == "nn.ParallelTable" then
-                m = m + 1
-                if m == 2 then
-                    --we are now in the correct module, extract values
-                    all_input[k][count[k]]:copy(module.output[1][currentbatch])
-                    all_hidden[k][count[k]]:copy(module.output[2][currentbatch])
-                    all_forget[k][count[k]]:copy(module.output[3][currentbatch])
+            elseif torch.type(module) == "nn.SplitTable" then
+                s = s + 1
+                if s > 1 then
+                    all_reset_no_sigmoid[k][count[k]]:copy(module.output[1])
+                    all_skip_no_sigmoid[k][count[k]]:copy(module.output[2])
                     count[k] = count[k] + 1
                     k = k + 1
-                    m = 0
+                    if s == 3 then
+                        s = 0
+                    end
                 end
             end
             module:get_states()
@@ -108,22 +105,23 @@ function eval_states(data, model)
             local d = data[i]
             local input, goal = d[1], d[2]
             for j = 1, data.seqlength do
-                out = model:forward(input:narrow(1, j, 1))
+                out = model:forward(input:narrow(1, j, 1):narrow(2, b, 1))
                 k = 1
                 model:get_states()
+
             end
+
         end
         print('output batch ' .. b .. ' of ' .. data.batchlength)
-        currentbatch = currentbatch + 1
+
     end
 end
 
 eval_states(data, model)
 
---local f = hdf5.open(opt.output_file, 'w')
---for k=1, opt.num_layers do
---   f:write("input" .. k, all_input[k]:float())
---   f:write("hidden" .. k, all_hidden[k]:float())
---   f:write("forget" .. k, all_forget[k]:float())
---end
---f:close()
+local f = hdf5.open(opt.output_file, 'w')
+for k = 1, opt.num_layers do
+    f:write("reset" .. k, all_reset_no_sigmoid[k]:float())
+    f:write("skip" .. k, all_skip_no_sigmoid[k]:float())
+end
+f:close()

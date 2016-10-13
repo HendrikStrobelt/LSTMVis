@@ -34,7 +34,7 @@ function data:__init(data_file)
    self.target  = f:read('target'):all()
    self.target_output = f:read('target_output'):all()
    self.target_size = f:read('target_size'):all()[1]
-   self.length = self.target:size(1)
+   self.length = 500--self.target:size(1)
    self.batchlength = self.target:size(2)
    self.seqlength = self.target:size(3)
 end
@@ -67,11 +67,13 @@ for i = 1, (2*opt.num_layers) do
    count[i] = 1
 end
 
+print("starting the extraction...")
+
 -- Function to recursively extract output and hidden state of the LSTM
 function Module:get_states()
    if self.modules then
       for i,module in ipairs(self.modules) do
-         if torch.type(module) == "nn.FastLSTM" then
+         if torch.type(module) == "nn.FastLSTM" or torch.type(module) == "nn.GRU"then
             if module.output ~= nil then
                all_hidden[k][count[k]]:copy(module.output[currentbatch])
                count[k] = count[k] + 1
