@@ -85,7 +85,7 @@ description: children book texts from the Gutenberg project # little description
 
 files: # assign files to reference name
   states: cbt_epoch10.h5 # HDF5 files have to end with .h5 or .hdf5 !!!
-  word_ids: train.h5
+  train: train.h5 # word ids of training set
   words: words.dict # dict files have to end with .dict !!
 
 word_sequence: # defines the word sequence
