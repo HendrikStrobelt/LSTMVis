@@ -6,10 +6,10 @@ class HeatMap {
     constructor(parent, data, labels, pos_x, pos_y, options) {
         `data is a matrix of values,
         labels is an optional matrix of ids`
-        
+
+        this.id= options.id || _.uniqueId('heatmap_'),
         // Default draw options.
         this.options = {
-            id: _.uniqueId('heatmap_'),
             opacity: [],
             showSetup: false,
             datatype: 'scalar',
@@ -202,10 +202,10 @@ class HeatMap {
             this.hoverCell(data.x, data.y, data.active));
         
         handler.bind('heatmap_mapping_rect_selected', (e, hm_id) =>
-            this.hm.selectAll('.mapping-rect').classed('selected', this.options.id == hm_id));
+            this.hm.selectAll('.mapping-rect').classed('selected', this.id == hm_id));
         
         handler.bind('heatmap_mapping_circle_selected', (e, hm_id) =>
-            this.hm.selectAll('.mapping-circle').classed('selected', this.options.id == hm_id));
+            this.hm.selectAll('.mapping-circle').classed('selected', this.id == hm_id));
         
         handler.bind('row_detail', (e, id) =>
                      this.hm.transition().style({

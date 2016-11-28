@@ -244,12 +244,12 @@ class ResultView {
         
         if (options.no_transition) {
             background_rect.style({
-                fill:  d => rect_hm ? rect_hm.colorScale(d.value) : 'white',
+                fill:  d => rect_hm ? rect_hm.options.colorScale(d.value) : 'white',
                 'fill-opacity': d => use_opacity ? this.opacity_map[d.x][d.y] : 1
             });
         } else {
             background_rect.transition().style({
-                fill: d => rect_hm ? rect_hm.colorScale(d.value) : 'white',
+                fill: d => rect_hm ? rect_hm.options.colorScale(d.value) : 'white',
                 'fill-opacity': d => use_opacity ? this.opacity_map[d.x][d.y] : 1
             });
         }
@@ -277,7 +277,7 @@ class ResultView {
         background_circle.enter().append("circle").attr({
             r: 3
         }).style({
-            fill: d => rect_hm ? rect_hm.colorScale(d.value) : 'white',
+            fill: d => rect_hm ? rect_hm.options.colorScale(d.value) : 'white',
             stroke: 'white',
             'stroke-width': '1',
             'stroke-opacity': .5
@@ -294,12 +294,12 @@ class ResultView {
         
         if (options.no_transition) {
             background_circle.style({
-                fill: d => rect_hm ? rect_hm.colorScale(d.value) : 'white',
+                fill: d => rect_hm ? rect_hm.options.colorScale(d.value) : 'white',
                 'fill-opacity': d => use_opacity ? this.opacity_map[d.x][d.y] : 1
             });
         } else {
             background_circle.transition().style({
-                fill: d => rect_hm ? rect_hm.colorScale(d.value) : 'white',
+                fill: d => rect_hm ? rect_hm.options.colorScale(d.value) : 'white',
                 'fill-opacity': d => use_opacity ? this.opacity_map[d.x][d.y] : 1
             });
         }
