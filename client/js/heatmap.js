@@ -2,317 +2,214 @@
  * Created by Hendrik Strobelt (hendrik.strobelt.com) on 4/7/16.
  */
 
+class HeatMap {    
+    constructor(parent, data, labels, pos_x, pos_y, options) {
+        `data is a matrix of values,
+        labels is an optional matrix of ids`
 
-/**
- * Create a heatmap
- * @param {object} parent - parent node as d3 selection
- * @param data
- * @param labels
- * @param pos_x
- * @param pos_y
- * @param options
- * @constructor
- */
-function HeatMap(parent, data, labels, pos_x, pos_y, options) {
-  var that = this;
-  this.id = options.id || _.uniqueId('heatmap_');
-  this.parent = parent;
-  this.layout = {
-    mapping_panel: {x: 0, y: -20 - 20},
-    title: {x: 0, y: -20 + 12},
-    main: {x: 0, y: 0}
-  };
+        this.id= options.id || _.uniqueId('heatmap_'),
+        // Default draw options.
+        this.options = {
+            opacity: [],
+            showSetup: false,
+            datatype: 'scalar',
+            title: "heatmap",
+            cellWidth: 10,
+            cellHeight: 15,
+            colorScale: d3.scale.linear(),
+        };
+        this.updateOptions(options);
+        
+        this.layout = {
+            mapping_panel: {x: 0, y: -20 - 20},
+            title: {x: 0, y: -20 + 12},
+            main: {x: 0, y: 0}
+        };
 
-  this.opacity = options.opacity || [];
+        // The heatmap itself.
+        this.parent = parent;
+        this.hm = gr(d3.select(parent), 'heatmap', {x:pos_x, y:pos_y})
 
-  this.showSetup = options.showSetup || false;
+        // Little Title above.
+        this.hm.append('text').attr({
+            "class": 'hm-title',
+            x: this.layout.title.x,
+            y: this.layout.title.y
+        }).text(this.options.title);
 
-  this.datatype = options.datatype || 'scalar';
+        // The heat map itself.
+        this.drawPanel();
 
-  this.hm = d3.select(parent).append('g').attr({
-    class: 'heatmap',
-    "transform": "translate(" + pos_x + "," + pos_y + ")"
-  });
+        // Tool tips
+        this.init_tooltip();
+        this.updateData(data, labels, {})
+    }
 
-  var title = options.title || "heatmap";
-  this.hm.append('text').attr({
-    "class": 'hm-title',
-    x: this.layout.title.x,
-    y: this.layout.title.y
-  }).text(
-    title
-  );
-  this.cellWidth = options.cellWidth || 10;
-  this.cellHeight = options.cellHeight || 15;
-  this.options = options;
-  this.colorScale = options.colorScale || d3.scale.linear();
+    updateOptions(options) {
+        Object.keys(options || {}).map(d => this.options[d] = options[d]);
+    }
+
+    updateData(data, labels, options) {
+        this.updateOptions(options);        
+
+        // Set the color scale.
+        if (this.options.noAutoColorScale == undefined) {
+            this.max = this.options.max || _.max(_.flatten(data));
+            this.min = this.options.min || _.min(_.flatten(data));
+            if (this.min < 0) {
+                var maxAbs = -this.min > this.max ? -this.min : this.max;
+                this.options.colorScale = d3.scale.linear()
+                    .domain([maxAbs, 0, maxAbs])
+                    .range(['#ca0020', '#f7f7f7', '#0571b0']);
+            } else {
+                this.options.colorScale = d3.scale.linear()
+                    .domain([this.min, this.max])
+                    .range(['#f7f7f7', '#0571b0'])
+            }
+        }
+
+        // Make the data.
+        var labelFormat = d3.format(".4f");
+        if (!_.isNumber(data[0][0])) labelFormat = _.identity;
+        var label = (x, y, v) => { return {x:x, y:y, label: labels[x][y], value:v};};
+        if (!labels)
+            label = (x, y, v) => { return {x:x, y:y, label: labelFormat(v), value:v};};
+        this.data = _.flatten(data.map((row, x) => row.map((value, y) => label(x,y,value))));
+    }
 
 
-  this.drawPanel();
-  this.init_tooltip();
-  this.updateData(data, labels, {})
+    draw(options) {
+        this.updateOptions(options)
+        
+        // Create a heat map cell
+        var hmCell = this.hmCells.selectAll(".hmCell").data(this.data);
+        hmCell.exit().remove();
+        hmCell.enter().append("rect");
+        
+        var has_opacity = this.options.opacity.length > 0 && this.options.datatype != 'scalar';
+        hmCell.attr({
+            "class": d => "hmCell x" + d.x + " y" + d.y,
+            x: d => d.y * this.options.cellWidth,
+            y: d => d.x * this.options.cellHeight,
+            width: this.options.cellWidth,
+            height: this.options.cellHeight
+        });
+        
+        var style_hm = hmCell;
+        if (options && options.transition == true) 
+            style_hm = hmCell.transition().duration(1000);
+        
+        style_hm.style({
+            fill: d => this.options.colorScale(d.value),
+            opacity: d => (has_opacity) ? this.options.opacity[d.x][d.y] : null
+        });
 
+        hmCell.on({
+            'mouseover': d => 
+                this.eventHandler.trigger('heatmap_item_hovered',
+                                          {x: d.x, y: d.y, active: true}),
+            'mouseout': d => 
+                this.eventHandler.trigger('heatmap_item_hovered',
+                                          {x: d.x, y: d.y, active: false})
+        });
+        // End
+    }
+    
+    hoverCell(x, y, select) {
+        var hovered = this.hm.selectAll(".x" + x + ".y" + y);
+        hovered.classed('hovered', select);
+        
+        if (select) {
+            var datum = hovered.datum();
+            this.tooltip.attr({
+                opacity: 1,
+                "transform": tr({x: datum.y * this.options.cellWidth,
+                                 y: (datum.x + 1) * this.options.cellHeight + 5 + this.layout.main.y})
+            });
+            this.tooltip.select('text').text(datum.label);
+        } else {
+            this.tooltip.attr({opacity: 0});
+        }
+    }
+
+    drawPanel() {
+        var that = this;
+        this.mapping_panel = gr(this.hm, 'mapping_panel', this.layout.mapping_panel);
+        this.mapping_panel.append('rect').attr({
+            class: 'mapping-rect',
+            x: 0,
+            y: 3,
+            width: 15,
+            height: 10
+        }).on({
+            'click': function () {
+                that.eventHandler.trigger('heatmap_mapping_rect_selected',
+                                          d3.select(this).classed('selected') ? 'none' : that.id);
+            }
+        });
+        
+        this.mapping_panel.append('rect').attr({
+            class: 'mapping-circle',
+            x: 20,
+            y: 3,
+            width: 15,
+            height: 10
+        }).on({
+            'click': function () {
+                that.eventHandler.trigger('heatmap_mapping_circle_selected',
+                                          d3.select(this).classed('selected') ? 'none': that.id)
+            }
+        });
+        
+        this.mapping_panel.append('circle').attr({
+            cx: 20 + 3,
+            cy: 3 + 5,
+            r: 2
+        });
+        
+        if (this.options.showSetup) 
+            this.mapping_panel.append('text').attr({
+                class: 'setup-icon',
+                x: 40,
+                y: 3 + 10
+            }).on({
+                'click': function () {
+                    that.eventHandler.trigger('hm_setup', that.id);
+                }
+            }).text("\uf085");
+
+    }
+
+    init_tooltip() {
+        this.hmCells = gr(this.hm, 'cells', this.layout.main);        
+        this.tooltip = gr(this.hm, 'hm-tooltip', {x:5, y:50}).attr("opacity", 0);
+        this.tooltip.append('rect').attr({
+            x: -50,
+            y: 0,
+            width: 100,
+            height: 15
+        });
+        this.tooltip.append('text').attr({
+            x: 0,
+            y: 13
+        }).text('Hallo')
+    }
+
+    bindEvents(handler) {
+        this.eventHandler = handler;
+        handler.bind('draw', this.draw());
+        handler.bind('heatmap_item_hovered', (e, data) =>
+            this.hoverCell(data.x, data.y, data.active));
+        
+        handler.bind('heatmap_mapping_rect_selected', (e, hm_id) =>
+            this.hm.selectAll('.mapping-rect').classed('selected', this.id == hm_id));
+        
+        handler.bind('heatmap_mapping_circle_selected', (e, hm_id) =>
+            this.hm.selectAll('.mapping-circle').classed('selected', this.id == hm_id));
+        
+        handler.bind('row_detail', (e, id) =>
+                     this.hm.transition().style({
+                         opacity: (id > -1) ? 0 : 1,
+                         'pointer-events': (id > -1) ? 'none': null}));
+    }
 }
-
-
-HeatMap.prototype.updateData = function (data, labels, options) {
-  var that = this;
-
-  // update options as needed... keep old options.
-  _.forEach(options, function (key, value) {
-    that.options[key] = value;
-  });
-
-
-  if (that.options.noAutoColorScale == undefined) {
-    that.max = that.options.max || _.max(_.flatten(data));
-    that.min = that.options.min || _.min(_.flatten(data));
-
-    if (that.min < 0) {
-      var maxAbs = -that.min > that.max ? -that.min : that.max;
-      that.colorScale = d3.scale.linear()
-        .domain([maxAbs, 0, maxAbs])
-        .range(['#ca0020', '#f7f7f7', '#0571b0']); //['#ca0020','#f4a582','#f7f7f7','#92c5de','#0571b0']
-
-    } else {
-      that.colorScale = d3.scale.linear()
-        .domain([that.min, that.max])
-        .range(['#f7f7f7', '#0571b0'])
-    }
-
-  }
-
-  var labelFormat = d3.format(".4f");
-  if (!_.isNumber(data[0][0])) labelFormat = _.identity;
-
-
-  if (labels) {
-    this.data = _.flatten(data.map(function (row, x) {
-      return row.map(function (value, y) {
-        return {value: value, label: labels[x][y], x: x, y: y}
-
-      })
-    }))
-
-  } else {
-    this.data = _.flatten(data.map(function (row, x) {
-      return row.map(function (value, y) {
-        return {value: value, label: labelFormat(value), x: x, y: y}
-      })
-    }))
-  }
-
-
-};
-
-
-HeatMap.prototype.draw = function (options) {
-
-  options = options || {};
-  var that = this;
-  var hmCell = that.hmCells.selectAll(".hmCell").data(that.data);
-  hmCell.exit().remove();
-
-  // --- adding Element to class hmCell
-  hmCell.enter().append("rect");
-
-
-  that.opacity = options.opacity || that.opacity;
-  var has_opacity = that.opacity.length > 0 && that.datatype!='scalar';
-
-  // --- changing nodes for hmCell
-  hmCell.attr({
-    "class": function (d) {
-      return "hmCell x" + d.x + " y" + d.y
-    },
-    x: function (d) {
-      return d.y * that.cellWidth
-    },
-    y: function (d) {
-      return d.x * that.cellHeight
-    },
-    width: that.cellWidth,
-    height: that.cellHeight
-  });
-
-  var style_hm = hmCell;
-  if (options && options.transition == true) {
-    style_hm = hmCell.transition().duration(1000)
-  }
-  style_hm.style({
-    fill: function (d) {
-      return that.colorScale(d.value);
-    },
-    opacity: function (d) {
-      if (has_opacity) {
-        return that.opacity[d.x][d.y] //* .8 + .2
-      } else {
-        return null;
-      }
-    }
-  });
-  hmCell.on({
-    'mouseover': function (d) {
-      that.eventHandler.trigger('heatmap_item_hovered', {x: d.x, y: d.y, active: true});
-    },
-    'mouseout': function (d) {
-      that.eventHandler.trigger('heatmap_item_hovered', {x: d.x, y: d.y, active: false});
-    }
-  })
-
-
-};
-
-
-HeatMap.prototype.hoverCell = function (x, y, select) {
-  var that = this;
-  var hovered = this.hm.selectAll(".x" + x + ".y" + y);
-  hovered.classed('hovered', select);
-
-  if (select) {
-
-
-    var datum = hovered.datum();
-    that.tooltip.attr({
-      opacity: 1,
-      "transform": "translate("
-      + (datum.y * that.cellWidth) + ","
-      + ((datum.x + 1) * that.cellHeight + 5 + this.layout.main.y) + ")"
-    });
-
-    that.tooltip.select('text').text(datum.label);
-
-
-  } else {
-
-    that.tooltip.attr({
-      opacity: 0
-    })
-
-
-  }
-
-};
-
-HeatMap.prototype.drawPanel = function () {
-  var that = this;
-
-  this.mapping_panel = this.hm.append('g').attr({
-    class: 'mapping_panel',
-    "transform": "translate(" + that.layout.mapping_panel.x + "," + that.layout.mapping_panel.y + ")"
-  });
-  this.mapping_panel.append('rect').attr({
-    class: 'mapping-rect',
-    x: 0,
-    y: 3,
-    width: 15,
-    height: 10
-  }).on({
-    'click': function () {
-      if (d3.select(this).classed('selected')) {
-        that.eventHandler.trigger('heatmap_mapping_rect_selected', 'none')
-      } else {
-        that.eventHandler.trigger('heatmap_mapping_rect_selected', that.id)
-      }
-
-    }
-  });
-  this.mapping_panel.append('rect').attr({
-    class: 'mapping-circle',
-    x: 20,
-    y: 3,
-    width: 15,
-    height: 10
-  }).on({
-    'click': function () {
-      if (d3.select(this).classed('selected')) {
-        that.eventHandler.trigger('heatmap_mapping_circle_selected', 'none')
-      } else {
-        that.eventHandler.trigger('heatmap_mapping_circle_selected', that.id)
-      }
-
-
-    }
-  });
-  this.mapping_panel.append('circle').attr({
-    cx: 20 + 3,
-    cy: 3 + 5,
-    r: 2
-  });
-
-  if (this.showSetup) {
-    this.mapping_panel.append('text').attr({
-      class: 'setup-icon',
-      x: 40,
-      y: 3 + 10
-    }).on({
-      'click': function () {
-        that.eventHandler.trigger('hm_setup', that.id);
-      }
-    }).text("\uf085")
-
-
-  }
-
-
-};
-
-HeatMap.prototype.init_tooltip = function () {
-  this.hmCells = this.hm.append("g").attr({
-    class: 'cells',
-    "transform": "translate(" + this.layout.main.x + "," + this.layout.main.y + ")"
-  });
-
-  this.tooltip = this.hm
-    .append("g").attr({
-      class: 'hm-tooltip',
-      "transform": "translate(" + 5 + "," + 50 + ")",
-      opacity: 0
-    });
-  this.tooltip.append('rect').attr({
-    x: -50,
-    y: 0,
-    width: 100,
-    height: 15
-  });
-  this.tooltip.append('text').attr({
-    x: 0,
-    y: 13
-  }).text('Hallo')
-};
-
-
-HeatMap.prototype.bindEvents = function (handler) {
-  var that = this;
-  this.eventHandler = handler;
-  handler.bind('draw', that.draw());
-  handler.bind('heatmap_item_hovered', function (e, data) {
-    that.hoverCell(data.x, data.y, data.active);
-  });
-
-  handler.bind('heatmap_mapping_rect_selected', function (e, hm_id) {
-    that.hm.selectAll('.mapping-rect').classed('selected', that.id == hm_id);
-  });
-
-  handler.bind('heatmap_mapping_circle_selected', function (e, hm_id) {
-    that.hm.selectAll('.mapping-circle').classed('selected', that.id == hm_id);
-  });
-
-
-  handler.bind('row_detail', function (e, id) {
-    if (id > -1) {
-      that.hm.transition().style({
-        opacity: 0,
-        'pointer-events': 'none'
-      })
-    } else {
-      that.hm.transition().style({
-        opacity: 1,
-        'pointer-events': null
-      })
-    }
-
-  })
-
-
-};

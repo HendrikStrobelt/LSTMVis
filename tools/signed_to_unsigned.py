@@ -13,10 +13,12 @@ def convert(in_file, out_file):
     data_in = h5.File(in_file, 'r')
     data_out = h5.File(out_file, 'w')
     for k in data_in.keys():
+        if "offset"  in k: continue
         logging.info('processing table: %s', k)
 
         slice_offset = 0
         shape = data_in[k].shape
+        print shape
         x_out = data_out.create_dataset(k, (shape[0], shape[1] * 2))
         while slice_offset < shape[0]:
             slice_end = min(slice_offset + MAX_ROWS, shape[0])
