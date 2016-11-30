@@ -1,3 +1,5 @@
+import cgi
+
 import os
 
 import gc
@@ -90,6 +92,13 @@ class LSTMDataHandler:
                         m_info['vis']['range'] = range(int(m.group(1)), int(m.group(2)))
         else:
             self.config['meta'] = []
+
+        if self.config.get('etc'):
+            self.config['etc']['regex_search'] = self.config['etc'].get('regex_search', False)
+        else:
+            self.config['etc'] = {"regex_search": False}
+
+        self.config['is_searchable'] = self.config['index'] or self.config['etc']['regex_search']
 
         if not ('description' in self.config and self.config['description']):
             self.config['description'] = self.config['name']
@@ -437,7 +446,7 @@ class LSTMDataHandler:
             res.append([pos, 0, ml,  # int(value[int(indices[ll2]) + 1])
                         (float(len(intersect)) / float(len(union))),  # Jaccard
                         cell_count - len(intersect), len(union),
-                       len(intersect)])  # how many selected cells are not active
+                        len(intersect)])  # how many selected cells are not active
 
         def key(elem):
             return -elem[6], elem[5], -elem[2]  # largest intersection, smallest union, longest phrase
@@ -493,3 +502,38 @@ class LSTMDataHandler:
         # print 'cs:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 
         return matrix, transformed
+
+    def regex_search(self, _query, no_results=20, htmlFormat=False):
+        ws = self.config['word_sequence']
+        word_sequence = self.h5_files[ws['file']][ws['path']]
+
+        ws_last_pos = len(word_sequence) - 1
+        pos = 0
+        hits = []
+        while pos < ws_last_pos and len(hits) < no_results:
+            upper_bound = min((pos + 10000), ws_last_pos)
+            word_ids = word_sequence[pos:upper_bound]
+
+            mapper = self.dicts_id_value[ws['dict_file']]
+            phrase = ''.join([mapper[x][0] for x in word_ids.tolist()])
+            r = [(m.start() + pos, m.end() + pos, m.group(0)) for m in re.finditer(_query, phrase)]
+            hits.extend(r)
+            if upper_bound < ws_last_pos:
+                pos = upper_bound - 1000
+            else:
+                pos = upper_bound
+        res = []
+        for h in hits:
+            min_pos = max(h[0] - 5, 0)
+            max_pos = min(h[1] + 5, ws_last_pos)
+            text = ''.join([mapper[x] for x in word_sequence[min_pos:max_pos].tolist()])
+            res.append({'index': h[0], 'text': cgi.escape(text)})
+        return res
+
+        # if htmlFormat:
+        #     # results.formatter = HtmlFormatter()
+        #     return map(lambda y: {'index': y['index'], 'text': y.highlights('content')}
+        #                , sorted(results, key=lambda k: k['index']))
+        # else:
+        #     return map(lambda y: {'index': y['index'], 'text': y['content']}
+        #                , sorted(results, key=lambda k: k['index']))
