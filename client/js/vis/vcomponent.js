@@ -31,7 +31,8 @@ class VComponent {
         this.parent = parent;
 
         const defaults = this._getDefaultOptions();
-        this.options = Object.keys(defaults).map((key) => options[key] || defaults[key]);
+        this.options = {};
+        Object.keys(defaults).forEach((key) => this.options[key] = options[key] || defaults[key]);
 
         this._init()
     }

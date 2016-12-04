@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+    <!--<script src="bower_components/jquery/dist/jquery.min.js"></script>-->
+    <!--<script src="bower_components/lodash/dist/lodash.min.js"></script>-->
+    <!--<script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>-->
+
+    <script src="js/ext_libs/d3.min.js"></script>
+    <script src="js/ext_libs/d3-selection-multi.v1.min.js"></script>
+
+
+    <script src="js/etc/global_helper.js"></script>
+    <script src="js/vis/vcomponent.js"></script>
+    <script src="js/vis/simple_vis.js"></script>
+    <!--<script src="js/vis/lineplot.js"></script>-->
+
+
+</head>
+<body>
+
+<svg id="vis" width="500" height="500">
+
+</svg>
+
+<script>
+    let v = d3.select('#vis').node();
+    let sv = new SimpleVis({parent: v, options: {}});
+    console.log(SimpleVis.events);
+
+</script>
+
+
+</body>
+</html>

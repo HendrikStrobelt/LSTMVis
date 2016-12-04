@@ -3,18 +3,21 @@
  */
 class SimpleVis extends VComponent{
 
+    static get events(){return {
+        textClick:'SimpleVis_textclick'
+    }}
+
+    _getDefaultOptions(){return {
+        x:30,
+        y:50
+    }}
+
     _init(){
-        console.log(this.options);
-        this.mainG = d3.select(this.parent).append('g');
+        this.mainG = d3.select(this.parent).append('g')
+          .attr('transform', svg_translate({x:this.options.x, y:this.options.y}));
+
+        this.mainG.append('text').text('SimpleVis').on('click', () => console.log(SimpleVis.events.textClick));
     }
-
-    // Houston -- we need a new idea
-    setOptions({px=10, py=100}){
-        super.setOptions(arguments[0])
-    }
-
-
-
 
 
 }
