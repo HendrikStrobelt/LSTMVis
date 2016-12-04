@@ -5,12 +5,12 @@ class VComponent {
 
     /**
      * The static property that contains all class related events.
-     * Should be overwritten.
+     * Should be overwritten and event strings have to be unique!!
      * @returns {{}} an key-value object for object to string
      */
     static get events() {
         console.error('static get events() --  not implemented');
-        return {noEvent:'noEvent'}
+        return {noEvent:'VComponent_noEvent'}
     };
 
     /**
