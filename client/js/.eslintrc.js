@@ -3,6 +3,7 @@ module.exports = {
         "browser": true,
         "es6": true
     },
+    "globals":{"module":false, "d3":false, "VComponent":false, 'SVG':false, "Util":false},
     "extends": "eslint:recommended",
     "rules": {
         "accessor-pairs": "error",
@@ -38,7 +39,7 @@ module.exports = {
             "error",
             "always"
         ],
-        "class-methods-use-this": "error",
+        // "class-methods-use-this": "error",
         "comma-dangle": "off",
         "comma-spacing": "off",
         "comma-style": [

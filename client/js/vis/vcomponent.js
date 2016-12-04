@@ -1,7 +1,8 @@
 /**
  * Created by Hendrik Strobelt (hendrik.strobelt.com) on 12/3/16.
  */
-class VComponent { // eslint-disable-line
+
+class VComponent {
 
     /**
      * The static property that contains all class related events.
@@ -68,7 +69,7 @@ class VComponent { // eslint-disable-line
      * @returns {*} ---
      * @private
      */
-    _wrangle(data) { // eslint-disable-line class-methods-use-this
+    _wrangle(data) {
 
         return data;
     }
@@ -95,3 +96,5 @@ class VComponent { // eslint-disable-line
 
 
 }
+
+VComponent;
