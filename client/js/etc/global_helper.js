@@ -3,9 +3,9 @@
  */
 
 class SVG {
-    translate({x, y}) {return "translate(" + x + "," + y + ")"}
+    static translate({x, y}) {return "translate(" + x + "," + y + ")"}
 
-    group({parent, classes, pos}) {
+    static group({parent, classes, pos}) {
         parent.append('g').attrs({
             class: classes,
             "transform": SVG.translate(pos)

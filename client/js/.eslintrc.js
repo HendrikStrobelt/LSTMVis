@@ -3,7 +3,7 @@ module.exports = {
         "browser": true,
         "es6": true
     },
-    "globals":{"module":false, "d3":false, "VComponent":false, 'SVG':false, "Util":false},
+    "globals": {"module": false, "d3": false, "VComponent": false, 'SVG': false, "Util": false, "SimpleComponent":false},
     "extends": "eslint:recommended",
     "rules": {
         "accessor-pairs": "error",
@@ -118,7 +118,7 @@ module.exports = {
         "no-caller": "error",
         "no-catch-shadow": "error",
         "no-confusing-arrow": "off",
-        "no-console": ["error", { allow: ["warn", "error"] }],
+        "no-console": ["error", {allow: ["warn", "error"]}],
         "no-continue": "error",
         "no-div-regex": "error",
         "no-duplicate-imports": "error",
