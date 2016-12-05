@@ -51,23 +51,21 @@ class HeatMapComponent extends VComponent {
         this.mapping_panel = SVG.group(this.hm, 'mapping_panel', this.options.panelPos);
         const select = (e, but) => () => 
             this.eventHandler.trigger(e, but.classed('selected') ? 'none': this.id);
-        
+        const width = 15
+        const height = 10
+        const y = 3
         const rect_button = this.mapping_panel.append('rect');
         rect_button.attrs({
             class: 'mapping-rect',
             x: 0,
-            y: 3,
-            width: 15,
-            height: 10
+            y, width, height
         }).on('click', select(this.events.rectSelected, rect_button))
         
         const circle_button = this.mapping_panel.append('rect')
         circle_button.attrs({
             class: 'mapping-circle',
             x: 20,
-            y: 3,
-            width: 15,
-            height: 10
+            y, width, height
         }).on('click', select(this.events.circleSelected, circle_button));
         
         this.mapping_panel.append('circle').attrs({
