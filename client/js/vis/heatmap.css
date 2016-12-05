@@ -1,0 +1,63 @@
+/*HEATMAPS*/
+
+.hm-tooltip {
+    pointer-events: none;
+}
+
+.hm-tooltip rect {
+    fill: black;
+    fill-opacity: .5;
+}
+
+.hm-tooltip text {
+    fill: white;
+    font-weight: bold;
+    font-size: 12pt;
+    text-anchor: middle;
+}
+
+.mapping_panel {
+    cursor: crosshair;
+}
+
+.mapping_panel rect {
+    stroke: black;
+    fill: white;
+    opacity: .3;
+}
+
+.mapping_panel rect.selected {
+    stroke: black;
+    stroke-width: 2;
+    fill: white;
+    opacity: 1;
+}
+
+.mapping_panel rect:hover, .mapping_panel circle:hover, .mapping_panel .setup-icon:hover {
+    opacity: .8;
+}
+
+.mapping_panel circle {
+    fill: darkgray;
+    stroke: none;
+    opacity: .7;
+    pointer-events: none;
+}
+
+.mapping_panel .setup-icon {
+    font-family: FontAwesome, sans-serif;
+    font-size: 12px;
+    fill: black;
+    opacity: .5;
+    
+}
+
+.hmCell, .wordGroup {
+    cursor: crosshair;
+    
+}
+
+.hmCell.hovered {
+    stroke: red;
+    stroke-width: 2;
+}

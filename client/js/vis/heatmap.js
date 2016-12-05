@@ -48,7 +48,7 @@ class HeatMapComponent extends VComponent {
     }
 
     _initPanel() {
-        var that = this;
+        const that = this;
         this.mapping_panel = SVG.group(this.hm, 'mapping_panel', this.options.mapping_panel);
         this.mapping_panel.append('rect').attrs({
             class: 'mapping-rect',
@@ -104,7 +104,7 @@ class HeatMapComponent extends VComponent {
             this.max = this.options.max || _.max(_.flatten(data));
             this.min = this.options.min || _.min(_.flatten(data));
             if (this.min < 0) {
-                var maxAbs = -this.min > this.max ? -this.min : this.max;
+                const maxAbs = -this.min > this.max ? -this.min : this.max;
                 this.options.colorScale = d3.scaleLinear()
                     .domain([maxAbs, 0, maxAbs])
                     .range(['#ca0020', '#f7f7f7', '#0571b0']);
@@ -116,7 +116,7 @@ class HeatMapComponent extends VComponent {
         }
 
         // Make the data.
-        var labelFormat = d3.format(".4f");
+        const labelFormat = d3.format(".4f");
         if (!_.isNumber(data[0][0])) labelFormat = _.identity;
         // var label = (x, y, v) => { return {x:x, y:y, label: labels[x][y], value:v};};
         // if (!labels) {
@@ -129,14 +129,14 @@ class HeatMapComponent extends VComponent {
 
     _render(renderData) {
         // Create a heat map cell
-        var hmCell = this.hmCells.selectAll(".hmCell").data(renderData);
+        let hmCell = this.hmCells.selectAll(".hmCell").data(renderData);
         hmCell.exit().remove();
-        hmCell.enter().append("rect");
+        let hmUpdate = hmCell.enter().append("rect").merge(hmCell);
         
-        var has_opacity = this.options.opacity.length > 0 && this.options.datatype != 'scalar';
+        const has_opacity = this.options.opacity.length > 0 && this.options.datatype != 'scalar';
 
         // This should be a linear scale.
-        hmCell.attrs({
+        hmUpdate.attrs({
             "class": d => "hmCell x" + d.x + " y" + d.y,
             x: d => d.y * this.options.cellWidth,
             y: d => d.x * this.options.cellHeight,
@@ -144,17 +144,17 @@ class HeatMapComponent extends VComponent {
             height: this.options.cellHeight
         });
         
-        var style_hm = hmCell;
+        const style_hm = hmUpdate;
         if (this.options.transition == true) {
             style_hm = hmCell.transition().duration(1000);
         } 
 
-        style_hm.styles({
+        hmUpdate.styles({
             fill: d => this.options.colorScale(d.value),
             opacity: d => (has_opacity) ? this.options.opacity[d.x][d.y] : null
         });
 
-        hmCell
+        hmUpdate
             .on('mouseover', d => 
                 this.eventHandler.trigger(this.events.itemHovered,
                                           {x: d.x, y: d.y, active: true}))
@@ -165,11 +165,11 @@ class HeatMapComponent extends VComponent {
 
     // ACTION METHODS
     actionHoverCell(x, y, select) {
-        var hovered = this.hm.selectAll(".x" + x + ".y" + y);
+        const hovered = this.hm.selectAll(".x" + x + ".y" + y);
         hovered.classed('hovered', select);
         
         if (select) {
-            var datum = hovered.datum();
+            const datum = hovered.datum();
             this.tooltip.attrs({
                 opacity: 1,
                 "transform": tr({x: datum.y * this.options.cellWidth,
