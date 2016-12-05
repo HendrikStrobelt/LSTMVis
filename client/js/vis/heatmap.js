@@ -95,7 +95,7 @@ class HeatMapComponent extends VComponent {
 
     // RENDER/WRANGLE METHODS
     _wrangle(data) {
-        let colorScale
+        let colorScale = null
         if (this.options.noAutoColorScale == undefined) {
             this.max = this.options.max || _.max(_.flatten(data.values));
             this.min = this.options.min || _.min(_.flatten(data.values));
@@ -112,7 +112,7 @@ class HeatMapComponent extends VComponent {
         }
 
         // Make the data.
-        const labelFormat = d3.format(".4f");
+        let labelFormat = d3.format(".4f");
         if (!_.isNumber(data.values[0][0])) labelFormat = _.identity;
         let label = (x, y, v) => { return {row: x, col: y, label: data.labels[x][y], value: v};};
         if (!data.labels) {
@@ -135,9 +135,9 @@ class HeatMapComponent extends VComponent {
             .range([0, this.options.cellWidth]);
 
         // Create a heat map cell
-        let hmCell = this.hmCells.selectAll(".hmCell").data(renderData.raw);
+        const hmCell = this.hmCells.selectAll(".hmCell").data(renderData.raw);
         hmCell.exit().remove();
-        let hmUpdate = hmCell.enter().append("rect").merge(hmCell);
+        const hmUpdate = hmCell.enter().append("rect").merge(hmCell);
 
         const has_opacity = renderData.opacity.length > 0 && this.options.datatype != 'scalar';
         const hover = active => d => 
@@ -177,7 +177,6 @@ class HeatMapComponent extends VComponent {
 
     bindEvents(handler) {
         this.eventHandler = handler;
-        // handler.bind('draw', this.draw());
         handler.bind(this.events.itemHovered, (e, data) =>
             this.actionHoverCell(data.col, data.row, data.active));
         
