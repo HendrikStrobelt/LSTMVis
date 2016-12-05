@@ -5,23 +5,23 @@
 
 }
 
-.heatmap-cell.hovered {
+.heatmap .cell.hovered {
     stroke: red;
     stroke-width: 2;
 }
 
 
 /* Heatmap Tooltip style */
-.heatmap-tooltip {
+.heatmap .tooltip {
     pointer-events: none;
 }
 
-.heatmap-tooltip rect {
+.heatmap .tooltip rect {
     fill: black;
     fill-opacity: .5;
 }
 
-.heatmap-tooltip text {
+.heatmap .tooltip text {
     fill: white;
     font-weight: bold;
     font-size: 12pt;
@@ -30,20 +30,20 @@
 
 
 /* Heatmap GUI Panel styles */
-.heatmap-gui-panel rect {
+.heatmap .gui-panel rect {
     stroke: black;
     fill: white;
     opacity: .3;
 }
 
-.heatmap-gui-panel circle {
+.heatmap .gui-panel circle {
     fill: darkgray;
     stroke: none;
     opacity: .7;
     pointer-events: none;
 }
 
-.heatmap-gui-panel .selected {
+.heatmap .gui-panel .selected {
     opacity: 1;
 }
 
