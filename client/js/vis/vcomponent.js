@@ -17,11 +17,10 @@ class VComponent {
 
     /**
      * Should be overwritten to define the set of ALL options and their defaults
-     * @private
      * @returns {{}}  an key-value object for default options
      */
-    _getDefaultOptions() {
-        console.error(this.constructor.name + '._getDefaultOptions() not implemented');
+    static get defaultOptions() {
+        console.error('static get defaultOptions() not implemented');
 
         return {};
     }
@@ -34,7 +33,7 @@ class VComponent {
     constructor({parent, options}) {
         this.parent = parent;
 
-        const defaults = this._getDefaultOptions();
+        const defaults = this.defaultOptions;
         this.options = {};
         this.id = Util.simpleUId({});
         Object.keys(defaults).forEach(key => this.options[key] = options[key] || defaults[key]);
@@ -52,7 +51,7 @@ class VComponent {
     }
 
     /**
-     * Everytime data has changed, update is called and
+     * Every time data has changed, update is called and
      * triggers wrangling and re-rendering
      * @param {Object} data data object
      * @return {*} ---
@@ -94,12 +93,6 @@ class VComponent {
     updateOptions({options}) {
         Object.keys(options).forEach(k => this.options[k] = options[k]);
     }
-
-    
-    subscribe(listener) {
-
-    }
-
 
 }
 
