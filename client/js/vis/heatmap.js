@@ -11,11 +11,20 @@ class HeatMapComponent extends VComponent {
     get defaultOptions() {
         return {
             pos: {x: 30, y: 50},
-            datatype: 'scalar',
-            title: "heatmap",
+            title: "Heatmap",
+            // Width and height of one HM cell
             cellWidth: 10,
             cellHeight: 15,
-            noAutoColorScale: null
+            // Defines if heatmap shows scalar or categorical data
+            chartType: HeatMapComponent.chartType.scalar,
+            // D3 color scale or 'null' if using automatic min-max scale
+            ownColorScale: null,
+            // Default color schemes for automatic scales
+            colorsZeroOne: ['#f7f7f7', '#0571b0'],
+            colorsNegativeZeroOne: ['#ca0020', '#f7f7f7', '#0571b0'],
+            colorsCategorical: ["#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", "#0099c6", "#dd4477", "#66aa00",
+                "#b82e2e", "#316395", "#994499", "#22aa99", "#aaaa11", "#6633cc", "#e67300", "#8b0707", "#651067",
+                "#329262", "#5574a6", "#3b3eac"]
         }
     }
 
@@ -25,6 +34,13 @@ class HeatMapComponent extends VComponent {
             values: null,
             labels: null,
             opacity: []
+        }
+    }
+
+    static get chartType() {
+        return {
+            scalar: 1,
+            categorical: 2
         }
     }
 
@@ -97,19 +113,26 @@ class HeatMapComponent extends VComponent {
 
     // RENDER/WRANGLE METHODS
     _wrangle(data) {
-        let colorScale = null;
-        if (this.options.noAutoColorScale == undefined) {
-            this.max = this.options.max || _.max(_.flatten(data.values));
-            this.min = this.options.min || _.min(_.flatten(data.values));
-            if (this.min < 0) {
-                const maxAbs = -this.min > this.max ? -this.min : this.max;
-                colorScale = d3.scaleLinear()
-                  .domain([maxAbs, 0, maxAbs])
-                  .range(['#ca0020', '#f7f7f7', '#0571b0']);
-            } else {
-                colorScale = d3.scaleLinear()
-                  .domain([this.min, this.max])
-                  .range(['#f7f7f7', '#0571b0'])
+        let colorScale = this.options.ownColorScale;
+        // If no own color scale given, create one
+        if (this.options.ownColorScale == undefined) {
+
+            if (this.options.chartType == HeatMapComponent.chartType.scalar) {
+                const max = _.max(_.flatten(data.values));
+                const min = _.min(_.flatten(data.values));
+                if (min < 0) {
+                    const maxAbs = -min > max ? -min : max;
+                    colorScale = d3.scaleLinear()
+                      .domain([maxAbs, 0, maxAbs])
+                      .range(this.options.colorsNegativeZeroOne);
+                } else {
+                    colorScale = d3.scaleLinear()
+                      .domain([min, max])
+                      .range(this.options.colorsZeroOne)
+                }
+            } else if (this.options.chartType == HeatMapComponent.chartType.categorical) {
+                const allCategories = [...new Set(_.flatten(data.values))].sort();
+                colorScale = d3.scaleOrdinal(this.options.colorsCategorical).domain(allCategories);
             }
         }
 
@@ -132,9 +155,11 @@ class HeatMapComponent extends VComponent {
     _render(renderData) {
 
         // Build the scales.
-        this.scaleY = d3.scaleLinear().domain([0, 1])
+        this.scaleY = d3.scaleLinear()
+          .domain([0, 1])
           .range([0, this.options.cellHeight]);
-        this.scaleX = d3.scaleLinear().domain([0, 1])
+        this.scaleX = d3.scaleLinear()
+          .domain([0, 1])
           .range([0, this.options.cellWidth]);
 
         // Create a heat map cell
@@ -142,7 +167,7 @@ class HeatMapComponent extends VComponent {
         hmCell.exit().remove();
         const hmUpdate = hmCell.enter().append("rect").merge(hmCell);
 
-        const has_opacity = renderData.opacity.length > 0 && this.options.datatype != 'scalar';
+        const hasOpacity = renderData.opacity.length > 0 && this.options.chartType != this.chartType.scalar;
         const hover = active => d =>
           this.eventHandler.trigger(this.events.cellHovered,
             {col: d.col, row: d.row, active: active});
@@ -155,7 +180,7 @@ class HeatMapComponent extends VComponent {
         })
           .styles({
               fill: d => renderData.colorScale(d.value),
-              opacity: d => (has_opacity) ? renderData.opacity[d.col][d.row] : null
+              opacity: d => (hasOpacity) ? renderData.opacity[d.col][d.row] : null
           })
           .on('mouseover', hover(true))
           .on('mouseout', hover(false));
