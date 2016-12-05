@@ -3,7 +3,7 @@ module.exports = {
         "browser": true,
         "es6": true
     },
-    "globals": {"module": false, "d3": false, "VComponent": false, 'SVG': false, "Util": false, "SimpleComponent":false},
+    "globals": {"module": false, "d3": false, "VComponent": false, 'SVG': false, "Util": false, "SimpleComponent":false, "_": false},
     "extends": "eslint:recommended",
     "rules": {
         "accessor-pairs": "error",

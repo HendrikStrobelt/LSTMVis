@@ -11,8 +11,20 @@ class Tester {
     }
 
 
+    static test_heatmap() {
+        const event_handler = $({});        
+        const v = d3.select('#heat');
+        const sv = new HeatMapComponent({parent: v, options: {}});
+        sv.bindEvents(event_handler);
+        sv.update({labels: [["a", "b", "cd", "ef"], 
+                            ["g", "h", "i", "j"]],
+                   values: [[10, 0, 1, 5], 
+                            [10, 12, 10, 2]]});
+
+    }
 }
 
-Tester.test_simple();
+// Tester.test_simple();
+Tester.test_heatmap();
 
 

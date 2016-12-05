@@ -36,6 +36,7 @@ class VComponent {
 
         const defaults = this._getDefaultOptions();
         this.options = {};
+        this.id = Util.simpleUId({});
         Object.keys(defaults).forEach(key => this.options[key] = options[key] || defaults[key]);
 
         this._init()
@@ -56,7 +57,7 @@ class VComponent {
      * @param {Object} data data object
      * @return {*} ---
      */
-    update({data}) {
+    update(data) {
         this.data = data;
         this.renderData = this._wrangle(data);
         this._render(this.renderData);
@@ -92,6 +93,11 @@ class VComponent {
      */
     updateOptions({options}) {
         Object.keys(options).forEach(k => this.options[k] = options[k]);
+    }
+
+    
+    subscribe(listener) {
+
     }
 
 
