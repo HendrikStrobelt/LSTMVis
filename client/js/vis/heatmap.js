@@ -97,7 +97,7 @@ class HeatMapComponent extends VComponent {
 
     // RENDER/WRANGLE METHODS
     _wrangle(data) {
-        let colorScale = null
+        let colorScale = null;
         if (this.options.noAutoColorScale == undefined) {
             this.max = this.options.max || _.max(_.flatten(data.values));
             this.min = this.options.min || _.min(_.flatten(data.values));
@@ -130,6 +130,7 @@ class HeatMapComponent extends VComponent {
     }
 
     _render(renderData) {
+
         // Build the scales.
         this.scaleY = d3.scaleLinear().domain([0, 1])
           .range([0, this.options.cellHeight]);

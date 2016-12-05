@@ -212,12 +212,12 @@ module.exports = {
             "error",
             "never"
         ],
-        "object-property-newline": [
-            "error",
-            {
-                "allowMultiplePropertiesPerLine": true
-            }
-        ],
+        // "object-property-newline": [
+        //     "error",
+        //     {
+        //         "allowMultiplePropertiesPerLine": true
+        //     }
+        // ],
         "object-shorthand": "off",
         "one-var": "off",
         "one-var-declaration-per-line": "error",
