@@ -1,0 +1,8 @@
+.non-active{
+    pointer-events: none;
+}
+
+.slider-handle{
+    fill: grey;
+    stroke: red;
+}
