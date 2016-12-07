@@ -29,7 +29,15 @@ class Tester {
         const event_handler = $({});
         const v = d3.select('#line');
         const sv = new LinePlot({parent: v, options: {}});
-        sv.update({cellData: [1, 2, 3, 4], timeSteps: 50});
+        sv.update({
+            timeSteps: 3,
+            cellValues: [
+                {index: 0, values: [0.1, 0.3, 0.2]},
+                {index: 1, values: [0.4, 0.6, 0.1]},
+                {index: 2, values: [0.5, 0.62, 0.9]}],
+            selectedCells: [2],
+            deselectedCells: []
+        });
 
         // sv.bindEvents(event_handler);
         // sv.update({

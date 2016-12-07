@@ -30,7 +30,7 @@ class LinePlot extends VComponent {
         return [
             {name: 'main', pos: {x: 60, y: 0}},
             {name: 'overlay', pos: {x: 60, y: 0}},
-            {name: 'thresholdSlider', pos: {x: 60, y: 0}},
+            {name: 'axis', pos: {x: 60, y: 0}},
         ]
     }
 
@@ -44,62 +44,156 @@ class LinePlot extends VComponent {
     }
 
     _init() {
-
         this.thresholdValue = 0;
-        this._initThresholdSlider();
-        this._initThresholdLine();
+        this._initAxisAndSlider();
 
     }
 
-    _initThresholdSlider() {
+    _initAxisAndSlider() {
         const yScale = this.yScale.copy();
         yScale.clamp(true);
 
-        const sliderParent = this.layers.thresholdSlider;
+        const axisParent = this.layers.axis;
 
-        sliderParent.append('g').attr('class', 'y-axis').call(d3.axisLeft(yScale));
+        axisParent.append('g').attr('class', 'y-axis').call(d3.axisLeft(yScale));
 
+        // Add a zero line:
+        this.layers.main.append('line').attr('class', 'zeroLine');
+
+        // Add the slider:
         const dragging = () =>
           this.eventHandler.trigger(
             this.events.thresholdChanged, {newValue: yScale.invert(d3.event.y)});
 
-        sliderParent.append('line').attrs({
+        axisParent.append('line').attrs({
             class: 'slider-bg',
             y1: yScale.range()[1],
             y2: yScale.range()[0]
         }).styles({'stroke-width': '10', 'stroke': 'black', 'opacity': '0'})
           .call(d3.drag().on('start drag', dragging));
 
-        sliderParent.append('circle').attrs({
+        axisParent.append('circle').attrs({
             class: 'slider-handle non-active',
             cy: yScale(this.thresholdValue),
             r: 5
-        })
+        });
 
-
-    }
-
-    _initThresholdLine() {
         this.layers.overlay.append('line').attr('class', 'thresholdLine');
+
     }
+
 
     _wrangle(data) {
         const dataLength = data.timeSteps;
         this.xScale = d3.scaleLinear().domain([0, dataLength])
           .range([0, dataLength * this.options.cellWidth]);
 
+        // Determine if update axis is necessary:
+        const st = this._states;
+        st.needsAxisUpdate = (st.dataLength === null || st.dataLength != dataLength);
+        st.dataLength = dataLength;
+
         return data;
     }
 
 
     _render(renderData) {
+        const st = this._states;
 
+        this._updateLines(renderData);
+
+        // Only update axis if necessary:
+        if (st.needsAxisUpdate) {
+            this._updateAxisAndSlider();
+            st.needsAxisUpdate = false;
+        }
+
+    }
+
+    _updateAxisAndSlider() {
+        const yScale = this.yScale;
+        const xScale = this.xScale;
+        const clampedYScale = yScale.copy().clamp(true);
+
+        const axisParent = this.layers.axis;
+        axisParent.select('.y-axis').call(d3.axisLeft(yScale));
+
+        // Update zero line
+        this.layers.main.select('.zeroLine')
+          .attrs({
+              x1: xScale.range()[0],
+              x2: xScale.range()[1],
+              y1: yScale(0),
+              y2: yScale(0)
+          });
+
+        // Update the slider area
+        const dragging = () =>
+          this.eventHandler.trigger(
+            this.events.thresholdChanged, {newValue: clampedYScale.invert(d3.event.y)});
+
+        axisParent.select('.slider-bg').attrs({
+            y1: yScale.range()[1],
+            y2: yScale.range()[0]
+        }).call(d3.drag().on('start drag', dragging));
+
+        // Update threshold handle and threshold line
+        const tValue = yScale(this.thresholdValue);
+        axisParent.select('.slider-handle').attrs({
+            cy: tValue,
+        });
+
+        this.layers.overlay.select('.thresholdLine')
+          .attrs({
+              x1: xScale.range()[0],
+              x2: xScale.range()[1],
+              y1: tValue,
+              y2: tValue
+          });
+    }
+
+    _updateLines(renderData) {
         const xScale = this.xScale;
         const yScale = this.yScale;
 
-        this._updateThresholdLine({xScale, yPos: yScale(this.thresholdValue)});
 
-        this._updateLines({xScale, yScale, renderData});
+        const lineOpacity = 1.0 / (Math.sqrt(renderData.cellValues.length) + 0.00001);
+        const lineGenerator = d3.line()
+          .x((d, i) => xScale(i))
+          .y(d => yScale(d));
+
+        this._updateLineSubset({
+            container: this.layers.main,
+            data: renderData.cellValues.filter(d => !_.includes(renderData.selectedCells, d.index)),
+            lineGenerator, lineOpacity
+        })
+
+
+        this._updateLineSubset({
+            container: this.layers.overlay,
+            data: renderData.cellValues.filter(d => _.includes(renderData.selectedCells, d.index)),
+            lineOpacity: null,
+            lineGenerator
+        })
+
+
+    }
+
+    _updateLineSubset({container, data, lineGenerator, lineOpacity}) {
+        const valueLines = container.selectAll('.valueLine')
+          .data(data);
+        valueLines.exit().remove();
+
+        valueLines
+          .enter().append('path')
+          .merge(valueLines)
+          .attrs({
+              "class": d => "valueLine id_" + d.index,
+              d: d => lineGenerator(d.values)
+          })
+          .styles({
+              opacity: lineOpacity
+          });
 
     }
 
@@ -114,35 +208,14 @@ class LinePlot extends VComponent {
     }
 
     actionUpdateThreshold(newValue) {
-        const xScale = this.xScale;
-        const yScale = this.yScale;
         this.thresholdValue = newValue;
-        this.layers.thresholdSlider.select('.slider-handle').attr('cy', yScale(newValue));
-        this._updateThresholdLine({xScale, yPos: yScale(newValue)});
+        this._updateAxisAndSlider();
+
     }
 
     _bindLocalEvents(eventHandler) {
         eventHandler.bind(this.events.thresholdChanged,
           ({newValue}) => this.actionUpdateThreshold(newValue))
-    }
-
-
-    _updateThresholdLine({xScale, yPos}) {
-        this.layers.overlay.select('.thresholdLine')
-          .attrs({
-              x1: xScale.range()[0],
-              x2: xScale.range()[1],
-              y1: yPos,
-              y2: yPos
-          });
-    }
-
-
-    _updateLines({xScale, yScale, renderData}) {
-        // const line_opacity = 1. / (Math.sqrt(dt.draw_data.length) + .00001);
-        // this.lpMain
-
-
     }
 }
 
