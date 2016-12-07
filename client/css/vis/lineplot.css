@@ -1,0 +1,33 @@
+.non-active {
+    pointer-events: none;
+}
+
+.slider-handle {
+    fill: grey;
+    stroke: red;
+}
+
+.lineplot .thresholdLine {
+    stroke: red;
+    stroke-width: 0.5;
+    /*stroke-dasharray: 3, 3;*/
+
+}
+
+.lineplot .valueLine {
+    stroke: black;
+    stroke-width: 1;
+    fill: none;
+}
+
+.lineplot .overlay .valueLine {
+    stroke: #1399e4;
+    stroke-width: 3;
+}
+
+.lineplot .zeroLine {
+    stroke: #b3b3b3;
+    stroke-width: 1;
+    fill: none;
+    stroke-dasharray: 2, 2;
+}
