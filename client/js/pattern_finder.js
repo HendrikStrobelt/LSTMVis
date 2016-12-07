@@ -9,7 +9,7 @@ const Event_list = {
   threshold_update: 'threshold_update',
   cell_hovered: 'cell_hovered',
   new_page: 'new_page',
-  clear_selection: 'clear_selection'
+  clear_selection:'clear_selection'
 };
 
 
@@ -140,7 +140,7 @@ var contextVisGroup = svg.append('g').attr({
 function bindSearchButtons() {
   function search() {
     var value = $("#searchPhrase").val();
-    if (value.length < 1) return;
+    if (value.length<1) return;
     $.ajax(url + "/api/search_words/?html=true"
       + (url_parameters.data_set ? '&data_set=' + url_parameters.data_set : '')
       + "&query=" + encodeURI(value), {
@@ -172,7 +172,7 @@ function bindSearchButtons() {
           return d.text
         })
 
-        $('#search_results_modal').modal()
+        $('#search_results_modal').modal()        
 
 
       }
@@ -203,7 +203,7 @@ function createGlobalInformation(info) {
   //+ (url_parameters.mask ? ' (masked)' : ''));
 
   d3.select('#searchPhrase').attr({
-    disabled: globalInfo['info']['is_searchable'] ? null : true
+    disabled: globalInfo['info'].index ? null : true
   });
 
   var all_states = globalInfo.info.states.types.map(function (d, i) {return d.file + '::' + d.path})
