@@ -214,11 +214,7 @@ def search_words():
     data_set = request.args.get("data_set")
     res = []
     data_set_key = data_set
-
-    dh = data_handlers[data_set_key]
-    if dh.config['etc']['regex_search']:
-        res = dh.regex_search(query, limit, html)
-    elif data_set_key in index_map:
+    if data_set_key in index_map:
         res = ri.query_index(query, limit, html, dir=index_map[data_set_key])
 
     return json.dumps(res)
