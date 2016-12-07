@@ -2,7 +2,9 @@
  * Created by Hendrik Strobelt (hendrik.strobelt.com) on 12/4/16.
  */
 
-class LinePlotComponent extends VComponent {
+class LinePlot extends VComponent {
+
+    // Super class methods ----------------
 
     get events() {
         return {
@@ -19,74 +21,129 @@ class LinePlotComponent extends VComponent {
             minValue: -1,
             maxValue: 1,
             height: 150,
-            // Default threshold
-            threshold: 0
+            // Cell width along x axis
+            cellWidth: 25
+        }
+    }
+
+    get layout() {
+        return [
+            {name: 'main', pos: {x: 60, y: 0}},
+            {name: 'overlay', pos: {x: 60, y: 0}},
+            {name: 'thresholdSlider', pos: {x: 60, y: 0}},
+        ]
+    }
+
+    get _dataFormat() {
+        return {
+            timeSteps: 3,
+            cellValues: [{index: 0, values: [0.1, 0.3, 0.5]}, {index: 1, values: [0.4, 0.5, 0.6]}],
+            selectedCells: [],
+            deselectedCells: []
         }
     }
 
     _init() {
 
-        // Sub-component arrangement
-        const layout = {
-            thresholdSlider: {x: 60, y: 0, w: 10},
-            pc: {x: 60, y: 0}
-        };
-        this.lp = SVG.group(this.parent, 'lineplot ID' + this.id, this.options.pos);
-        this.lpMain = SVG.group(this.lp, 'main', layout.pc);
-        this.lpOverlay = SVG.group(this.lp, 'overlay', layout.pc);
-
-        this.lpSlider = SVG.group(this.lp, 'threshold-slider', layout.thresholdSlider);
-        this._initThresholdSlider(this.lpSlider);
-    }
-
-    _wrangle(data) {
-        return super._wrangle(data);
-    }
-
-
-    _render(renderData) {
-        const op = this.options;
-        const yScale = op.yScale || d3.scaleLinear([op.height, 0]).domain([op.minValue, op.maxValue]);
-        this._updateThresholdSlider({yScale, threshold: op.threshold});
-    }
-
-
-    _thresholdDragged(parent, yScale) {
-        const value = yScale.invert(d3.event.y);
-        parent.select('.slider-handle').attr('cy', yScale(value));
-        this.eventHandler.trigger(this.events.thresholdChanged, {value});
+        this.thresholdValue = 0;
+        this._initThresholdSlider();
+        this._initThresholdLine();
 
     }
 
-    _initThresholdSlider(parent) {
-        const threshold = 0;
-        const op = this.options;
-        const yScale = op.yScale || d3.scaleLinear().domain([op.minValue, op.maxValue]).range([op.height, 0]);
+    _initThresholdSlider() {
+        const yScale = this.yScale.copy();
         yScale.clamp(true);
 
-        parent.append('g').attr('class', 'y-axis').call(d3.axisLeft(yScale));
+        const sliderParent = this.layers.thresholdSlider;
 
-        parent.append('line').attrs({
+        sliderParent.append('g').attr('class', 'y-axis').call(d3.axisLeft(yScale));
+
+        const dragging = () =>
+          this.eventHandler.trigger(
+            this.events.thresholdChanged, {newValue: yScale.invert(d3.event.y)});
+
+        sliderParent.append('line').attrs({
             class: 'slider-bg',
             y1: yScale.range()[1],
             y2: yScale.range()[0]
         }).styles({'stroke-width': '10', 'stroke': 'black', 'opacity': '0'})
-          .call(d3.drag().on('start drag',
-            () => this._thresholdDragged(parent, yScale)));
+          .call(d3.drag().on('start drag', dragging));
 
-        parent.append('circle').attrs({
+        sliderParent.append('circle').attrs({
             class: 'slider-handle non-active',
-            cy: yScale(threshold),
+            cy: yScale(this.thresholdValue),
             r: 5
         })
-    }
-
-    _updateThresholdSlider({yScale, threshold}) {
 
 
     }
 
+    _initThresholdLine() {
+        this.layers.overlay.append('line').attr('class', 'thresholdLine');
+    }
 
+    _wrangle(data) {
+        const dataLength = data.timeSteps;
+        this.xScale = d3.scaleLinear().domain([0, dataLength])
+          .range([0, dataLength * this.options.cellWidth]);
+
+        return data;
+    }
+
+
+    _render(renderData) {
+
+        const xScale = this.xScale;
+        const yScale = this.yScale;
+
+        this._updateThresholdLine({xScale, yPos: yScale(this.thresholdValue)});
+
+        this._updateLines({xScale, yScale, renderData});
+
+    }
+
+
+    // Lineplot methods ----------------
+
+    get yScale() {
+        const op = this.options;
+
+        return op.yScale ||
+          d3.scaleLinear().domain([op.minValue, op.maxValue]).range([op.height, 0]);
+    }
+
+    actionUpdateThreshold(newValue) {
+        const xScale = this.xScale;
+        const yScale = this.yScale;
+        this.thresholdValue = newValue;
+        this.layers.thresholdSlider.select('.slider-handle').attr('cy', yScale(newValue));
+        this._updateThresholdLine({xScale, yPos: yScale(newValue)});
+    }
+
+    _bindLocalEvents(eventHandler) {
+        eventHandler.bind(this.events.thresholdChanged,
+          ({newValue}) => this.actionUpdateThreshold(newValue))
+    }
+
+
+    _updateThresholdLine({xScale, yPos}) {
+        this.layers.overlay.select('.thresholdLine')
+          .attrs({
+              x1: xScale.range()[0],
+              x2: xScale.range()[1],
+              y1: yPos,
+              y2: yPos
+          });
+    }
+
+
+    _updateLines({xScale, yScale, renderData}) {
+        // const line_opacity = 1. / (Math.sqrt(dt.draw_data.length) + .00001);
+        // this.lpMain
+
+
+    }
 }
 
-LinePlotComponent;
+LinePlot;

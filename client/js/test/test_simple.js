@@ -4,7 +4,7 @@
 class Tester {
 
     static test_simple() {
-        const v = d3.select('#vis').node();
+        const v = d3.select('#vis');
         const sv = new SimpleComponent({parent: v, options: {}});
         console.warn(sv, SimpleComponent.events);
 
@@ -28,7 +28,9 @@ class Tester {
     static test_lineplot() {
         const event_handler = $({});
         const v = d3.select('#line');
-        const sv = new LinePlotComponent({parent: v, options: {}});
+        const sv = new LinePlot({parent: v, options: {}});
+        sv.update({cellData: [1, 2, 3, 4], timeSteps: 50});
+
         // sv.bindEvents(event_handler);
         // sv.update({
         //     // labels: [["a", "b", "cd", "ef"],

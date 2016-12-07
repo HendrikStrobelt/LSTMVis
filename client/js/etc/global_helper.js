@@ -21,6 +21,31 @@ class Util {
 
         return prefix + the_unique_id_counter;
     }
+
 }
 
-SVG, Util;
+class SimpleEventHandler {
+    constructor(element) {
+        this.element = element;
+        this.eventListeners = []
+    }
+
+
+    bind(eventName, eventFunction) {
+        this.eventListeners.push({eventName, eventFunction});
+        const eventFunctionWrap = e => eventFunction(e.detail, e);
+        this.element.addEventListener(eventName, eventFunctionWrap, false);
+    }
+
+    getListeners() {
+        return this.eventListeners;
+    }
+
+    trigger(eventName, detail) {
+        this.element.dispatchEvent(new CustomEvent(eventName, {detail}));
+    }
+
+}
+
+
+SVG, Util, SimpleEventHandler;

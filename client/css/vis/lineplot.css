@@ -1,8 +1,14 @@
-.non-active{
+.non-active {
     pointer-events: none;
 }
 
-.slider-handle{
+.slider-handle {
     fill: grey;
     stroke: red;
+}
+
+.lineplot .thresholdLine {
+    stroke: red;
+    stroke-dasharray: 3, 3;
+
 }

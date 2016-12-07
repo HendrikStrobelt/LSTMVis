@@ -3,7 +3,16 @@ module.exports = {
         "browser": true,
         "es6": true
     },
-    "globals": {"module": false, "d3": false, "VComponent": false, 'SVG': false, "Util": false, "SimpleComponent":false, "_": false},
+    "globals": {
+        "module": false,
+        "d3": false,
+        "VComponent": false,
+        'SVG': false,
+        "Util": false,
+        "SimpleComponent": false,
+        "_": false,
+        "SimpleEventHandler": false
+    },
     "extends": "eslint:recommended",
     "rules": {
         "accessor-pairs": "error",
@@ -106,10 +115,10 @@ module.exports = {
         ],
         "new-cap": "error",
         "new-parens": "error",
-        "newline-after-var": [
-            "error",
-            "never"
-        ],
+        // "newline-after-var": [
+        //     "error",
+        //     "never"
+        // ],
         "newline-before-return": "error",
         "newline-per-chained-call": "off",
         "no-alert": "error",
