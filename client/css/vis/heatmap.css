@@ -30,20 +30,20 @@
 
 
 /* Heatmap GUI Panel styles */
-.heatmap .gui-panel rect {
+.heatmap .guiPanel rect {
     stroke: black;
     fill: white;
     opacity: .3;
 }
 
-.heatmap .gui-panel circle {
+.heatmap .guiPanel circle {
     fill: darkgray;
     stroke: none;
     opacity: .7;
     pointer-events: none;
 }
 
-.heatmap .gui-panel .selected {
+.heatmap .guiPanel .selected {
     opacity: 1;
 }
 

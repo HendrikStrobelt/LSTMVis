@@ -4,6 +4,8 @@
 
 class VComponent {
 
+    // STATIC FIELDS ============================================================
+
     /**
      * The static property that contains all class related events.
      * Should be overwritten and event strings have to be unique!!
@@ -19,18 +21,21 @@ class VComponent {
      * Should be overwritten to define the set of ALL options and their defaults
      * @returns {{}}  an key-value object for default options
      */
-    static get defaultOptions() {
-        console.error('static get defaultOptions() not implemented');
+    get defaultOptions() {
+        console.error('get defaultOptions() not implemented');
 
         return {pos: {x: 10, y: 10}};
     }
 
 
-    static get layout() {
-        console.error('static get layout() not implemented');
+    get layout() {
+        console.error('get layout() not implemented');
 
         return [{name: 'main', pos: {x: 0, y: 0}}];
     }
+
+    // CONSTRUCTOR ============================================================
+
 
     /**
      * Inits the class and creates static DOM elements
@@ -63,6 +68,8 @@ class VComponent {
         // Setup the static parts of the DOM tree
         this._init()
     }
+
+    // CREATE BASIC ELEMENTS ============================================================
 
     /**
      * Creates the base element (<g>) that hosts the vis
@@ -99,6 +106,8 @@ class VComponent {
         console.error(this.constructor.name + '._init() not implemented')
     }
 
+    // DATA UPDATE & RENDER ============================================================
+
     /**
      * Every time data has changed, update is called and
      * triggers wrangling and re-rendering
@@ -133,6 +142,8 @@ class VComponent {
     }
 
 
+    // UPDATE OPTIONS ============================================================
+
     /**
      * Updates instance options
      * @param {Object} options only the options that should be updated
@@ -143,6 +154,8 @@ class VComponent {
         Object.keys(options).forEach(k => this.options[k] = options[k]);
         if (reRender) this._render(this.renderData);
     }
+
+    // BIND LOCAL EVENTS ============================================================
 
     _bindLocalEvents(eventHandler) {
         eventHandler;

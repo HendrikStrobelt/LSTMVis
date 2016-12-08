@@ -1,6 +1,6 @@
-class HeatMapComponent extends VComponent {
+class HeatMap extends VComponent {
 
-    get events() {
+    static get events() {
         return {
             cellHovered: 'heatmap-cellHovered',
             rectSelected: 'heatmap-rectSelected',
@@ -16,7 +16,7 @@ class HeatMapComponent extends VComponent {
             cellWidth: 10,
             cellHeight: 15,
             // Defines if heatmap shows scalar or categorical data
-            chartType: HeatMapComponent.chartType.scalar,
+            chartType: HeatMap.chartType.scalar,
             // D3 color scale or 'null' if using automatic min-max scale
             ownColorScale: null,
             // Default color schemes for automatic scales
@@ -28,8 +28,18 @@ class HeatMapComponent extends VComponent {
         }
     }
 
+    get layout() {
+        return [
+            {name: 'guiPanel', pos: {x: 0, y: -40}},
+            {name: 'title', pos: {x: 0, y: -20 + 12}},
+            {name: 'cells', pos: {x: 0, y: 0}},
+            {name: 'tooltip', pos: {x: 5, y: 50}},
+        ];
+
+    }
+
     // Data Style
-    get _dataStyle() {
+    get _dataFormat() {
         return {
             values: null,
             labels: null,
@@ -46,26 +56,14 @@ class HeatMapComponent extends VComponent {
 
     // INIT METHODS
     _init() {
-        this.hm = SVG.group(this.parent, 'heatmap ID' + this.id, this.options.pos);
 
         this._initDecoration();
         this._initTooltip();
     }
 
     _initDecoration() {
-        const decoration = {
-            panelPos: {x: 0, y: -20 - 20},
-            titlePos: {x: 0, y: -20 + 12}
-        };
         // Put title above.
-        this.hm.append('text').attrs(
-          _.extend(
-            {"class": 'title'},
-            decoration.titlePos)
-        ).text(this.options.title);
-
-        // Creates a panel with buttons above the heat map.
-        this.guiPanel = SVG.group(this.hm, 'gui-panel', decoration.panelPos);
+        this.layers.title.append('text').text(this.options.title);
 
         // Add buttons
         const select = (e, button) => () =>
@@ -74,21 +72,21 @@ class HeatMapComponent extends VComponent {
         const height = 10;
         const y = 3;
         const x = [0, 20];
-        const rect_button = this.guiPanel.append('rect');
+        const rect_button = this.layers.guiPanel.append('rect');
         rect_button.attrs({
             class: 'mapping-rect-button',
             x: x[0],
             y, width, height
-        }).on('click', select(this.events.rectSelected, rect_button))
+        }).on('click', select(HeatMap.events.rectSelected, rect_button))
 
-        const circle_button = this.guiPanel.append('rect');
+        const circle_button = this.layers.guiPanel.append('rect');
         circle_button.attrs({
             class: 'mapping-circle-button',
             x: x[1],
             y, width, height
-        }).on('click', select(this.events.circleSelected, circle_button));
+        }).on('click', select(HeatMap.events.circleSelected, circle_button));
 
-        this.guiPanel.append('circle').attrs({
+        this.layers.guiPanel.append('circle').attrs({
             cx: x[1] + 3,
             cy: y + 5,
             r: 2
@@ -96,16 +94,15 @@ class HeatMapComponent extends VComponent {
     }
 
     _initTooltip() {
+        this.layers.tooltip.attr('opacity', 0);
         // Setup the hover tool tip.
-        this.hmCells = SVG.group(this.hm, 'cells', {x: 0, y: 0});
-        this.tooltip = SVG.group(this.hm, 'tooltip', {x: 5, y: 50}).attr("opacity", 0);
-        this.tooltip.append('rect').attrs({
+        this.layers.tooltip.append('rect').attrs({
             x: -50,
             y: 0,
             width: 100,
             height: 15
         });
-        this.tooltip.append('text').attrs({
+        this.layers.tooltip.append('text').attrs({
             x: 0,
             y: 13
         }).text('Hallo')
@@ -117,20 +114,20 @@ class HeatMapComponent extends VComponent {
         // If no own color scale given, create one
         if (this.options.ownColorScale == undefined) {
 
-            if (this.options.chartType == HeatMapComponent.chartType.scalar) {
+            if (this.options.chartType == HeatMap.chartType.scalar) {
                 const max = _.max(_.flatten(data.values));
                 const min = _.min(_.flatten(data.values));
                 if (min < 0) {
                     const maxAbs = -min > max ? -min : max;
                     colorScale = d3.scaleLinear()
-                      .domain([maxAbs, 0, maxAbs])
+                      .domain([-maxAbs, 0, maxAbs])
                       .range(this.options.colorsNegativeZeroOne);
                 } else {
                     colorScale = d3.scaleLinear()
                       .domain([min, max])
                       .range(this.options.colorsZeroOne)
                 }
-            } else if (this.options.chartType == HeatMapComponent.chartType.categorical) {
+            } else if (this.options.chartType == HeatMap.chartType.categorical) {
                 const allCategories = [...new Set(_.flatten(data.values))].sort();
                 colorScale = d3.scaleOrdinal(this.options.colorsCategorical).domain(allCategories);
             }
@@ -163,13 +160,13 @@ class HeatMapComponent extends VComponent {
           .range([0, this.options.cellWidth]);
 
         // Create a heat map cell
-        const hmCell = this.hmCells.selectAll(".cell").data(renderData.raw);
+        const hmCell = this.layers.cells.selectAll(".cell").data(renderData.raw);
         hmCell.exit().remove();
         const hmUpdate = hmCell.enter().append("rect").merge(hmCell);
 
         const hasOpacity = renderData.opacity.length > 0 && this.options.chartType != this.chartType.scalar;
         const hover = active => d =>
-          this.eventHandler.trigger(this.events.cellHovered,
+          this.eventHandler.trigger(HeatMap.events.cellHovered,
             {col: d.col, row: d.row, active: active});
         hmUpdate.attrs({
             "class": d => "cell x" + d.col + " y" + d.row,
@@ -188,11 +185,11 @@ class HeatMapComponent extends VComponent {
 
     // ACTION METHODS
     actionHoverCell(x, y, select) {
-        const hovered = this.hm.selectAll(".x" + x + ".y" + y);
+        const hovered = this.layers.cells.selectAll(".x" + x + ".y" + y);
         hovered.classed('hovered', select);
         if (select) {
             const datum = hovered.datum();
-            this.tooltip.attrs({
+            this.layers.tooltip.attrs({
                 opacity: 1,
                 "transform": SVG.translate({
                     x: this.scaleX(datum.col),
@@ -200,21 +197,24 @@ class HeatMapComponent extends VComponent {
                 })
             }).select('text').text(datum.label);
         } else {
-            this.tooltip.attrs({opacity: 0});
+            this.layers.tooltip.attrs({opacity: 0});
         }
     }
 
-    bindEvents(handler) {
-        this.eventHandler = handler;
-        handler.bind(this.events.cellHovered, (e, data) =>
+    _bindLocalEvents() {
+        const handler = this.eventHandler;
+
+        handler.bind(HeatMap.events.cellHovered, data =>
           this.actionHoverCell(data.col, data.row, data.active));
 
-        handler.bind(this.events.rectSelected, (e, hm_id) =>
-          this.hm.selectAll('.mapping-rect-button').classed('selected', this.id == hm_id));
+        handler.bind(HeatMap.events.rectSelected, hm_id =>
+          this.layers.guiPanel.selectAll('.mapping-rect-button').classed('selected', this.id == hm_id));
 
-        handler.bind(this.events.circleSelected, (e, hm_id) =>
-          this.hm.selectAll('.mapping-circle-button').classed('selected', this.id == hm_id));
+        handler.bind(HeatMap.events.circleSelected, hm_id =>
+          this.layers.guiPanel.selectAll('.mapping-circle-button').classed('selected', this.id == hm_id));
+
+
     }
 }
 
-HeatMapComponent;
+HeatMap;

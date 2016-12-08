@@ -2,3 +2,4 @@
 .DS_Store
 _build_html
 docs/_build
+node_modules
