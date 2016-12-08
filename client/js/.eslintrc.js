@@ -11,7 +11,9 @@ module.exports = {
         "Util": false,
         "SimpleComponent": false,
         "_": false,
-        "SimpleEventHandler": false
+        "SimpleEventHandler": false,
+        "HeatMap": false,
+        "LinePlot": false
     },
     "extends": "eslint:recommended",
     "rules": {

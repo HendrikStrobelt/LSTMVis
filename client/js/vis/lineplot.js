@@ -6,7 +6,7 @@ class LinePlot extends VComponent {
 
     // Super class methods ----------------
 
-    get events() {
+    static get events() {
         return {
             thresholdChanged: 'lineplot-thresholdChanged'
         }
@@ -130,7 +130,7 @@ class LinePlot extends VComponent {
         // Update the slider area
         const dragging = () =>
           this.eventHandler.trigger(
-            this.events.thresholdChanged, {newValue: clampedYScale.invert(d3.event.y)});
+            LinePlot.events.thresholdChanged, {newValue: clampedYScale.invert(d3.event.y)});
 
         axisParent.select('.slider-bg').attrs({
             y1: yScale.range()[1],
@@ -214,7 +214,7 @@ class LinePlot extends VComponent {
     }
 
     _bindLocalEvents(eventHandler) {
-        eventHandler.bind(this.events.thresholdChanged,
+        eventHandler.bind(LinePlot.events.thresholdChanged,
           ({newValue}) => this.actionUpdateThreshold(newValue))
     }
 }

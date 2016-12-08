@@ -31,10 +31,12 @@ class SimpleEventHandler {
     }
 
 
-    bind(eventName, eventFunction) {
-        this.eventListeners.push({eventName, eventFunction});
-        const eventFunctionWrap = e => eventFunction(e.detail, e);
-        this.element.addEventListener(eventName, eventFunctionWrap, false);
+    bind(eventNames, eventFunction) {
+        for (const eventName of eventNames.split(' ')) {
+            this.eventListeners.push({eventName, eventFunction});
+            const eventFunctionWrap = e => eventFunction(e.detail, e);
+            this.element.addEventListener(eventName, eventFunctionWrap, false);
+        }
     }
 
     getListeners() {
