@@ -11,20 +11,39 @@ class SimpleComponent extends VComponent {
         }
     }
 
-    _getDefaultOptions() {
+    get defaultOptions() {
         return {
-            x: 30,
-            y: 50
+            pos: {x: 30, y: 50}
         }
     }
 
-    _init() {
-        this.mainG = d3.select(this.parent).append('g')
-          .attr('transform', SVG.translate({x: this.options.x, y: this.options.y}));
-
-        this.mainG.append('text').text('SimpleVis').on('click', () => console.warn(SimpleComponent.events.textClick));
+    get layout() {
+        return [
+            {name: 'text', pos: {x: 0, y: 50}}
+        ]
     }
 
+    _init() {
+
+        this.isActive = false;
+
+        this.layers.text.append('text').text('click me').style('font-family', 'sans-serif')
+          .on('click',
+            () => this.eventHandler.trigger(SimpleComponent.events.textClick, 'Hi World'));
+    }
+
+    _bindLocalEvents() {
+        this.eventHandler.bind(
+          SimpleComponent.events.textClick, d => this.actionTextClicked(d))
+    }
+
+
+    actionTextClicked(d) {
+        console.warn(d);
+        this.layers.text.selectAll('text').style('font-weight',
+          () => (this.isActive = !this.isActive) ? 700 : 300)
+
+    }
 }
 
 SimpleComponent;

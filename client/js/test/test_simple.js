@@ -6,8 +6,6 @@ class Tester {
     static test_simple() {
         const v = d3.select('#vis');
         const sv = new SimpleComponent({parent: v, options: {}});
-        console.warn(sv, SimpleComponent.events);
-
     }
 
 
@@ -78,7 +76,7 @@ class Tester {
 
 }
 
-// Tester.test_simple();
+Tester.test_simple();
 Tester.test_heatmap();
 Tester.test_lineplot();
 
