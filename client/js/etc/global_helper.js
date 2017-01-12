@@ -22,6 +22,10 @@ class Util {
         return prefix + the_unique_id_counter;
     }
 
+    static vectorSum(a, b) {
+        return a.map((d, i) => a[i] + b[i])
+    }
+
 }
 
 class SimpleEventHandler {

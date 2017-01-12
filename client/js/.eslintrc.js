@@ -13,7 +13,8 @@ module.exports = {
         "_": false,
         "SimpleEventHandler": false,
         "HeatMap": false,
-        "LinePlot": false
+        "LinePlot": false,
+        "WordSequence": false,
     },
     "extends": "eslint:recommended",
     "rules": {
@@ -150,7 +151,7 @@ module.exports = {
             "error",
             "functions"
         ],
-        "no-invalid-this": "error",
+        "no-invalid-this": "off",
         "no-iterator": "error",
         "no-label-var": "error",
         "no-labels": "error",

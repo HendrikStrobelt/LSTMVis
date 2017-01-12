@@ -19,9 +19,10 @@ class Tester {
                 parent: v,
                 eventHandler,
                 options: {
-                    title:'HeatMap '+i,
+                    title: 'HeatMap ' + i,
                     pos: {x: 0, y: 40 + i * 100}
-                }});
+                }
+            });
             sv.update({
                 labels: [["a" + i, "b" + i, "cd", "ef"],
                     ["g", "h", "i" + i, "j"]],
@@ -68,9 +69,40 @@ class Tester {
                 cellValues: data,
                 selectedCells,
                 deselectedCells: []
-           })
+            })
         })
 
+
+    }
+
+
+    static test_wordseq() {
+        const v = d3.select('#wordseq');
+        const ws = new WordSequence({parent: v, options: {}});
+        ws.update({
+            words: ['hello', 'world', 'gIL', 'a', 'beautiful', 'day', '!']
+        })
+
+        var cellWidth = 35;
+
+        d3.select('#wordseq_inc')
+          .on('click', () => {
+              cellWidth += 5;
+              ws.updateOptions({
+                  options: {cellWidth: cellWidth},
+                  reRender: true
+              })
+          })
+
+        d3.select('#wordseq_dec')
+          .on('click', () => {
+              cellWidth -= 5;
+              cellWidth = Math.max(5, cellWidth);
+              ws.updateOptions({
+                  options: {cellWidth: cellWidth},
+                  reRender: true
+              })
+          })
 
     }
 
@@ -79,5 +111,5 @@ class Tester {
 Tester.test_simple();
 Tester.test_heatmap();
 Tester.test_lineplot();
-
+Tester.test_wordseq();
 
