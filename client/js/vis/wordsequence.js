@@ -8,7 +8,8 @@ class WordSequence extends VComponent {
     static get events() {
         return {
             brushSelectionChanged: 'wordsequence_brushSelChanged',
-            zeroBrushSelectionChanged: 'wordsequence_zeroBrushSelChanged'
+            zeroBrushSelectionChanged: 'wordsequence_zeroBrushSelChanged',
+            wordHovered: 'wordsequence_wordHovered'
         }
     }
 
@@ -17,7 +18,9 @@ class WordSequence extends VComponent {
             pos: {x: 10, y: 10},
             cellWidth: 35,
             cellPadding: 2,
-            cellHeight: 20
+            cellHeight: 20,
+            zeroBrush: true,
+            hovering: true
         }
     }
 
@@ -26,7 +29,7 @@ class WordSequence extends VComponent {
             {name: 'measure', pos: {x: 0, y: -10}},
             {name: 'text', pos: {x: 0, y: 50}},
             {name: 'brush', pos: {x: 0, y: 50}},
-            {name: 'zeroBrush', pos: {x: 0, y: (50 + 20 + 5)}}
+            {name: 'zeroBrush', pos: {x: 0, y: 50 + 5}}
         ]
     }
 
@@ -63,7 +66,8 @@ class WordSequence extends VComponent {
 
         this._renderWords({renderData, op, st});
         this._renderBrush({op, st});
-        this._renderZeroBrush({op, st});
+
+        if (op.zeroBrush) this._renderZeroBrush({op, st});
 
 
     }
@@ -74,17 +78,31 @@ class WordSequence extends VComponent {
         word.exit().remove();
 
         // --- adding Element to class word
-        const wordEnter = word.enter().append("g").attr("class", "word noselect");
+        const wordEnter = word.enter().append("g");
+        wordEnter.append('rect');
         wordEnter.append('text').text(d => d.text);
 
         word = wordEnter.merge(word);
+        word.attr("class", (d, i) => `word noselect word_${i}`);
 
         // --- changing nodes for word
-        word.attr("transform", (d, i) => {
+        word.attr('transform', (d, i) => `translate(${xScale(i)},0)`);
+        word.select('rect')
+          .attrs({y: -op.cellHeight, width: op.cellWidth, height: op.cellHeight})
+
+        word.select('text').attr("transform", d => {
             const scaleX = (op.cellWidth - op.cellPadding) / d.length || 1;
 
-            return `translate(${xScale(i)},0)` + (scaleX < 1 ? `scale(${scaleX},1)` : '');
+            return (scaleX < 1 ? `scale(${scaleX},1)` : '');
         });
+
+
+        // word.on('mousedown', () => {
+        //   const brush_elm = this.base.select('.brush .overlay').node();
+        //   const new_click_event = new MouseEvent('mousedown', d3.event);
+        //   brush_elm.dispatchEvent(new_click_event);
+        // });
+
     }
 
     _renderBrush({op, st}) {
@@ -142,6 +160,23 @@ class WordSequence extends VComponent {
 
         this.layers.brush.call(brushGenerator);
 
+        const ol = this.layers.brush;
+
+        if (op.hovering) {
+            ol.on('mousemove', () => {
+                const wordNo = Math.floor(xScale.invert(d3.mouse(ol.node())[0]));
+                if (st.wordHovered != wordNo) {
+                    st.wordHovered = wordNo;
+                    this.eventHandler.trigger(WordSequence.events.wordHovered, wordNo)
+                }
+            });
+
+            ol.on('mouseout', () => {
+                st.wordHovered = null;
+                this.eventHandler.trigger(WordSequence.events.wordHovered, -1)
+
+            });
+        }
         if (st.selectedRange)
             brushGenerator.move(this.layers.brush, st.selectedRange.map(xScale));
         else
@@ -204,7 +239,7 @@ class WordSequence extends VComponent {
               .merge(zHandles)
               .attrs({
                   x: d => xScale(d[d.handle]) - 3,
-                  y: -op.cellHeight / 2,
+                  y: op.cellHeight / 2,
                   height: op.cellHeight / 2,
                   width: 6
               }).call(d3.drag()
@@ -218,15 +253,15 @@ class WordSequence extends VComponent {
               .attrs({
                   x1: d => xScale(d.l),
                   x2: d => xScale(d.r),
-                  y1: -3,
-                  y2: -3
+                  y1: op.cellHeight - 3,
+                  y2: op.cellHeight - 3
               });
 
             const signatureLineData = [
-                [sr[0], -3],
-                [sr[0], -op.cellHeight + 3],
-                [sr[1], -op.cellHeight + 3],
-                [sr[1], -3]
+                [sr[0], op.cellHeight - 3],
+                [sr[0], 3],
+                [sr[1], 3],
+                [sr[1], op.cellHeight - 3]
             ]
             const signatureLine = d3.line().x(d => xScale(d[0])).y(d => d[1])
 
@@ -247,13 +282,21 @@ class WordSequence extends VComponent {
     _bindLocalEvents() {
         this.eventHandler.bind(WordSequence.events.brushSelectionChanged,
           d => {
-              this._renderZeroBrush({op: this.options, st: this._states})
+              if (this.options.zeroBrush) this._renderZeroBrush({op: this.options, st: this._states})
           }
         )
 
         this.eventHandler.bind(WordSequence.events.zeroBrushSelectionChanged,
           d => console.log('sss', d)
         )
+
+        this.eventHandler.bind(WordSequence.events.wordHovered,
+          wordNo => {
+              this.layers.text.selectAll('.word')
+                .classed('hovered', (d, i) => i == wordNo)
+          })
+
+
     }
 
 

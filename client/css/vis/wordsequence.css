@@ -1,3 +1,20 @@
+.wordsequence .word rect {
+    fill: lightgray;
+    stroke: darkgray;
+    opacity: .5;
+    cursor: crosshair;
+}
+
+.wordsequence .word.hovered rect{
+    fill: lightblue;
+}
+
+
+.wordsequence .word text {
+    pointer-events: none;
+}
+
+
 .wordsequence .brush .selection {
     stroke:none;
 }
