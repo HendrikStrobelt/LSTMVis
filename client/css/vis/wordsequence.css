@@ -1,17 +1,22 @@
 .wordsequence .word rect {
     fill: lightgray;
-    stroke: darkgray;
+    stroke: none;
     opacity: .5;
     cursor: crosshair;
 }
 
 .wordsequence .word.hovered rect{
-    fill: lightblue;
+    stroke: #1399e4;
+    stroke-width: 2;
 }
-
+.wordsequence .word.selected rect{
+    stroke: #2d57b2;
+    stroke-width: 3;
+}
 
 .wordsequence .word text {
     pointer-events: none;
+    dominant-baseline: central;
 }
 
 

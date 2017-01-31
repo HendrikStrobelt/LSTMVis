@@ -9,7 +9,16 @@ class WordSequence extends VComponent {
         return {
             brushSelectionChanged: 'wordsequence_brushSelChanged',
             zeroBrushSelectionChanged: 'wordsequence_zeroBrushSelChanged',
-            wordHovered: 'wordsequence_wordHovered'
+            wordHovered: 'wordsequence_wordHovered',
+            wordClicked: 'wordsequence_wordClicked',
+            updateWordSelection: 'wordsequence_upwordsel'
+        }
+    }
+
+    static get modes() {
+        return {
+            brushing: ['zeroBrush', 'brushSelect', 'hovering'],
+            multiSelect: ['multiSelect', 'hovering']
         }
     }
 
@@ -17,19 +26,18 @@ class WordSequence extends VComponent {
         return {
             pos: {x: 10, y: 10},
             cellWidth: 35,
-            cellPadding: 2,
+            cellPadding: 4,
             cellHeight: 20,
-            zeroBrush: true,
-            hovering: true
+            mode: WordSequence.modes.brushing
         }
     }
 
     get layout() {
         return [
             {name: 'measure', pos: {x: 0, y: -10}},
-            {name: 'text', pos: {x: 0, y: 50}},
-            {name: 'brush', pos: {x: 0, y: 50}},
-            {name: 'zeroBrush', pos: {x: 0, y: 50 + 5}}
+            {name: 'text', pos: {x: 0, y: 20}},
+            {name: 'brush', pos: {x: 0, y: 20}},
+            {name: 'zeroBrush', pos: {x: 0, y: 20 + 5}}
         ]
     }
 
@@ -49,9 +57,14 @@ class WordSequence extends VComponent {
     _wrangle(data) {
         this._states.selectedRange = data.selectedRange;
         this._states.zeroBrushSelection = data.zeroBrushSelection;
+        this._states.colorArray = data.colorArray || [];
+
+        this._states.selectedWords = new Set();
+
 
         return {
-            words: data.words.map(d => ({text: d, length: this._measureTextLength(d)}))
+            words: data.words.map((d, i) =>
+              ({text: d, index: i, length: this._measureTextLength(d)}))
         };
     }
 
@@ -64,10 +77,12 @@ class WordSequence extends VComponent {
           .domain([0, wordCount])
           .range([0, wordCount * op.cellWidth]);
 
-        this._renderWords({renderData, op, st});
-        this._renderBrush({op, st});
+        op.mode.forEach(d => st[d] = true);
 
-        if (op.zeroBrush) this._renderZeroBrush({op, st});
+        this._renderWords({renderData, op, st});
+
+        if (st.brushSelect) this._renderBrush({op, st});
+        if (st.zeroBrush) this._renderZeroBrush({op, st});
 
 
     }
@@ -83,19 +98,40 @@ class WordSequence extends VComponent {
         wordEnter.append('text').text(d => d.text);
 
         word = wordEnter.merge(word);
-        word.attr("class", (d, i) => `word noselect word_${i}`);
+        word
+          .attr("class", d => `word noselect word_${d.index}`)
+          .attr('transform', (d, i) => `translate(${xScale(i)},0)`)
+          .classed('selected', d => ('selectedWords' in st) && st.selectedWords.has(d.index))
 
-        // --- changing nodes for word
-        word.attr('transform', (d, i) => `translate(${xScale(i)},0)`);
-        word.select('rect')
+
+        const rects = word.select('rect')
           .attrs({y: -op.cellHeight, width: op.cellWidth, height: op.cellHeight})
 
-        word.select('text').attr("transform", d => {
-            const scaleX = (op.cellWidth - op.cellPadding) / d.length || 1;
+        if ('colorArray' in st) {
+            rects.style('fill', d => (d.index < st.colorArray.length) ? st.colorArray[d.index] : null);
+        }
 
-            return (scaleX < 1 ? `scale(${scaleX},1)` : '');
-        });
+        word.select('text')
+          .attr('y', -op.cellHeight / 2)
+          .attr('x', op.cellPadding / 2)
+          .attr("transform", d => {
+              const scaleX = (op.cellWidth - op.cellPadding / 2) / d.length || 1;
 
+              return (scaleX < 1 ? `scale(${scaleX},1)` : '');
+          });
+
+        if (st.multiSelect) {
+            word.on('click',
+              d => this.eventHandler.trigger(WordSequence.events.wordClicked, d.index))
+
+            if (st.hovering) {
+                word.select('rect')
+                  .on('mouseenter',
+                    d => this.eventHandler.trigger(WordSequence.events.wordHovered, d.index))
+                this.layers.text.on('mouseout',
+                  () => this.eventHandler.trigger(WordSequence.events.wordHovered, -1))
+            }
+        }
 
         // word.on('mousedown', () => {
         //   const brush_elm = this.base.select('.brush .overlay').node();
@@ -162,7 +198,7 @@ class WordSequence extends VComponent {
 
         const ol = this.layers.brush;
 
-        if (op.hovering) {
+        if (st.hovering) {
             ol.on('mousemove', () => {
                 const wordNo = Math.floor(xScale.invert(d3.mouse(ol.node())[0]));
                 if (st.wordHovered != wordNo) {
@@ -280,31 +316,45 @@ class WordSequence extends VComponent {
 
 
     _bindLocalEvents() {
-        this.eventHandler.bind(WordSequence.events.brushSelectionChanged,
-          d => {
-              if (this.options.zeroBrush) this._renderZeroBrush({op: this.options, st: this._states})
-          }
-        )
+        const handler = this.eventHandler;
+        const ev = WordSequence.events;
 
-        this.eventHandler.bind(WordSequence.events.zeroBrushSelectionChanged,
+        handler.bind(ev.brushSelectionChanged, () => {
+            const st = this._states;
+            if (st.zeroBrush)
+                this._renderZeroBrush({op: this.options, st: st})
+        })
+
+        handler.bind(ev.zeroBrushSelectionChanged,
           d => console.log('sss', d)
         )
 
-        this.eventHandler.bind(WordSequence.events.wordHovered,
-          wordNo => {
-              this.layers.text.selectAll('.word')
-                .classed('hovered', (d, i) => i == wordNo)
-          })
+        handler.bind(ev.wordHovered, wordNo => {
+            this.layers.text.selectAll('.word')
+              .classed('hovered', d => d.index == wordNo)
+        })
 
+        handler.bind(ev.wordClicked, wordIndex => {
+            const st = this._states;
+            const sw = st.selectedWords;
+
+            if (sw.has(wordIndex)) sw.delete(wordIndex);
+            else sw.add(wordIndex);
+
+            this._renderWords({renderData: this.renderData, op: this.options, st})
+
+            handler.trigger(ev.updateWordSelection, [...sw])
+
+        })
+
+        handler.bind(ev.updateWordSelection, d => console.log(d))
 
     }
 
 
-    actionTextClicked(d) {
-        console.warn(d);
-        this.layers.text.selectAll('text').style('font-weight',
-          () => (this.isActive = !this.isActive) ? 700 : 300)
-
+    actionChangeWordBackgrounds(colorArray) {
+        this._states.colorArray = colorArray;
+        this._renderWords({renderData: this.renderData, op: this.options, st: this._states});
     }
 
 }

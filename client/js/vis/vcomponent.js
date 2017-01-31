@@ -58,6 +58,7 @@ class VComponent {
         this.layers = this._createLayoutLayers(this.base);
 
         // If not further specified - create a local event handler bound to the bas element
+        this.isLocalEventHandler = !eventHandler;
         this.eventHandler = eventHandler ||
           new SimpleEventHandler(this.base.node());
         this._bindLocalEvents(this.eventHandler);

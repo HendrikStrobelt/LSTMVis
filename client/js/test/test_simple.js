@@ -14,24 +14,36 @@ class Tester {
         const v = d3.select('#heat');
         const eventHandler = new SimpleEventHandler(v.node());
 
+        const heatmaps = [];
         for (const i of [0, 1]) {
-            const sv = new HeatMap({
+            const hm = new HeatMap({
                 parent: v,
                 eventHandler,
                 options: {
                     title: 'HeatMap ' + i,
-                    pos: {x: 0, y: 40 + i * 100}
+                    pos: {x: 0, y: 40 + i * 100},
+                    bindEventsAutomatically:false
                 }
             });
-            sv.update({
+            hm.update({
                 labels: [["a" + i, "b" + i, "cd", "ef"],
                     ["g", "h", "i" + i, "j"]],
                 values: [[10 * i, 0, 1, 5],
                     [10, -3 * i, 10, 2]]
             });
 
+            heatmaps.push(hm);
+
         }
 
+        // Mutual exclusive selection of rect
+        eventHandler.bind(`${HeatMap.events.rectSelected}`, hm_id => {
+              const idSet = new Set([hm_id]);
+              heatmaps.forEach(hm => hm.actionRectSelect(idSet));
+          }
+        )
+
+        // Binding multiple events
         eventHandler.bind(
           `${HeatMap.events.rectSelected} ${HeatMap.events.cellHovered}`,
           (d, e) => console.log(d, e.type)
@@ -79,8 +91,9 @@ class Tester {
     static test_wordseq() {
         const v = d3.select('#wordseq');
         const ws = new WordSequence({parent: v, options: {}});
+        const words = ['hello', 'world', 'gIL', 'a', 'beautiful', 'day', '!'];
         ws.update({
-            words: ['hello', 'world', 'gIL', 'a', 'beautiful', 'day', '!']
+            words: words
         })
 
         var cellWidth = 35;
@@ -102,6 +115,14 @@ class Tester {
                   options: {cellWidth: cellWidth},
                   reRender: true
               })
+          })
+
+        d3.select('#wordseq_color')
+          .on('click', () => {
+              const cs = d3.scaleLinear().range(['white', 'red']);
+              const rand = d3.randomUniform(1);
+              const colors = words.map(() => cs(rand()))
+              ws.actionChangeWordBackgrounds(colors)
           })
 
     }

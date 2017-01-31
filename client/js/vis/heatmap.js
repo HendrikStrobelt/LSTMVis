@@ -1,5 +1,7 @@
 class HeatMap extends VComponent {
 
+    /** @namespace this.layers.guiPanel */
+
     static get events() {
         return {
             cellHovered: 'heatmap-cellHovered',
@@ -24,7 +26,10 @@ class HeatMap extends VComponent {
             colorsNegativeZeroOne: ['#ca0020', '#f7f7f7', '#0571b0'],
             colorsCategorical: ["#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", "#0099c6", "#dd4477", "#66aa00",
                 "#b82e2e", "#316395", "#994499", "#22aa99", "#aaaa11", "#6633cc", "#e67300", "#8b0707", "#651067",
-                "#329262", "#5574a6", "#3b3eac"]
+                "#329262", "#5574a6", "#3b3eac"],
+            // Bind RectSelect and CircleSelect Events automatically
+            // Set to false if should be handled by Application (use action... methods)
+            bindEventsAutomatically: true
         }
     }
 
@@ -77,7 +82,7 @@ class HeatMap extends VComponent {
             class: 'mapping-rect-button',
             x: x[0],
             y, width, height
-        }).on('click', select(HeatMap.events.rectSelected, rect_button))
+        }).on('click', select(HeatMap.events.rectSelected, rect_button));
 
         const circle_button = this.layers.guiPanel.append('rect');
         circle_button.attrs({
@@ -201,17 +206,30 @@ class HeatMap extends VComponent {
         }
     }
 
+    actionRectSelect(idSet) {
+        this.layers.guiPanel.selectAll('.mapping-rect-button')
+          .classed('selected', idSet.has(this.id));
+    }
+
+    actionCircleSelect(idSet) {
+        this.layers.guiPanel.selectAll('.mapping-circle-button')
+          .classed('selected', idSet.has(this.id));
+    }
+
+
     _bindLocalEvents() {
         const handler = this.eventHandler;
 
         handler.bind(HeatMap.events.cellHovered, data =>
           this.actionHoverCell(data.col, data.row, data.active));
 
-        handler.bind(HeatMap.events.rectSelected, hm_id =>
-          this.layers.guiPanel.selectAll('.mapping-rect-button').classed('selected', this.id == hm_id));
+        if (!this.options.bindEventsAutomatically) {
+            handler.bind(HeatMap.events.rectSelected,
+              hm_id => this.actionRectSelect(new Set([hm_id])));
 
-        handler.bind(HeatMap.events.circleSelected, hm_id =>
-          this.layers.guiPanel.selectAll('.mapping-circle-button').classed('selected', this.id == hm_id));
+            handler.bind(HeatMap.events.circleSelected,
+              hm_id => this.actionCircleSelect(new Set([hm_id])));
+        }
 
 
     }
