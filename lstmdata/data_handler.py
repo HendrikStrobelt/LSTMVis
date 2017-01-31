@@ -2,17 +2,13 @@ import cgi
 
 import os
 
-import gc
 import h5py
 import resource
 
 import numpy as np
 import re
-import scipy.signal
-import time
 
 import helper_functions as hf
-from data_structures import State
 
 __author__ = 'Hendrik Strobelt'
 
@@ -287,12 +283,6 @@ class LSTMDataHandler:
 
         for dim in dimensions:
             if dim == 'states':
-                # TODO: contradicts with cell_count call
-                # if states:  # reuse states from alignment
-                #     for st in states:
-                #         st['data'] = [[round(y, round_values) for y in x] for x in st['data'].tolist()]
-                #     res[dim] = states
-                # else:
                 res[dim], cell_active = self.get_states(pos_array, source, left, right,
                                                         round_values=round_values,
                                                         data_transform=data_transform,
@@ -302,12 +292,7 @@ class LSTMDataHandler:
                                                         transpose=True, rle=rle)
                 if 'cell_count' in dimensions:
                     res['cell_count'] = cell_active
-            elif dim == 'words':  # reuse words from alignment
-                # if words_and_embedding:
-                #     for we in words_and_embedding:
-                #         del we['embeddings']
-                #     res[dim] = words_and_embedding
-                # else:
+            elif dim == 'words':
                 res[dim] = self.get_words(pos_array, left, right)
             elif dim.startswith('meta_'):
                 res[dim] = self.get_meta(dim[5:], pos_array, left, right)
@@ -463,11 +448,11 @@ class LSTMDataHandler:
 
         res_50 = list(res[:50])
 
-        for elem in res_50:
-            print elem, cell_count, -1. * (cell_count - elem[4]) / float(elem[3] + cell_count)
-        print(constrain_left, constrain_right)
+        # for elem in res_50:
+        #     print elem, cell_count, -1. * (cell_count - elem[4]) / float(elem[3] + cell_count)
+        # print(constrain_left, constrain_right)
         del res
-        print 'out cs 2:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+        # print 'out cs 2:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 
         return res_50, meta
 
@@ -502,6 +487,20 @@ class LSTMDataHandler:
         # print 'cs:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 
         return matrix, transformed
+
+    def is_valid_source(self, source_id):
+        split = source_id.split('::')
+        if len(split)<2:
+            return False
+
+        source_file = source_id.split('::')[0]
+        source = source_id.split('::')[1]
+
+        b = source in self.h5_files[source_file]
+
+
+        return (source_file in self.h5_files) and \
+               (source in self.h5_files[source_file])
 
     def regex_search(self, _query, no_results=20, htmlFormat=False):
         ws = self.config['word_sequence']

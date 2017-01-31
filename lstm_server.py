@@ -1,10 +1,12 @@
 import argparse
 import connexion
+import numpy as np
 import os
 import yaml
 from flask import send_from_directory
 
 from lstmdata.data_handler import LSTMDataHandler
+import lstmdata.read_index as ri
 
 __author__ = 'Hendrik Strobelt'
 
@@ -15,34 +17,103 @@ index_map = {}
 app = connexion.App(__name__, debug=False)
 
 
-def get_context(**query):
-    project = query['project']
+def get_context(**request):
+    project = request['project']
     if project not in data_handlers:
         return 'No such project', 404
     else:
-        return {'query': query}
+        dh = data_handlers[project]  # type: LSTMDataHandler
+
+        # check if source is exists
+        if not dh.is_valid_source(request['source']):
+            return 'No valid source', 404
+
+        # cell selection by bitmask vs. cell array
+        cells = []
+        if 'bitmask' in request:
+            cells = np.where(np.fromstring(request['bitmask'], dtype=np.uint8) > 48)[0].tolist()
+        elif 'cells' in request:
+            cells = request['cells']
+
+        res = dh.get_dimensions(
+            pos_array=request['pos'],
+            source=request['source'],
+            left=request['left'],
+            right=request['right'],
+            dimensions=request['dims'],
+            data_transform=request['transform'],
+            cells=cells,
+            activation_threshold=request['activation']
+        )
+        res['cells'] = cells
+
+        return {'request': request, 'results': res}
 
 
 def get_info():
-    print 'getinfo'
-    print data_handlers
     res = []
-    for key, value in data_handlers.iteritems():
+    for key, project in data_handlers.iteritems():
         print key
         res.append({
             'project': key,
-            'info': value.config
+            'info': project.config
         })
     return sorted(res, key=lambda x: x['project'])
 
 
-def search(**query):
-    project = query['project']
+def search(**request):
+    project = request['project']
+    res = {}
+
     if project not in data_handlers:
         return 'No such project', 404
-    else:
 
-        return {'query': query}
+    else:
+        # start search either using index or regex
+
+        dh = data_handlers[project]
+        if project in index_map:
+            res = ri.query_index(request['q'], request['limit'], request['html'],
+                                 dir=index_map[project])
+        elif dh.config['etc']['regex_search']:
+            res = dh.regex_search(request['q'], request['limit'], request['html'])
+
+    return {'request': request, 'res': res}
+
+
+def match(**request):
+    project = request['project']
+    res = {}
+
+    if project not in data_handlers:
+        return 'No such project', 404
+
+    else:
+        dh = data_handlers[project]  # type: LSTMDataHandler
+
+        # check if source is exists
+        if not dh.is_valid_source(request['source']):
+            return 'No valid source', 404
+
+        indices, meta = dh.query_similar_activations(
+            source=request['source'],
+            cells=request['cells'],
+            activation_threshold=request['threshold'],
+            data_transform=request['transform'],
+            phrase_length=request['phrase_length'],
+            add_histograms=True,
+            query_mode=request['mode'],
+            constrain_left=request['constraints'][0] > 0,
+            constrain_right=request['constraints'][1] > 0
+        )
+
+        res = {
+            'data': indices,
+            'fuzzy_length_histogram': meta['fuzzy_length_histogram'].tolist(),
+            'strict_length_histogram': meta['strict_length_histogram'].tolist()
+        }
+
+        return {'request': request, 'res': res}
 
 
 @app.route('/client/<path:path>')

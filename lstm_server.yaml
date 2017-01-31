@@ -15,7 +15,7 @@ paths:
       operationId: lstm_server.get_context
       tags:
         - all
-        - contexts
+#        - contexts
       summary: data for a list of token positions and their context
       parameters:
 
@@ -75,15 +75,7 @@ paths:
             type: integer
           collectionFormat: csv
 
-        - name: transform
-          description: state value transformations. By default all values are tanh-ed
-          in: query
-          required: False
-          type: string
-          enum:
-            - tanh
-            - none
-          default: tanh
+        - $ref: '#/parameters/transform'
 
         - name: activation
           description: >
@@ -93,7 +85,6 @@ paths:
           required: False
           type: number
           default: 0.3
-
       responses:
         200:
           description: Return requested data
@@ -104,7 +95,7 @@ paths:
     get:
       tags:
         - all
-        - info
+#        - info
       summary: information about all projects and sources available
       operationId: lstm_server.get_info
       responses:
@@ -119,7 +110,7 @@ paths:
     get:
       tags:
         - all
-        - search and match
+#        - search and match
       summary: >
         search for a token within the project. If an index exists,
         it is used otherwise the search uses Regex matching.
@@ -144,13 +135,80 @@ paths:
           in: query
           type: integer
           default: 50
-
-
       responses:
         200:
           description: aaa
           schema:
             type: object
+
+  /match/{project}:
+    get:
+      tags:
+        - all
+#        - search and match
+      summary: find a matching pattern in dataset
+      operationId: lstm_server.match
+      parameters:
+        - $ref: '#/parameters/project'
+        - $ref: '#/parameters/source'
+        - name: cells
+          description: list of cells to query for
+          in: query
+          required: true
+          type: array
+          items:
+            type: integer
+          default: 100,101
+
+        - name: threshold
+          description: threshold to discretize values
+          in: query
+          required: true
+          type: number
+          default: 0.3
+
+        - name: phrase_length
+          description: if set, filter only for phrases of this length
+          in: query
+          required: false
+          type: integer
+          default: 0
+
+        - name: mode
+          description: matching mode -- fast or complete
+          in: query
+          required: false
+          type: string
+          enum:
+            - fast
+            - complete
+          default: fast
+
+        - name: constraints
+          description: >
+            defines the zero constraints as array [left, right]
+            -- a value larger than 0 indicates that the constrain should be applied
+          in: query
+          required: false
+          type: array
+          maxItems: 2
+          minItems: 2
+          items:
+            type: integer
+          default: 1,0
+
+
+
+
+
+        - $ref: '#/parameters/transform'
+      responses:
+        200:
+          description: result
+          schema:
+            type: object
+
+
 
 
 parameters:
@@ -160,7 +218,7 @@ parameters:
     in: path
     required: true
     type: string
-    default: childbook
+    default: ptb_word
 
   source:
     name: source
@@ -168,7 +226,19 @@ parameters:
     in: query
     required: true
     type: string
-    default: state1
+    default: states::states1
+
+  transform:
+    name: transform
+    description: state value transformations. By default all values are tanh-ed
+    in: query
+    required: False
+    type: string
+    enum:
+      - tanh
+      - none
+    default: tanh
+
 
 
 definitions:
