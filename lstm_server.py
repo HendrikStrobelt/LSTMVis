@@ -26,7 +26,7 @@ def get_context(**request):
 
         # check if source is exists
         if not dh.is_valid_source(request['source']):
-            return 'No valid source', 404
+            return 'No valid source. Valid are: ' + ' -- '.join(dh.valid_sources()), 404
 
         # cell selection by bitmask vs. cell array
         cells = []
@@ -95,10 +95,10 @@ def match(**request):
         if not dh.is_valid_source(request['source']):
             return 'No valid source', 404
 
-        indices, meta = dh.query_similar_activations(
+        ranking, meta = dh.query_similar_activations(
             source=request['source'],
             cells=request['cells'],
-            activation_threshold=request['threshold'],
+            activation_threshold=request['activation'],
             data_transform=request['transform'],
             phrase_length=request['phrase_length'],
             add_histograms=True,
@@ -107,13 +107,26 @@ def match(**request):
             constrain_right=request['constraints'][1] > 0
         )
 
+        request_positions = map(lambda x: x['pos'], ranking)
+        position_details = dh.get_dimensions(
+            pos_array=request_positions,
+            source=request['source'],
+            left=request['left'],
+            right=request['right'],
+            cells=request['cells'],
+            dimensions=request['dims'],
+            data_transform=request['transform'],
+            activation_threshold=request['activation']
+        )
+
         res = {
-            'data': indices,
-            'fuzzy_length_histogram': meta['fuzzy_length_histogram'].tolist(),
-            'strict_length_histogram': meta['strict_length_histogram'].tolist()
+            'rankingDetail': ranking,
+            'positionDetail': position_details,
+            'fuzzyLengthHistogram': meta['fuzzy_length_histogram'].tolist(),
+            'strictLengthHistogram': meta['strict_length_histogram'].tolist()
         }
 
-        return {'request': request, 'res': res}
+        return {'request': request, 'results': res}
 
 
 @app.route('/client/<path:path>')

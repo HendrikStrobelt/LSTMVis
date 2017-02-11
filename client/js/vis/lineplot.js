@@ -63,13 +63,13 @@ class LinePlot extends VComponent {
         // Add the slider:
         const dragging = () =>
           this.eventHandler.trigger(
-            this.events.thresholdChanged, {newValue: yScale.invert(d3.event.y)});
+            LinePlot.events.thresholdChanged, {newValue: yScale.invert(d3.event.y)});
 
         axisParent.append('line').attrs({
             class: 'slider-bg',
             y1: yScale.range()[1],
             y2: yScale.range()[0]
-        }).styles({'stroke-width': '10', 'stroke': 'black', 'opacity': '0'})
+        }).styles({'stroke-width': '20', 'stroke': 'black', 'opacity': '0'})
           .call(d3.drag().on('start drag', dragging));
 
         axisParent.append('circle').attrs({
@@ -88,9 +88,29 @@ class LinePlot extends VComponent {
         this.xScale = d3.scaleLinear().domain([0, dataLength])
           .range([0, dataLength * this.options.cellWidth]);
 
+        // Determine Min/Max values
+        let minValue = Number.MAX_VALUE;
+        let maxValue = -Number.MAX_VALUE;
+
+        data.cellValues.forEach(cell => {
+            cell.values.forEach(value => {
+                if (minValue > value) minValue = value;
+                if (maxValue < value) maxValue = value;
+            })
+        })
+
+        if (minValue < 0) {
+            const maxAbs = maxValue > -minValue ? maxValue : -minValue;
+            this.options.minValue = -maxAbs;
+            this.options.maxValue = maxAbs;
+        } else {
+            this.options.minValue = 0;
+            this.options.maxValue = maxValue;
+        }
+
         // Determine if update axis is necessary:
         const st = this._states;
-        st.needsAxisUpdate = (st.dataLength === null || st.dataLength != dataLength);
+        st.needsAxisUpdate = (st.dataLength === null || st.dataLength !== dataLength);
         st.dataLength = dataLength;
 
         return data;
@@ -98,15 +118,14 @@ class LinePlot extends VComponent {
 
 
     _render(renderData) {
-        const st = this._states;
+
+        const dataLength = renderData.timeSteps;
+        this.xScale = d3.scaleLinear().domain([0, dataLength])
+          .range([0, dataLength * this.options.cellWidth]);
+
 
         this._updateLines(renderData);
-
-        // Only update axis if necessary:
-        if (st.needsAxisUpdate) {
-            this._updateAxisAndSlider();
-            st.needsAxisUpdate = false;
-        }
+        this._updateAxisAndSlider();
 
     }
 
@@ -128,18 +147,31 @@ class LinePlot extends VComponent {
           });
 
         // Update the slider area
-        const dragging = () =>
-          this.eventHandler.trigger(
-            LinePlot.events.thresholdChanged, {newValue: clampedYScale.invert(d3.event.y)});
+        const dragging = () => {
+            const v = clampedYScale.invert(d3.event.y);
+            if (this._states.threshold !== v) {
+                this._states.threshold = v;
+                this.eventHandler.trigger(
+                  LinePlot.events.thresholdChanged, {newValue: v});
+            }
+
+
+        }
 
         axisParent.select('.slider-bg').attrs({
             y1: yScale.range()[1],
             y2: yScale.range()[0]
         }).call(d3.drag().on('start drag', dragging));
 
+        this._updateThreshold();
+    }
+
+    _updateThreshold() {
+        const xScale = this.xScale;
+
         // Update threshold handle and threshold line
-        const tValue = yScale(this.thresholdValue);
-        axisParent.select('.slider-handle').attrs({
+        const tValue = this.yScale(this.thresholdValue);
+        this.layers.axis.select('.slider-handle').attrs({
             cy: tValue,
         });
 
@@ -180,8 +212,7 @@ class LinePlot extends VComponent {
     }
 
     _updateLineSubset({container, data, lineGenerator, lineOpacity}) {
-        const valueLines = container.selectAll('.valueLine')
-          .data(data);
+        const valueLines = container.selectAll('.valueLine').data(data);
         valueLines.exit().remove();
 
         valueLines
@@ -202,21 +233,29 @@ class LinePlot extends VComponent {
 
     get yScale() {
         const op = this.options;
+        if (op.yScale) return op.yScale.range([op.height, 0]);
 
-        return op.yScale ||
-          d3.scaleLinear().domain([op.minValue, op.maxValue]).range([op.height, 0]);
+        return d3.scaleLinear().domain([op.minValue, op.maxValue])
+          .range([op.height, 0]);
     }
 
     actionUpdateThreshold(newValue) {
         this.thresholdValue = newValue;
-        this._updateAxisAndSlider();
+        this._updateThreshold();
 
+    }
+
+    actionUpdateSelectedCells(selCells) {
+        this.renderData.selectedCells = selCells;
+        this._render(this.renderData);
     }
 
     _bindLocalEvents(eventHandler) {
         eventHandler.bind(LinePlot.events.thresholdChanged,
           ({newValue}) => this.actionUpdateThreshold(newValue))
     }
+
+
 }
 
 LinePlot;

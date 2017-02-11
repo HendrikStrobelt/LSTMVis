@@ -1,0 +1,5 @@
+.wordmatrix text.word {
+    /*text-anchor: middle;*/
+    pointer-events: none;
+    dominant-baseline: central;
+}

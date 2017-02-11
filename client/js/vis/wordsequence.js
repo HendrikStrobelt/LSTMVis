@@ -42,29 +42,21 @@ class WordSequence extends VComponent {
     }
 
     _init() {
-        this.measureTextElement = this.layers.measure.append('text');
-    }
-
-    _measureTextLength(text) {
-        this.measureTextElement.text(text);
-        const tl = this.measureTextElement.node().getComputedTextLength();
-        this.measureTextElement.text('');
-
-        return tl;
+        const svgMeasure = new SVGMeasurements(this.layers.measure);
+        this._calcTextLength = text => svgMeasure.textLength(text);
     }
 
 
     _wrangle(data) {
-        this._states.selectedRange = data.selectedRange;
-        this._states.zeroBrushSelection = data.zeroBrushSelection;
+        this._states.selectedRange = data.wordBrush;
+        this._states.zeroBrushSelection = data.wordBrushZero;
         this._states.colorArray = data.colorArray || [];
 
         this._states.selectedWords = new Set();
 
-
         return {
             words: data.words.map((d, i) =>
-              ({text: d, index: i, length: this._measureTextLength(d)}))
+              ({text: d, index: i, length: this._calcTextLength(d)}))
         };
     }
 
@@ -95,7 +87,7 @@ class WordSequence extends VComponent {
         // --- adding Element to class word
         const wordEnter = word.enter().append("g");
         wordEnter.append('rect');
-        wordEnter.append('text').text(d => d.text);
+        wordEnter.append('text');
 
         word = wordEnter.merge(word);
         word
@@ -103,12 +95,15 @@ class WordSequence extends VComponent {
           .attr('transform', (d, i) => `translate(${xScale(i)},0)`)
           .classed('selected', d => ('selectedWords' in st) && st.selectedWords.has(d.index))
 
+        word.select('text').text(d => d.text)
 
         const rects = word.select('rect')
-          .attrs({y: -op.cellHeight, width: op.cellWidth, height: op.cellHeight})
+          .attrs({y: -op.cellHeight - 3, width: op.cellWidth, height: op.cellHeight + 6})
 
         if ('colorArray' in st) {
             rects.style('fill', d => (d.index < st.colorArray.length) ? st.colorArray[d.index] : null);
+        } else {
+            rects.style('fill', null);
         }
 
         word.select('text')
@@ -132,12 +127,6 @@ class WordSequence extends VComponent {
                   () => this.eventHandler.trigger(WordSequence.events.wordHovered, -1))
             }
         }
-
-        // word.on('mousedown', () => {
-        //   const brush_elm = this.base.select('.brush .overlay').node();
-        //   const new_click_event = new MouseEvent('mousedown', d3.event);
-        //   brush_elm.dispatchEvent(new_click_event);
-        // });
 
     }
 
@@ -353,7 +342,12 @@ class WordSequence extends VComponent {
 
 
     actionChangeWordBackgrounds(colorArray) {
-        this._states.colorArray = colorArray;
+        if (colorArray) {
+            this._states.colorArray = colorArray;
+        } else {
+            delete this._states.colorArray;
+        }
+
         this._renderWords({renderData: this.renderData, op: this.options, st: this._states});
     }
 

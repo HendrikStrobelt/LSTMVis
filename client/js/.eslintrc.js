@@ -18,6 +18,10 @@ module.exports = {
         "WordSequence": false,
         "LSTMController":false,
         "LSTMVis":false,
+        "URLHandler": false,
+        "CellList": false,
+        "SVGMeasurements":false,
+        "WordMatrix":false
     },
     "extends": "eslint:recommended",
     "rules": {

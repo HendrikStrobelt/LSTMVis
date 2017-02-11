@@ -29,7 +29,7 @@ class HeatMap extends VComponent {
                 "#329262", "#5574a6", "#3b3eac"],
             // Bind RectSelect and CircleSelect Events automatically
             // Set to false if should be handled by Application (use action... methods)
-            bindEventsAutomatically: true
+            localEventHandling: true
         }
     }
 
@@ -223,7 +223,7 @@ class HeatMap extends VComponent {
         handler.bind(HeatMap.events.cellHovered, data =>
           this.actionHoverCell(data.col, data.row, data.active));
 
-        if (!this.options.bindEventsAutomatically) {
+        if (!this.options.localEventHandling) {
             handler.bind(HeatMap.events.rectSelected,
               hm_id => this.actionRectSelect(new Set([hm_id])));
 

@@ -26,22 +26,80 @@ class Util {
         return a.map((d, i) => a[i] + b[i])
     }
 
+    static objectMap(obj) {
+        return new Map(Object.keys(obj).map(k => [k, obj[k]]))
+    }
+
+    static range(start, end) {
+        return [...new Array(end - start)].map((v, i) => i + start);
+    }
+
+    // Adapted -- https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Math/round#PHP-Like_rounding_Method
+    static round(number, precision) {
+        const factor = Math.pow(10, precision);
+        const tempNumber = number * factor;
+        const roundedTempNumber = Math.round(tempNumber);
+
+        return roundedTempNumber / factor;
+    }
+
+}
+
+
+class SVGMeasurements {
+    constructor(baseElement) {
+        this.measureElement = baseElement.append('text').attrs({x: 0, y: -20})
+    }
+
+    textLength(text) {
+        this.measureElement.text(text);
+        const tl = this.measureElement.node().getComputedTextLength();
+        this.measureElement.text('');
+
+        return tl;
+    }
+}
+
+class URLHandler {
+
+    static basicURL() {
+        const url_path = window.location.pathname.split('/').slice(0, -2).join('/');
+
+        return window.location.origin + (url_path.length ? url_path : '');
+    }
+
     /**
      * Read all URL parameters into a map.
      * @returns {Map} the url parameters as a key-value store (ES6 map)
      */
-    static getUrlParameters() {
+    static parameters() {
         // Adapted from:  http://stackoverflow.com/questions/2090551/parse-query-string-in-javascript
         const query = window.location.search.substring(1);
         const vars = query.split('&');
 
         const urlParameters = new Map();
 
+        const isInt = x => (/^[0-9]+$/).test(x);
+        const isFloat = x => (/^[0-9]+\.[0-9]*$/).test(x);
+
         vars.forEach(v => {
             if (v.length > 0) {
                 const splits = v.split('=');
                 const key = decodeURIComponent(splits[0]);
-                urlParameters.set(key, decodeURIComponent(splits[1]));
+                const raw_value = decodeURIComponent(splits[1]);
+
+                const all_values = raw_value.split(',').map(val => {
+                    if (isInt(val)) {
+                        return Number.parseInt(val, 10);
+                    } else if (isFloat(val)) {
+                        return Number.parseFloat(val);
+                    }
+
+                    return val;
+                });
+
+
+                urlParameters.set(key, all_values.length > 1 ? all_values : all_values[0]);
             }
 
         });
@@ -50,16 +108,24 @@ class Util {
 
     }
 
+    static updateParameters(urlParameters) {
+        const currentParams = URLHandler.parameters();
+        currentParams.forEach((v, k) => urlParameters.set(k, v));
+    }
+
+
     /**
      * Generates an URL string from a map of url parameters
      * @param {Map} urlParameters - the map of parameters
      * @returns {string} - an URI string
      */
-    static generateUrlString(urlParameters) {
+    static urlString(urlParameters) {
         const attr = [];
         urlParameters.forEach((v, k) => {
             if (v != undefined) {
-                attr.push(encodeURI(k + '=' + v))
+                let value = v;
+                if (Array.isArray(v)) value = v.join(',');
+                attr.push(encodeURI(k + '=' + value))
             }
         });
 
@@ -71,10 +137,20 @@ class Util {
         }
 
         return res;
+    }
 
+    static updateUrl({urlParameters, addToBrowserHistory = true}) {
+        if (addToBrowserHistory) {
+            window.history.pushState(urlParameters, '',
+              URLHandler.urlString(urlParameters))
+        } else {
+            window.history.replaceState(urlParameters, '',
+              URLHandler.urlString(urlParameters))
+        }
     }
 
 }
+
 
 class Network {
 
@@ -91,17 +167,17 @@ class Network {
 
          var mdnAPI = 'https://developer.mozilla.org/en-US/search.json';
          var payload = {
-            'topic' : 'js',
-            'q'     : 'Promise'
+         'topic' : 'js',
+         'q'     : 'Promise'
          };
 
          var callback = {
-            success: function(data) {
-                console.log(1, 'success', JSON.parse(data));
-            },
-            error: function(data) {
-                console.log(2, 'error', JSON.parse(data));
-            }
+         success: function(data) {
+         console.log(1, 'success', JSON.parse(data));
+         },
+         error: function(data) {
+         console.log(2, 'error', JSON.parse(data));
+         }
          };
 
          // Executes the method call
@@ -117,43 +193,43 @@ class Network {
 
          */
 
-          // Method that performs the ajax request
+        // Method that performs the ajax request
         const ajax = (method, _url, args) => {
 
-              // Creating a promise
-              return new Promise((resolve, reject) => {
+            // Creating a promise
+            return new Promise((resolve, reject) => {
 
-                  // Instantiates the XMLHttpRequest
-                  const client = new XMLHttpRequest();
-                  let uri = _url;
+                // Instantiates the XMLHttpRequest
+                const client = new XMLHttpRequest();
+                let uri = _url;
 
-                  if (args && (method === 'POST' || method === 'GET' || method === 'PUT')) {
-                      uri += '?';
-                      for (const key of args) {
+                if (args && (method === 'POST' || method === 'GET' || method === 'PUT')) {
+                    uri += '?';
+                    args.forEach((value, key) => {
                           uri += '&';
-                          uri += encodeURIComponent(key) + '=' + encodeURIComponent(args[key]);
-
+                          uri += encodeURIComponent(key) + '=' + encodeURIComponent(value);
                       }
-                  }
+                    )
+                }
 
-                  // Debug: console.log('URI', uri, args);
-                  client.open(method, uri);
-                  client.send();
-                  client.onload = function () {
-                      if (this.status >= 200 && this.status < 300) {
-                          // Performs the function "resolve" when this.status is equal to 2xx
-                          resolve(this.response);
-                      } else {
-                          // Performs the function "reject" when this.status is different than 2xx
-                          reject(this.statusText);
-                      }
-                  };
-                  client.onerror = function () {
-                      reject(this.statusText);
-                  };
-              });
+                // Debug: console.log('URI', uri, args);
+                client.open(method, uri);
+                client.send();
+                client.onload = function () {
+                    if (this.status >= 200 && this.status < 300) {
+                        // Performs the function "resolve" when this.status is equal to 2xx
+                        resolve(this.response);
+                    } else {
+                        // Performs the function "reject" when this.status is different than 2xx
+                        reject(this.statusText);
+                    }
+                };
+                client.onerror = function () {
+                    reject(this.statusText);
+                };
+            });
 
-          };
+        };
 
         // Adapter pattern
         return {
@@ -193,5 +269,6 @@ class SimpleEventHandler {
 
 }
 
+// Map.prototype.getDef = function (v, dv) {return this.has(v) ? this.get(v) : dv}
 
-SVG, Util, SimpleEventHandler, Network;
+SVG, Util, SimpleEventHandler, Network, URLHandler, SVGMeasurements;

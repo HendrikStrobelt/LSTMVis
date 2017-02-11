@@ -300,8 +300,8 @@ class LSTMDataHandler:
         return res
 
     def query_similar_activations(self, cells, source, activation_threshold=.3,
-                                  data_transform='tanh', add_histograms=False, phrase_length=0, sort_mode='cells',
-                                  query_mode='fast', constrain_left=False, constrain_right=False):
+                                  data_transform='tanh', add_histograms=False, phrase_length=0,
+                                  query_mode='fast', constrain_left=False, constrain_right=False, no_of_results=50):
         """ search for the longest sequences given the activation threshold and a set of cells
 
         :param cells: the cells
@@ -312,7 +312,7 @@ class LSTMDataHandler:
         """
         cell_states, data_transformed = self.get_cached_matrix(data_transform, source)
 
-        print 'before cs:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+        # print 'before cs:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 
         activation_threshold_corrected = activation_threshold
         if not data_transformed:
@@ -320,7 +320,7 @@ class LSTMDataHandler:
 
         cut_off = 2
 
-        print 'out cs 1:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+        # print 'out cs 1:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 
         if query_mode == "fast":
             num_of_cells_per_sum = 5  # how many cells are evaluated per batch
@@ -332,7 +332,7 @@ class LSTMDataHandler:
             num_of_cells_per_sum = 1 if num_of_cells_per_sum == 0 else num_of_cells_per_sum
             num_candidates = 10000
 
-        print 'num_cells', num_of_cells_per_sum
+        # print 'num_cells', num_of_cells_per_sum
 
         cs_cand = None
         # start = time.time()
@@ -428,25 +428,26 @@ class LSTMDataHandler:
             intersect = np.intersect1d(all_active_cells, cells)  # intersection with selected cells
             union = np.union1d(all_active_cells, cells)  # union with selected cells
 
-            res.append([pos, 0, ml,  # int(value[int(indices[ll2]) + 1])
-                        (float(len(intersect)) / float(len(union))),  # Jaccard
-                        cell_count - len(intersect), len(union),
-                        len(intersect)])  # how many selected cells are not active
+            res.append({'pos': pos,
+                        'factors': [pos, 0, ml,  # int(value[int(indices[ll2]) + 1])
+                                  (float(len(intersect)) / float(len(union))),  # Jaccard
+                                  cell_count - len(intersect), len(union),
+                                  len(intersect)]})  # how many selected cells are not active
 
         def key(elem):
-            return -elem[6], elem[5], -elem[2]  # largest intersection, smallest union, longest phrase
+            return -elem['factors'][6], elem['factors'][5], -elem['factors'][2]  # largest intersection, smallest union, longest phrase
 
         meta = {}
         if add_histograms:
-            meta['fuzzy_length_histogram'] = np.bincount([x[2] for x in res])
-            meta['strict_length_histogram'] = np.bincount([x[2] for x in res if x[4] == 0])
+            meta['fuzzy_length_histogram'] = np.bincount([x['factors'][2] for x in res])
+            meta['strict_length_histogram'] = np.bincount([x['factors'][2] for x in res if x['factors'][4] == 0])
 
         if phrase_length > 1:
-            res = [x for x in res if x[2] == phrase_length]
+            res = [x for x in res if x['factors'][2] == phrase_length]
 
         res.sort(key=key)
 
-        res_50 = list(res[:50])
+        final_res = list(res[:no_of_results])
 
         # for elem in res_50:
         #     print elem, cell_count, -1. * (cell_count - elem[4]) / float(elem[3] + cell_count)
@@ -454,7 +455,7 @@ class LSTMDataHandler:
         del res
         # print 'out cs 2:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 
-        return res_50, meta
+        return final_res, meta
 
     def get_cached_matrix(self, data_transform, source, full_matrix=False):
         """ request the cached full state matrix or a reference to it
@@ -490,7 +491,7 @@ class LSTMDataHandler:
 
     def is_valid_source(self, source_id):
         split = source_id.split('::')
-        if len(split)<2:
+        if len(split) < 2:
             return False
 
         source_file = source_id.split('::')[0]
@@ -498,9 +499,14 @@ class LSTMDataHandler:
 
         b = source in self.h5_files[source_file]
 
-
         return (source_file in self.h5_files) and \
                (source in self.h5_files[source_file])
+
+    def valid_sources(self):
+        res = []
+        for x in self.config['states']['types']:
+            res.append(x['file'] + '::' + x['path'])
+        return res
 
     def regex_search(self, _query, no_results=20, htmlFormat=False):
         ws = self.config['word_sequence']

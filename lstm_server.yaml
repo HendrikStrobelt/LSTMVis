@@ -10,7 +10,7 @@ produces:
 basePath: /api/v2
 
 paths:
-  /context/{project}:
+  /context:
     get:
       operationId: lstm_server.get_context
       tags:
@@ -32,30 +32,11 @@ paths:
             type: integer
           collectionFormat: csv
 
-        - name: left
-          description: size of context to the left of each pos
-          in: query
-          required: true
-          type: integer
-          default: 10
-        - name: right
-          description: size of context to the right of each pos
-          in: query
-          required: true
-          type: integer
-          default: 10
+        - $ref: '#/parameters/left'
 
-        - name: dims
-          description: >
-           list of required data dimensions, like state values ('states'), token values ('words'),
-             or meta information ('meta_XYZ')
-          in: query
-          required: true
-          type: array
-          items:
-            type: string
-          collectionFormat: csv
-          default: states,words
+        - $ref: '#/parameters/right'
+
+        - $ref: '#/parameters/dims'
 
         - name: bitmask
           description: >
@@ -106,7 +87,7 @@ paths:
             items:
               type: object
 
-  /search/{project}:
+  /search:
     get:
       tags:
         - all
@@ -141,7 +122,7 @@ paths:
           schema:
             type: object
 
-  /match/{project}:
+  /match:
     get:
       tags:
         - all
@@ -160,12 +141,18 @@ paths:
             type: integer
           default: 100,101
 
-        - name: threshold
+        - name: activation
           description: threshold to discretize values
           in: query
           required: true
           type: number
           default: 0.3
+
+        - $ref: '#/parameters/left'
+
+        - $ref: '#/parameters/right'
+
+        - $ref: '#/parameters/dims'
 
         - name: phrase_length
           description: if set, filter only for phrases of this length
@@ -181,7 +168,7 @@ paths:
           type: string
           enum:
             - fast
-            - complete
+            - precise
           default: fast
 
         - name: constraints
@@ -215,7 +202,7 @@ parameters:
   project:
     name: project
     description: project ID (slug)
-    in: path
+    in: query
     required: true
     type: string
     default: ptb_word
@@ -239,29 +226,77 @@ parameters:
       - none
     default: tanh
 
+  left:
+    name: left
+    description: size of context to the left of each pos
+    in: query
+    required: false
+    type: integer
+    default: 10
+
+  right:
+    name: right
+    description: size of context to the right of each pos
+    in: query
+    required: false
+    type: integer
+    default: 10
+
+  dims:
+    name: dims
+    description: >
+     list of required data dimensions, like state values ('states'), token values ('words'),
+       or meta information ('meta_XYZ')
+    in: query
+    required: false
+    type: array
+    items:
+      type: string
+    collectionFormat: csv
+    default: states,words
+
 
 
 definitions:
   Context:
     type: object
     required:
-      - query
+      - request
+      - results
     properties:
-      query:
+      request:
         type: object
-        description: returns all query paramaters aas object
-        example: {"activation": 0.3,"pos": [12],"project": "childbook","source": "state1"}
-      values:
-        $ref: '#/definitions/Values'
-  Values:
+        example:
+         { "activation": 0.3, "cells": [ 2 ], "dims": [ "states", "words" ],
+         "left": 3, "pos": [ 12 ], "project": "ptb_word", "right": 3,
+         "source": "states::states1", "transform": "tanh" }
+      results:
+        $ref: '#/definitions/ContextResults'
+
+  ContextResults:
     type: object
-    description: returned values for requested dimensions
+    description: returned values for requested dimensions and positions
+    required:
+      - cells
     properties:
       states:
         type: array
-        description: state values as array (token indices/ positions) of arrays (state vetcors)
         items:
-          type: array
-          items:
-            type: integer
-        example: [[.3,.5,.7], [.2,.1,0]]
+          type: object
+        description: state values for requested positions
+        example: [ { "data": [ [ -0.10704, -0.11952, -0.10578, -0.11291, -0.00838, 0.07256,
+        0.04165 ] ], "left": 9, "pos": 12, "right": 15 } ]
+      cells:
+        type: array
+        description: all effected cells or empty if all
+        items:
+          type: integer
+        example: [2,100]
+      words:
+        type: array
+        items:
+          type: object
+        description: word sequence for each position requested
+        example: [ { "left": 9, "pos": 12, "right": 15, "word_ids": [ 13, 14, 15, 16, 17, 18, 19 ],
+        "words": [ "hydro-quebec", "ipo", "kia", "memotec", "mlx", "nahb", "punts" ] } ]
+

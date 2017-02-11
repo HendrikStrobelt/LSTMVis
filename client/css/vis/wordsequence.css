@@ -21,7 +21,10 @@
 
 
 .wordsequence .brush .selection {
-    stroke:none;
+    /*stroke:none;*/
+    stroke: #777;
+    border-radius: 5px;
+    fill: none;
 }
 
 .wordsequence .zeroWisker {

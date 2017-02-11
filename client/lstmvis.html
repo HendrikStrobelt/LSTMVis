@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>LSTMVis </title>
+
+    <script src="js/ext_libs/jquery.min.js"></script>
+    <script src="js/ext_libs/lodash.min.js"></script>
+    <!--<script src="https://d3js.org/d3.v4.js" ></script>-->
+    <script src="js/ext_libs/d3.min.js"></script>
+    <script src="js/ext_libs/d3-selection-multi.v1.min.js"></script>
+    <script src="js/ext_libs/bootstrap.min.js"></script>
+
+
+    <script src="js/etc/global_helper.js"></script>
+    <script src="js/vis/vcomponent.js"></script>
+    <script src="js/vis/SimpleComponent.js"></script>
+    <script src="js/vis/heatmap.js"></script>
+    <script src="js/vis/lineplot.js"></script>
+    <script src="js/vis/wordsequence.js"></script>
+    <script src="js/vis/celllist.js"></script>
+    <script src="js/vis/wordmatrix.js"></script>
+    <script src="js/apps/LSTMController.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="css/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/vis/heatmap.css">
+    <link rel="stylesheet" type="text/css" href="css/vis/lineplot.css">
+    <link rel="stylesheet" type="text/css" href="css/vis/wordsequence.css">
+    <link rel="stylesheet" type="text/css" href="css/vis/celllist.css">
+    <link rel="stylesheet" type="text/css" href="css/vis/wordmatrix.css">
+
+</head>
+<body>
+
+<style>
+    button {
+        border-style: none;
+        border-radius: 5px;
+        background-color: rgba(179, 179, 179, .4);
+    }
+
+    button:hover {
+        background-color: rgba(179, 179, 179, 1);
+    }
+
+    button:focus {
+        outline: none;
+    }
+</style>
+
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-sm-12">
+            <h1>LSTMVis V2</h1>
+
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-2 col-md-1" style="font-size: larger">
+            Selection
+        </div>
+        <div class="col-sm-3 col-md-2 hidden-print">
+            zoom:
+            <button id="smaller_btn">smaller</button>
+            <button id="larger_btn">larger</button>
+        </div>
+        <div class="col-sm-3 col-md-2">
+            position:
+            <button class="hidden-print" id="inc_pos">+10</button>
+            <button class="hidden-print" id="dec_pos">-10</button>
+        </div>
+
+    </div>
+    <div class="row" style="padding-top: 10px;">
+        <div class="col-sm-12">
+            <svg id="queryVis" width="900" height="300">
+            </svg>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-2">
+            <button> add meta track</button>
+        </div>
+    </div>
+
+    <hr/>
+    <div class="row">
+        <div class="col-sm-3 col-md-1" style="font-size: larger;">
+            Matching
+        </div>
+        <div class="col-sm-6 ">
+            <button class="hidden-print" id="match_fast">fast</button>
+            <button class="hidden-print" id="match_precise">precise</button>
+        </div>
+    </div>
+
+    <!--&lt;!&ndash; Trigger the modal with a button &ndash;&gt;-->
+    <!--<button type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModal">Open Modal</button>-->
+
+    <!--&lt;!&ndash; Modal &ndash;&gt;-->
+    <!--<div id="myModal" class="modal fade" role="dialog">-->
+    <!--<div class="modal-dialog">-->
+
+    <!--&lt;!&ndash; Modal content&ndash;&gt;-->
+    <!--<div class="modal-content">-->
+    <!--<div class="modal-header">-->
+    <!--<button type="button" class="close" data-dismiss="modal">&times;</button>-->
+    <!--<h4 class="modal-title">Modal Header</h4>-->
+    <!--</div>-->
+    <!--<div class="modal-body">-->
+    <!--<p>Some text in the modal.</p>-->
+    <!--</div>-->
+    <!--<div class="modal-footer">-->
+    <!--<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>-->
+    <!--</div>-->
+    <!--</div>-->
+
+    <!--</div>-->
+    <!--</div>-->
+
+
+    <svg id="resultVis" width="900" height="500">
+
+    </svg>
+
+
+</div>
+
+
+<script src="js/apps/LSTMVis.js"></script>
+
+</body>
+</html>
