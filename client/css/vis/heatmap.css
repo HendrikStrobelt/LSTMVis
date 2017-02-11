@@ -10,40 +10,48 @@
     stroke-width: 2;
 }
 
-
 /* Heatmap Tooltip style */
-.heatmap .tooltip {
+.heatmap .hmTooltip {
     pointer-events: none;
 }
 
-.heatmap .tooltip rect {
+.heatmap .hmTooltip rect {
     fill: black;
     fill-opacity: .5;
 }
 
-.heatmap .tooltip text {
+.heatmap .hmTooltip text {
     fill: white;
     font-weight: bold;
     font-size: 12pt;
     text-anchor: middle;
 }
 
-
 /* Heatmap GUI Panel styles */
-.heatmap .guiPanel rect {
+.heatmap .guiPanel rect, circle {
     stroke: black;
-    fill: white;
+    fill: #888888;
     opacity: .3;
 }
 
-.heatmap .guiPanel circle {
-    fill: darkgray;
-    stroke: none;
-    opacity: .7;
-    pointer-events: none;
-}
+/*.heatmap .guiPanel circle {*/
+/*fill: darkgray;*/
+/*stroke: none;*/
+/*opacity: .7;*/
+/*pointer-events: none;*/
+/*}*/
 
 .heatmap .guiPanel .selected {
     opacity: 1;
 }
 
+.heatmap .mapping-hide-button {
+    font-family: 'FontAwesome', sans-serif;
+    font-size: 15px;
+    dominant-baseline: central;
+    fill: #888888;
+    opacity: .3
+}
+.heatmap .mapping-hide-button:hover {
+    opacity: 1;
+}

@@ -8,7 +8,8 @@ class LSTMController {
             wrongParameters: 'lstmcontroller_wrongParams',
             contextRequestSent: 'lstmcontrol_ctxreq',
             newContextAvailable: 'lstmcontrol_newctx',
-            newMatchingResults: 'lstmcontrol_newmatch'
+            newMatchingResults: 'lstmcontrol_newmatch',
+            windowResize: 'lestmcontrol_wres'
         }
     }
 
@@ -30,6 +31,10 @@ class LSTMController {
         this.params = URLHandler.parameters();
         this._setContextDefaults(this.params);
         this.updateURLparams();
+
+        window.onresize = () =>
+          this.eventHandler.trigger(LSTMController.events.windowResize, {})
+
 
     }
 
@@ -71,7 +76,7 @@ class LSTMController {
     _setContextDefaults(params) {
         const sd = (att, def) => params.set(att, params.get(att) || def);
         sd('left', 5);
-        sd('right', 40);
+        sd('right', 20);
         sd('dims', ['states', 'words']);
         sd('activation', 0.3);
         sd('cw', 30);
@@ -114,7 +119,7 @@ class LSTMController {
             matchParameters.forEach(pName => matchPayload.set(pName, this.params.get(pName)));
             matchPayload.set('cells', this.state.selectedCells.join(','));
             matchPayload.set('constraints', this.params.get('wordBrushZero').join(','));
-            matchPayload.set('dims', [...metaDims, 'states', 'cell_count', 'words']);
+            matchPayload.set('dims', [...(metaDims.map(d => 'meta_' + d)), 'states', 'cell_count', 'words']);
             matchPayload.set('mode', mode);
 
             Network.ajax_request(this.apiURL + '/match')
@@ -136,6 +141,22 @@ class LSTMController {
         return this.matchResult.results.positionDetail.words
     }
 
+    get matchingCellCount() {
+        return this.matchResult.results.positionDetail.cell_count
+    }
+
+    get matchingMetaDims() {
+        const metaDims = Object.keys(this.matchResult.results.positionDetail)
+          .filter(d => d.startsWith('meta_'));
+
+        const res = {};
+        metaDims.forEach(
+          key => res[key.substring(5)] = this.matchResult.results.positionDetail[key]
+        );
+        return res;
+
+    }
+
 
     set wordBrush(range) {
         this.params.set('wordBrush', range);
@@ -149,7 +170,6 @@ class LSTMController {
     get wordBrush() {
         return this.params.get('wordBrush');
     }
-
 
     set wordBrushZero(range) {
         this.params.set('wordBrushZero', range);
@@ -199,6 +219,9 @@ class LSTMController {
         this.updateURLparams();
     }
 
+    get windowSize() {
+        return {width: window.innerWidth, height: window.innerHeight}
+    }
 
     cellSelection(recalc = false) {
         if (!('selectedCells' in this.state)) {

@@ -39,18 +39,18 @@ class WordMatrix extends VComponent {
         this._states.heatmap = data.heatmap;
 
         return {
-            wordData: data.words.map(
-              row => {
-                  const words = row.words.map(word => ({word, length: this._calcTextLength(word)}))
+            wordMatrix: data.wordMatrix.map(
+              (row, index) => {
+                  const words = row.words.map(word => ({word, length: this._calcTextLength(word)}));
 
-                  return {pos: row.pos, words}
+                  return {posOffset: row.posOffset || 0, rowId: row.rowId || index, words}
               })
         };
     }
 
 
     _render(renderData) {
-        this._renderWords(renderData.wordData);
+        this._renderWords(renderData.wordMatrix);
     }
 
     _renderWords(rowData) {
@@ -63,17 +63,19 @@ class WordMatrix extends VComponent {
             return (scale < 1 ? `${translate}scale(${scale},1)` : translate);
         };
 
-        const rows = this.layers.matrix.selectAll('.row').data(rowData, d => d.pos);
+        const rows = this.layers.matrix.selectAll('.row').data(rowData, d => d.rowId);
         rows.exit().remove();
 
         const newRows = rows.enter().append('g').attr('class', 'row');
-        newRows.selectAll('.word').data(d => d.words)
-          .enter().append('text')
-          .attrs({class: 'word'});
 
         const allRows = newRows.merge(rows);
         allRows.attr('transform', (d, i) => `translate(0,${i * this.options.rowHeight})`);
-        allRows.selectAll('.word')
+
+        const words = allRows.selectAll('.word').data(d => d.words)
+        words.exit().remove();
+        words.enter().append('text')
+          .attrs({class: 'word'})
+          .merge(words)
           .attr("transform", wordTransform)
           .text(d => d.word)
 

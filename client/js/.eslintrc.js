@@ -16,12 +16,13 @@ module.exports = {
         "HeatMap": false,
         "LinePlot": false,
         "WordSequence": false,
-        "LSTMController":false,
-        "LSTMVis":false,
+        "LSTMController": false,
+        "LSTMVis": false,
         "URLHandler": false,
         "CellList": false,
-        "SVGMeasurements":false,
-        "WordMatrix":false
+        "SVGMeasurements": false,
+        "WordMatrix": false,
+        "LSTMHeatmapHandler": false
     },
     "extends": "eslint:recommended",
     "rules": {

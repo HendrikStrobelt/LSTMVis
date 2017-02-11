@@ -64,7 +64,7 @@ class VComponent {
         this._bindLocalEvents(this.eventHandler);
 
         // Object for storing internal states and variables
-        this._states = {};
+        this._states = {hidden: false};
 
         // Setup the static parts of the DOM tree
         this._init()
@@ -164,6 +164,29 @@ class VComponent {
 
     }
 
+    hideView() {
+        if (!this._states.hidden) {
+            this.base.transition().styles({
+                'opacity': 0,
+                'pointer-events': 'none'
+            });
+            this._states.hidden = true;
+        }
+    }
+
+    unhideView() {
+        if (this._states.hidden) {
+            this.base.transition().styles({
+                'opacity': 1,
+                'pointer-events': null
+            });
+            this._states.hidden = false;
+        }
+    }
+
+    destroy() {
+        this.base.remove();
+    }
 
 }
 

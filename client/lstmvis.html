@@ -21,13 +21,16 @@
     <script src="js/vis/celllist.js"></script>
     <script src="js/vis/wordmatrix.js"></script>
     <script src="js/apps/LSTMController.js"></script>
+    <script src="js/apps/LSTMHeatmapHandler.js"></script>
 
     <link rel="stylesheet" type="text/css" href="css/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/vis/general.css">
     <link rel="stylesheet" type="text/css" href="css/vis/heatmap.css">
     <link rel="stylesheet" type="text/css" href="css/vis/lineplot.css">
     <link rel="stylesheet" type="text/css" href="css/vis/wordsequence.css">
     <link rel="stylesheet" type="text/css" href="css/vis/celllist.css">
     <link rel="stylesheet" type="text/css" href="css/vis/wordmatrix.css">
+    <link rel="stylesheet" type="text/css" href="css/apps/LSTMVis.css">
 
 </head>
 <body>
@@ -57,15 +60,15 @@
         </div>
     </div>
     <div class="row">
-        <div class="col-sm-2 col-md-1" style="font-size: larger">
+        <div class="col-xs-2 col-md-1" style="font-size: larger">
             Selection
         </div>
-        <div class="col-sm-3 col-md-2 hidden-print">
+        <div class="col-xs-4 col-sm-2 hidden-print">
             zoom:
-            <button id="smaller_btn">smaller</button>
-            <button id="larger_btn">larger</button>
+            <button id="smaller_btn">-</button>
+            <button id="larger_btn">+</button>
         </div>
-        <div class="col-sm-3 col-md-2">
+        <div class="col-xs-4 col-sm-3">
             position:
             <button class="hidden-print" id="inc_pos">+10</button>
             <button class="hidden-print" id="dec_pos">-10</button>
@@ -79,19 +82,22 @@
         </div>
     </div>
     <div class="row">
-        <div class="col-sm-2">
+        <div class="col-xs-12">
             <button> add meta track</button>
         </div>
     </div>
 
     <hr/>
     <div class="row">
-        <div class="col-sm-3 col-md-1" style="font-size: larger;">
+        <div class="col-xs-3 col-md-1" style="font-size: larger;">
             Matching
         </div>
-        <div class="col-sm-6 ">
+        <div class="col-xs-3 ">
             <button class="hidden-print" id="match_fast">fast</button>
             <button class="hidden-print" id="match_precise">precise</button>
+        </div>
+        <div class="col-xs-6 row" id="metaOptions">
+
         </div>
     </div>
 

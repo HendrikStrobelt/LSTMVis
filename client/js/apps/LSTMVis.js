@@ -8,6 +8,12 @@ class LSTMVis {
         this.resultSVG = resultSVG;
         this.eventHandler = new SimpleEventHandler(this.querySVG.node());
         this.controller = new LSTMController({eventHandler: this.eventHandler});
+        this.hmHandler = new LSTMHeatmapHandler({
+            parentNode: this.resultSVG,
+            controller: this.controller,
+            eventHandler: this.eventHandler
+        })
+
 
         this.setupQuery();
         this.setupResult();
@@ -48,18 +54,16 @@ class LSTMVis {
     }
 
     setupResult() {
+        this.resultSVG.attr('opacity', 0);
         this.resultList = new WordMatrix({
             parent: this.resultSVG, eventHandler: this.eventHandler,
             options: {
-                cellWidth: this.controller.cellWidth
+                cellWidth: this.controller.cellWidth,
+                pos: {x: 10, y: 20}
             }
         });
-        this.resultList.update({
-            words: [
-                {pos: 0, words: ['abc', 'Monument']},
-                {pos: -1, words: ['Erde', 'Welt']}
-            ]
-        });
+
+        this.hmHandler.init();
     }
 
     bindDataEvents() {
@@ -72,8 +76,6 @@ class LSTMVis {
                 (values, index) => ({values, index})
               );
 
-              // const yScale = d3.scaleLinear().domain([,1])
-              // this.lineplot.updateOptions({options: {yScale}})
               this.lineplot.update({timeSteps, cellValues});
               this.lineplot.actionUpdateThreshold(this.controller.threshold);
 
@@ -85,15 +87,23 @@ class LSTMVis {
               });
 
               this.updateCellSelection();
+              this.hmHandler.updateMetaOptions();
+
 
           });
 
 
         this.eventHandler.bind(LSTMController.events.newMatchingResults, () => {
-            // console.log(this.controller.matchingWordMatrix);
-            const words = this.controller.matchingWordMatrix;
-            this.resultList.update({words})
+            const wordMatrix = this.controller.matchingWordMatrix;
+            wordMatrix.forEach(row => {
+                row.posOffset = row.left;
+                row.rowId = row.pos;
+            });
+            this.hmHandler.updateHeatmapData();
 
+            this.resultList.update({wordMatrix});
+
+            this.resultSVG.transition().attr('opacity', 1);
         })
 
     }
@@ -147,10 +157,23 @@ class LSTMVis {
         });
 
         d3.select('#match_precise').on('click',
-          () => this.controller.requestMatch({mode: 'precise'}));
+          () => {
+              this.resultSVG.transition().attr('opacity', 0);
+
+              this.controller.requestMatch({
+                  metaDims: [...Object.keys(this.controller.projectMetadata.meta)],
+                  mode: 'precise'
+              })
+          });
 
         d3.select('#match_fast').on('click',
-          () => this.controller.requestMatch({mode: 'fast'}));
+          () => {
+              this.resultSVG.transition().attr('opacity', 0);
+              this.controller.requestMatch({
+                  metaDims: [...Object.keys(this.controller.projectMetadata.meta)],
+                  mode: 'fast'
+              })
+          });
         // --------------------------------
         // -- Move Position ---
         // --------------------------------
@@ -197,6 +220,12 @@ class LSTMVis {
               this.updateCellSelection(true);
           }
         )
+
+        this.eventHandler.bind(LSTMController.events.windowResize, () => {
+            const newWidth = this.controller.windowSize.width-20;
+            this.querySVG.attr('width', newWidth);
+            this.resultSVG.attr('width', newWidth);
+        })
 
 
     }

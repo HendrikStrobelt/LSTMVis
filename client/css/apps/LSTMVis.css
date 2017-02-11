@@ -1,0 +1,17 @@
+.metaOption{
+    padding-left: 5px;
+    padding-right: 5px;
+    /*border-radius: 5px;*/
+    margin-right: 5px ;
+    background-color: #ececec;
+    cursor: crosshair;
+
+}
+
+.metaOption:hover{
+    border: dashed #349576 1px;
+}
+
+.metaOption.activeHM{
+    background-color: #a1dd8d;
+}
