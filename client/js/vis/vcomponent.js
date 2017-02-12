@@ -24,7 +24,11 @@ class VComponent {
     get defaultOptions() {
         console.error('get defaultOptions() not implemented');
 
-        return {pos: {x: 10, y: 10}};
+        return {
+            pos: {x: 10, y: 10},
+            // List of Events that are ONLY handled globally:
+            globalExclusiveEvents: []
+        };
     }
 
 
@@ -51,7 +55,8 @@ class VComponent {
         // Set default options if not specified in constructor call
         const defaults = this.defaultOptions;
         this.options = {};
-        Object.keys(defaults).forEach(key => this.options[key] = options[key] || defaults[key]);
+        const keys = new Set([...Object.keys(defaults), ...Object.keys(options)])
+        keys.forEach(key => this.options[key] = options[key] || defaults[key]);
 
         // Create the base group element
         this.base = this._createBaseElement(parent);
@@ -158,6 +163,14 @@ class VComponent {
 
     // BIND LOCAL EVENTS ============================================================
 
+    _bindEvent(eventHandler, name, func) {
+        // Wrap in Set to handle 'undefinded' etc..
+        const globalEvents = new Set(this.options.globalExclusiveEvents);
+        if (!globalEvents.has(name)) {
+            eventHandler.bind(name, func)
+        }
+    }
+
     _bindLocalEvents(eventHandler) {
         eventHandler;
         console.error('_bindLocalEvents() not implemented.')
@@ -166,7 +179,7 @@ class VComponent {
 
     hideView() {
         if (!this._states.hidden) {
-            this.base.transition().styles({
+            this.base.styles({
                 'opacity': 0,
                 'pointer-events': 'none'
             });
@@ -176,7 +189,7 @@ class VComponent {
 
     unhideView() {
         if (this._states.hidden) {
-            this.base.transition().styles({
+            this.base.styles({
                 'opacity': 1,
                 'pointer-events': null
             });

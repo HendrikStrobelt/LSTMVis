@@ -15,9 +15,10 @@ class LSTMHeatmapHandler {
             parent: this.parentNode, eventHandler: this.eventHandler,
             options: {
                 title: 'match count',
-                pos: {x: 400, y: 20}
+                pos: {x: 400, y: 20},
+                globalExclusiveEvents: [HeatMap.events.cellHovered]
             }
-        })
+        });
 
         this.hmInfo = new Map();
 
@@ -68,7 +69,8 @@ class LSTMHeatmapHandler {
                 options: {
                     title: key,
                     pos: {x: 450, y: 20},
-                    chartType: hmType
+                    chartType: hmType,
+                    globalExclusiveEvents: [HeatMap.events.cellHovered]
                 }
             });
 
@@ -94,11 +96,11 @@ class LSTMHeatmapHandler {
         });
 
         let offset = this.controller.windowSize.width;
-        visKeys.forEach(key => offset -= this.hmInfo.get(key).heatmap.currentWidth);
+        visKeys.forEach(key => offset -= this.hmInfo.get(key).heatmap.currentWidth + 5);
         visKeys.forEach(key => {
             const hm = this.hmInfo.get(key).heatmap;
             hm.actionSetPos({x: offset, y: 20});
-            offset += hm.currentWidth;
+            offset += hm.currentWidth + 5;
         })
 
 
@@ -119,6 +121,20 @@ class LSTMHeatmapHandler {
             }
         })
 
+    }
+
+
+    getHeatmapById(hmID) {
+        let res = null;
+        this.hmInfo.forEach(hm => {
+            if (hm.heatmap.id === hmID) res = hm.heatmap
+        })
+
+        return res;
+    }
+
+    actionCellHovered(x, y, active) {
+        this.hmInfo.forEach(hm => hm.heatmap.actionHoverCell(y, x, active))
     }
 
 

@@ -3,9 +3,9 @@
  */
 class LSTMVis {
 
-    constructor(querySVG, resultSVG) {
-        this.querySVG = querySVG;
-        this.resultSVG = resultSVG;
+    constructor() {
+        this.querySVG = d3.select('#queryVis');
+        this.resultSVG = d3.select('#resultVis');
         this.eventHandler = new SimpleEventHandler(this.querySVG.node());
         this.controller = new LSTMController({eventHandler: this.eventHandler});
         this.hmHandler = new LSTMHeatmapHandler({
@@ -20,18 +20,22 @@ class LSTMVis {
 
         this.bindDataEvents();
         this.bindUIEvents();
+        this.bindHoverEvents();
 
         this.controller.initByUrlAndRun();
     }
 
     setupQuery() {
 
+        this.querySVG.attr('width', this.controller.windowSize.width);
+
         this.lineplot = new LinePlot({
             parent: this.querySVG, eventHandler: this.eventHandler,
             options: {
                 cellWidth: this.controller.cellWidth,
                 height: 200,
-                pos: {x: 0, y: 5}
+                pos: {x: 0, y: 5},
+                globalExclusiveEvents: [LinePlot.events.cellHovered]
             }
         });
 
@@ -46,7 +50,8 @@ class LSTMVis {
         this.cellList = new CellList({
             parent: this.querySVG, eventHandler: this.eventHandler,
             options: {
-                pos: {x: 0, y: 270}
+                pos: {x: 0, y: 270},
+                globalExclusiveEvents: [CellList.events.cellHovered]
             }
         })
 
@@ -54,8 +59,11 @@ class LSTMVis {
     }
 
     setupResult() {
-        this.resultSVG.attr('opacity', 0);
-        this.resultList = new WordMatrix({
+        this.resultSVG
+          .attr('width', this.controller.windowSize.width)
+          .attr('opacity', 0);
+
+        this.wordMatrix = new WordMatrix({
             parent: this.resultSVG, eventHandler: this.eventHandler,
             options: {
                 cellWidth: this.controller.cellWidth,
@@ -101,7 +109,7 @@ class LSTMVis {
             });
             this.hmHandler.updateHeatmapData();
 
-            this.resultList.update({wordMatrix});
+            this.wordMatrix.update({wordMatrix});
 
             this.resultSVG.transition().attr('opacity', 1);
         })
@@ -140,7 +148,7 @@ class LSTMVis {
             });
             this.wordSequence.base.attr('transform', `translate(${60 - this.controller.cellWidth},215)`)
 
-            this.resultList.updateOptions({
+            this.wordMatrix.updateOptions({
                 options: {cellWidth: this.controller.cellWidth},
                 reRender: true
             });
@@ -222,17 +230,49 @@ class LSTMVis {
         )
 
         this.eventHandler.bind(LSTMController.events.windowResize, () => {
-            const newWidth = this.controller.windowSize.width-20;
+            const newWidth = this.controller.windowSize.width;
             this.querySVG.attr('width', newWidth);
             this.resultSVG.attr('width', newWidth);
         })
 
 
     }
+
+    bindHoverEvents() {
+        this.eventHandler.bind(
+          [CellList.events.cellHovered, LinePlot.events.cellHovered].join(' '),
+          d => {
+              this.lineplot.actionCellHovered(d.index);
+              this.cellList.actionCellHovered(d.index);
+          })
+
+        this.eventHandler.bind(
+          [WordMatrix.events.cellHovered, HeatMap.events.cellHovered].join(' '),
+          d => {
+              this.wordMatrix.actionCellHovered(d.row, d.col, d.active);
+              this.hmHandler.actionCellHovered(d.row, d.col, d.active);
+          })
+
+        this.eventHandler.bind(
+          HeatMap.events.rectSelected,
+          hm_id => {
+              const heatmap = this.hmHandler.getHeatmapById(hm_id);
+              if (heatmap) {
+                  const colorScale = heatmap.renderData.colorScale;
+                  const colorMap = heatmap.data.values
+                    .map(row => row.map(cell => colorScale(cell))                  );
+                  this.wordMatrix.actionChangeHeatmap(colorMap)
+              } else {
+                  this.wordMatrix.actionChangeHeatmap(null);
+              }
+
+          }
+        )
+
+    }
+
 }
 
-const lstmVis = new LSTMVis(
-  d3.select('#queryVis'),
-  d3.select('#resultVis'));
+const lstmVis = new LSTMVis();
 
 lstmVis;

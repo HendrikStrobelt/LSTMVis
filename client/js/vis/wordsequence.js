@@ -304,24 +304,21 @@ class WordSequence extends VComponent {
     }
 
 
-    _bindLocalEvents() {
-        const handler = this.eventHandler;
+    _bindLocalEvents(handler) {
         const ev = WordSequence.events;
 
-        handler.bind(ev.brushSelectionChanged, () => {
+        this._bindEvent(handler, ev.brushSelectionChanged, () => {
             const st = this._states;
             if (st.zeroBrush)
                 this._renderZeroBrush({op: this.options, st: st})
-        })
+        });
 
-        handler.bind(ev.zeroBrushSelectionChanged,
+        this._bindEvent(handler, ev.zeroBrushSelectionChanged,
           d => console.log('sss', d)
-        )
+        );
 
-        handler.bind(ev.wordHovered, wordNo => {
-            this.layers.text.selectAll('.word')
-              .classed('hovered', d => d.index == wordNo)
-        })
+        this._bindEvent(handler, ev.wordHovered,
+          wordNo => this.actionWordHovered(wordNo));
 
         handler.bind(ev.wordClicked, wordIndex => {
             const st = this._states;
@@ -334,9 +331,7 @@ class WordSequence extends VComponent {
 
             handler.trigger(ev.updateWordSelection, [...sw])
 
-        })
-
-        handler.bind(ev.updateWordSelection, d => console.log(d))
+        });
 
     }
 
@@ -351,6 +346,10 @@ class WordSequence extends VComponent {
         this._renderWords({renderData: this.renderData, op: this.options, st: this._states});
     }
 
+    actionWordHovered(wordNo) {
+        this.layers.text.selectAll('.word')
+          .classed('hovered', d => d.index == wordNo)
+    }
 }
 
 WordSequence;

@@ -115,7 +115,7 @@ module.exports = {
         "lines-around-directive": "error",
         "max-depth": "error",
         "max-len": "off",
-        "max-lines": "error",
+        "max-lines": "off",
         "max-nested-callbacks": "error",
         "max-params": "off",
         "max-statements": "off",

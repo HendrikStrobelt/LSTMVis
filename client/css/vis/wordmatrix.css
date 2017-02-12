@@ -3,3 +3,13 @@
     pointer-events: none;
     dominant-baseline: central;
 }
+
+.wordmatrix .bgCell{
+    cursor: crosshair;
+    fill-opacity: .5;
+}
+
+.wordmatrix .bgCell.hovered {
+    stroke: red;
+    stroke-dasharray: 1,1;
+}

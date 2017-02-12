@@ -33,6 +33,10 @@ class CellList extends VComponent {
     }
 
     _render(renderData) {
+        const hover = active => d =>
+          this.eventHandler.trigger(CellList.events.cellHovered,
+            {index: active ? d : -1});
+
         const cells = this.base.selectAll('.cell').data(renderData.cells);
         cells.exit().remove();
 
@@ -40,20 +44,28 @@ class CellList extends VComponent {
         cellG.append('rect').attrs({width: 30, height: 20, rx: 2, ry: 2});
         cellG.append('text').attrs({x: 15, y: 10});
         cellG
-          .on('mouseenter', d => this.eventHandler.trigger(CellList.events.cellHovered, d))
-          .on('mouseout', () => this.eventHandler.trigger(CellList.events.cellHovered, -1));
+          .on('mouseenter', hover(true))
+          .on('mouseout', hover(false));
 
         const allCells = cellG.merge(cells);
 
         allCells.attr('transform', (d, i) => `translate(${i * 32},0)`);
         allCells.select('text').text(d => d);
+        this.allCells = allCells
 
     }
 
-    _bindLocalEvents() {
-        this.eventHandler.bind(CellList.events.cellHovered, cell => {
-            this.base.selectAll('.cell').classed('hovered', d => d === cell)
-        })
+    actionCellHovered(cell) {
+        if (cell < 0) {
+            this.allCells.classed('hovered', null);
+        } else {
+            this.allCells.classed('hovered', d => d === cell)
+        }
+    }
+
+    _bindLocalEvents(handler) {
+        this._bindEvent(handler, CellList.events.cellHovered,
+          d => this.actionCellHovered(d.index))
     }
 
 }

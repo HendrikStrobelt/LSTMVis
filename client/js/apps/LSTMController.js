@@ -220,7 +220,7 @@ class LSTMController {
     }
 
     get windowSize() {
-        return {width: window.innerWidth, height: window.innerHeight}
+        return {width: window.innerWidth-20, height: window.innerHeight-20}
     }
 
     cellSelection(recalc = false) {

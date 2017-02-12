@@ -31,3 +31,7 @@
     fill: none;
     stroke-dasharray: 2, 2;
 }
+
+.lineplot .valueLine.hovered {
+    stroke: red;
+}

@@ -8,7 +8,8 @@ class LinePlot extends VComponent {
 
     static get events() {
         return {
-            thresholdChanged: 'lineplot-thresholdChanged'
+            thresholdChanged: 'lineplot-thresholdChanged',
+            cellHovered: 'lineplot-cellhovered'
         }
     }
 
@@ -201,12 +202,20 @@ class LinePlot extends VComponent {
         })
 
 
-        this._updateLineSubset({
+        const highlightedCells = this._updateLineSubset({
             container: this.layers.overlay,
             data: renderData.cellValues.filter(d => _.includes(renderData.selectedCells, d.index)),
             lineOpacity: null,
             lineGenerator
         })
+
+        const hover = active => d =>
+          this.eventHandler.trigger(LinePlot.events.cellHovered,
+            {index: active ? d.index : -1});
+
+        highlightedCells
+          .on('mouseover', hover(true))
+          .on('mouseout', hover(false));
 
 
     }
@@ -215,7 +224,7 @@ class LinePlot extends VComponent {
         const valueLines = container.selectAll('.valueLine').data(data);
         valueLines.exit().remove();
 
-        valueLines
+        return valueLines
           .enter().append('path')
           .merge(valueLines)
           .attrs({
@@ -250,8 +259,14 @@ class LinePlot extends VComponent {
         this._render(this.renderData);
     }
 
+    actionCellHovered(cell) {
+        this.layers.overlay.selectAll('.valueLine')
+          .classed('hovered', d => cell === d.index)
+    }
+
+
     _bindLocalEvents(eventHandler) {
-        eventHandler.bind(LinePlot.events.thresholdChanged,
+        this._bindEvent(eventHandler, LinePlot.events.thresholdChanged,
           ({newValue}) => this.actionUpdateThreshold(newValue))
     }
 

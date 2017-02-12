@@ -26,10 +26,7 @@ class HeatMap extends VComponent {
             colorsNegativeZeroOne: ['#ca0020', '#f7f7f7', '#0571b0'],
             colorsCategorical: ["#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", "#0099c6", "#dd4477", "#66aa00",
                 "#b82e2e", "#316395", "#994499", "#22aa99", "#aaaa11", "#6633cc", "#e67300", "#8b0707", "#651067",
-                "#329262", "#5574a6", "#3b3eac"],
-            // Bind RectSelect and CircleSelect Events automatically
-            // Set to false if should be handled by Application (use action... methods)
-            localEventHandling: true
+                "#329262", "#5574a6", "#3b3eac"]
         }
     }
 
@@ -229,7 +226,7 @@ class HeatMap extends VComponent {
 
     actionSetPos(pos) {
         this.options.pos = pos;
-        this.base.attr('transform', SVG.translate(pos))
+        this.base.transition().attr('transform', SVG.translate(pos))
     }
 
 
@@ -237,20 +234,15 @@ class HeatMap extends VComponent {
         return this.scaleX(this._states.yLength)
     }
 
-    _bindLocalEvents() {
-        const handler = this.eventHandler;
+    _bindLocalEvents(handler) {
+        this._bindEvent(handler, HeatMap.events.cellHovered,
+          data => this.actionHoverCell(data.col, data.row, data.active));
 
-        handler.bind(HeatMap.events.cellHovered, data =>
-          this.actionHoverCell(data.col, data.row, data.active));
+        this._bindEvent(handler, HeatMap.events.rectSelected,
+          hm_id => this.actionRectSelect(new Set([hm_id])));
 
-        if (this.options.localEventHandling) {
-            handler.bind(HeatMap.events.rectSelected,
-              hm_id => this.actionRectSelect(new Set([hm_id])));
-
-            handler.bind(HeatMap.events.circleSelected,
-              hm_id => this.actionCircleSelect(new Set([hm_id])));
-        }
-
+        this._bindEvent(handler, HeatMap.events.circleSelected,
+          hm_id => this.actionCircleSelect(new Set([hm_id])));
 
     }
 }
