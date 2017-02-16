@@ -254,7 +254,8 @@ class PatternFinderVis{
         eventHandler.bind('navigate', (e, d) => {
             that.current.pos = that.current.pos + d;
 
-            that.current.brush_extent = that.current.brush_extent.mp(b => b - d);
+
+            that.current.brush_extent = that.current.brush_extent.map(function (b) {return b - d});
                                                                      
             that.current.selection.cells = that.selected_cells_for_query;
 
