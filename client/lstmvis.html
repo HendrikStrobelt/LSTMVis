@@ -9,7 +9,6 @@
     <!--<script src="https://d3js.org/d3.v4.js" ></script>-->
     <script src="js/ext_libs/d3.min.js"></script>
     <script src="js/ext_libs/d3-selection-multi.v1.min.js"></script>
-    <script src="js/ext_libs/bootstrap.min.js"></script>
 
 
     <script src="js/etc/global_helper.js"></script>
@@ -23,7 +22,6 @@
     <script src="js/apps/LSTMController.js"></script>
     <script src="js/apps/LSTMHeatmapHandler.js"></script>
 
-    <link rel="stylesheet" type="text/css" href="css/bootstrap/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="css/vis/general.css">
     <link rel="stylesheet" type="text/css" href="css/vis/heatmap.css">
     <link rel="stylesheet" type="text/css" href="css/vis/lineplot.css">
@@ -35,102 +33,55 @@
 </head>
 <body>
 
-<style>
-    button {
-        border-style: none;
-        border-radius: 5px;
-        background-color: rgba(179, 179, 179, .4);
-    }
-
-    button:hover {
-        background-color: rgba(179, 179, 179, 1);
-    }
-
-    button:focus {
-        outline: none;
-    }
-</style>
+<!--<h1>LSTMVis V2</h1>-->
+<div class="header">
+<img src="assets/lstmvis_v2_smaller.png" width="200">
+</div>
 
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-sm-12">
-            <h1>LSTMVis V2</h1>
-
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-xs-2 col-md-1" style="font-size: larger">
-            Selection
-        </div>
-        <div class="col-xs-4 col-sm-2 hidden-print">
-            zoom:
-            <button id="smaller_btn">-</button>
-            <button id="larger_btn">+</button>
-        </div>
-        <div class="col-xs-4 col-sm-3">
-            position:
-            <button class="hidden-print" id="inc_pos">+10</button>
-            <button class="hidden-print" id="dec_pos">-10</button>
-        </div>
-
-    </div>
-    <div class="row" style="padding-top: 10px;">
-        <div class="col-sm-12">
-            <svg id="queryVis" width="900" height="300">
-            </svg>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-xs-12">
-            <button> add meta track</button>
-        </div>
+<hr/>
+<div>
+    <div class="section">Selection</div>
+    <div class="optionGrp">
+        zoom
+        <button class="hidden-print uiButton" id="smaller_btn">&gt;&lt;</button>
+        <button class="hidden-print uiButton" id="larger_btn">&lt; &gt;</button>
     </div>
 
-    <hr/>
-    <div class="row">
-        <div class="col-xs-3 col-md-1" style="font-size: larger;">
-            Matching
-        </div>
-        <div class="col-xs-3 ">
-            <button class="hidden-print" id="match_fast">fast</button>
-            <button class="hidden-print" id="match_precise">precise</button>
-        </div>
-        <div class="col-xs-6 row" id="metaOptions">
-
-        </div>
+    <div class="optionGrp">
+        move
+        <button class="hidden-print uiButton" id="inc_pos">&lt;&lt;</button>
+        <button class="hidden-print uiButton" id="dec_pos">&gt;&gt;</button>
     </div>
+</div>
 
-    <!--&lt;!&ndash; Trigger the modal with a button &ndash;&gt;-->
-    <!--<button type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModal">Open Modal</button>-->
+<div>
+    <svg id="queryVis" width="900" height="260"></svg>
+</div>
+<div style="margin-top: 5px; margin-bottom: 5px;text-align:center;">
+    <button class="hidden-print uiButton"> add meta track</button>
+</div>
+<div>
+    <svg id="queryVisCells" width="900" height="20"></svg>
+</div>
 
-    <!--&lt;!&ndash; Modal &ndash;&gt;-->
-    <!--<div id="myModal" class="modal fade" role="dialog">-->
-    <!--<div class="modal-dialog">-->
+<hr/>
 
-    <!--&lt;!&ndash; Modal content&ndash;&gt;-->
-    <!--<div class="modal-content">-->
-    <!--<div class="modal-header">-->
-    <!--<button type="button" class="close" data-dismiss="modal">&times;</button>-->
-    <!--<h4 class="modal-title">Modal Header</h4>-->
-    <!--</div>-->
-    <!--<div class="modal-body">-->
-    <!--<p>Some text in the modal.</p>-->
-    <!--</div>-->
-    <!--<div class="modal-footer">-->
-    <!--<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>-->
-    <!--</div>-->
-    <!--</div>-->
+<div>
+    <div class="section">Matching</div>
+    <div class="optionGrp">
+        match
+        <button class="hidden-print uiButton" id="match_fast">fast</button>
+        <button class="hidden-print uiButton" id="match_precise">precise</button>
+    </div>
+    <div class="optionGrp">
+        meta
+        <div id="metaOptions" class="optionGrp"></div>
+    </div>
+</div>
 
-    <!--</div>-->
-    <!--</div>-->
-
-
-    <svg id="resultVis" width="900" height="500">
-
-    </svg>
-
-
+<div>
+    <svg id="resultVis" width="900" height="500"></svg>
 </div>
 
 

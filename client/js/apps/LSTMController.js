@@ -153,6 +153,7 @@ class LSTMController {
         metaDims.forEach(
           key => res[key.substring(5)] = this.matchResult.results.positionDetail[key]
         );
+
         return res;
 
     }

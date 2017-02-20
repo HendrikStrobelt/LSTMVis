@@ -38,7 +38,7 @@ class LSTMHeatmapHandler {
             this.hmInfo.remove(d);
         }).remove();
 
-        mOp.enter().append('span').attr('class', 'metaOption noselect')
+        mOp.enter().append('button').attr('class', 'metaOption noselect')
           .each(d => this._heatmapAdd(d))
           .on('click', function (d) {
               const selected = !that.hmInfo.get(d).selected;
@@ -46,7 +46,7 @@ class LSTMHeatmapHandler {
               d3.select(this).classed('activeHM', selected);
               that.updateVisibility();
           })
-          .style('padding-right', '2px')
+          // .style('padding-right', '2px')
           .merge(mOp)
           .classed('activeHM', d => this.hmInfo.get(d).selected)
           .text(d => d);

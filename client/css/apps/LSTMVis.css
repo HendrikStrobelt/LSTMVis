@@ -1,17 +1,104 @@
-.metaOption{
+@font-face {
+    font-family: 'Open Sans';
+    font-style: normal;
+    font-weight: 400;
+    src: local('Open Sans'), local('OpenSans'),
+    url(../../assets/fonts/opensans_400_latin.woff2) format('woff2');
+}
+
+@font-face {
+    font-family: 'Open Sans';
+    font-style: normal;
+    font-weight: 700;
+    src: local('Open Sans Bold'), local('OpenSans-Bold'),
+    url(../../assets/fonts/opensans_700_latin.woff2) format('woff2');
+}
+
+@font-face {
+    font-family: 'Roboto Condensed';
+    font-style: normal;
+    font-weight: 400;
+    src: local('Roboto Condensed'), local('RobotoCondensed-Regular'),
+    url(../../assets/fonts/robotocond_400_latin.woff2) format('woff2');
+}
+
+@font-face {
+    font-family: 'Roboto Condensed';
+    font-style: normal;
+    font-weight: 700;
+    src: local('Roboto Condensed Bold'), local('RobotoCondensed-Bold'),
+    url(../../assets/fonts/robotocond_700_latin.woff2) format('woff2');
+}
+
+body {
+    font-family: 'Open Sans', sans-serif;
+    font-size: 11pt;
+}
+
+.header {
+    margin-top: 10px;
+    margin-bottom: 5px;
+}
+
+hr {
+    height: 1px;
+    border-width: 0;
+    color: gray;
+    background-color: gray;
+}
+
+.section {
+    display: inline-block;
+    font-weight: bold;
+    margin-right: 1em;
+    background-color: #777;
+    padding: .3em;
+    color: white;
+}
+
+.optionGrp {
+    display: inline-block;
+    white-space: nowrap;
+    margin-right: 1em;
+}
+
+.word {
+    font-family: "Roboto Condensed", sans-serif;
+}
+
+button {
+    font-family: inherit;
+    font-size: smaller;
+    border-style: none;
+}
+
+button:focus {
+    outline: none;
+}
+
+.uiButton {
+    border-radius: 5px;
+    background-color: rgba(179, 179, 179, .4);
+}
+
+.uiButton:hover {
+    background-color: rgba(179, 179, 179, 1);
+}
+
+.metaOption {
     padding-left: 5px;
     padding-right: 5px;
     /*border-radius: 5px;*/
-    margin-right: 5px ;
+    margin-right: 5px;
     background-color: #ececec;
     cursor: crosshair;
 
 }
 
-.metaOption:hover{
-    border: dashed #349576 1px;
+.metaOption:hover {
+    outline: dashed #349576 1px;
 }
 
-.metaOption.activeHM{
+.metaOption.activeHM {
     background-color: #a1dd8d;
 }

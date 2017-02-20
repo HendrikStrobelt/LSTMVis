@@ -5,6 +5,7 @@ class LSTMVis {
 
     constructor() {
         this.querySVG = d3.select('#queryVis');
+        this.querySVGCells = d3.select('#queryVisCells');
         this.resultSVG = d3.select('#resultVis');
         this.eventHandler = new SimpleEventHandler(this.querySVG.node());
         this.controller = new LSTMController({eventHandler: this.eventHandler});
@@ -48,9 +49,9 @@ class LSTMVis {
         });
 
         this.cellList = new CellList({
-            parent: this.querySVG, eventHandler: this.eventHandler,
+            parent: this.querySVGCells, eventHandler: this.eventHandler,
             options: {
-                pos: {x: 0, y: 270},
+                pos: {x: 0, y:0},
                 globalExclusiveEvents: [CellList.events.cellHovered]
             }
         })
