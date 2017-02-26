@@ -4,20 +4,21 @@
 class LSTMVis {
 
     constructor() {
-        this.querySVG = d3.select('#queryVis');
-        this.querySVGCells = d3.select('#queryVisCells');
-        this.resultSVG = d3.select('#resultVis');
-        this.eventHandler = new SimpleEventHandler(this.querySVG.node());
-        this.controller = new LSTMController({eventHandler: this.eventHandler});
+        this.selectionSVG = d3.select('#selectionVis');
+        this.selectedCellsSVG = d3.select('#selectedCellsVis');
+        this.matchingSVG = d3.select('#matchingVis');
+        this.selectionEventHandler = new SimpleEventHandler(this.selectionSVG.node());
+        this.matchingEventHandler = new SimpleEventHandler(this.matchingSVG.node());
+        this.controller = new LSTMController({eventHandler: this.selectionEventHandler});
         this.hmHandler = new LSTMHeatmapHandler({
-            parentNode: this.resultSVG,
+            parentNode: this.matchingSVG,
             controller: this.controller,
-            eventHandler: this.eventHandler
+            eventHandler: this.matchingEventHandler
         })
 
 
-        this.setupQuery();
-        this.setupResult();
+        this.setupSelection();
+        this.setupMatching();
 
         this.bindDataEvents();
         this.bindUIEvents();
@@ -26,12 +27,12 @@ class LSTMVis {
         this.controller.initByUrlAndRun();
     }
 
-    setupQuery() {
+    setupSelection() {
 
-        this.querySVG.attr('width', this.controller.windowSize.width);
+        this.selectionSVG.attr('width', this.controller.windowSize.width);
 
         this.lineplot = new LinePlot({
-            parent: this.querySVG, eventHandler: this.eventHandler,
+            parent: this.selectionSVG, eventHandler: this.selectionEventHandler,
             options: {
                 cellWidth: this.controller.cellWidth,
                 height: 200,
@@ -41,7 +42,7 @@ class LSTMVis {
         });
 
         this.wordSequence = new WordSequence({
-            parent: this.querySVG, eventHandler: this.eventHandler,
+            parent: this.selectionSVG, eventHandler: this.selectionEventHandler,
             options: {
                 cellWidth: this.controller.cellWidth,
                 pos: {x: 60 - this.controller.cellWidth, y: 210 + 5}
@@ -49,7 +50,7 @@ class LSTMVis {
         });
 
         this.cellList = new CellList({
-            parent: this.querySVGCells, eventHandler: this.eventHandler,
+            parent: this.selectedCellsSVG, eventHandler: this.selectionEventHandler,
             options: {
                 pos: {x: 0, y: 0},
                 globalExclusiveEvents: [CellList.events.cellHovered]
@@ -59,13 +60,13 @@ class LSTMVis {
 
     }
 
-    setupResult() {
-        this.resultSVG
+    setupMatching() {
+        this.matchingSVG
           .attr('width', this.controller.windowSize.width)
           .attr('opacity', 0);
 
         this.wordMatrix = new WordMatrix({
-            parent: this.resultSVG, eventHandler: this.eventHandler,
+            parent: this.matchingSVG, eventHandler: this.matchingEventHandler,
             options: {
                 cellWidth: this.controller.cellWidth,
                 pos: {x: 10, y: 20}
@@ -76,7 +77,7 @@ class LSTMVis {
     }
 
     bindDataEvents() {
-        this.eventHandler.bind(LSTMController.events.newContextAvailable,
+        this.selectionEventHandler.bind(LSTMController.events.newContextAvailable,
           () => {
               const states = this.controller.states;
               const timeSteps = states.right - states.left;
@@ -102,7 +103,7 @@ class LSTMVis {
           });
 
 
-        this.eventHandler.bind(LSTMController.events.newMatchingResults, () => {
+        this.selectionEventHandler.bind(LSTMController.events.newMatchingResults, () => {
             const wordMatrix = this.controller.matchingWordMatrix;
             wordMatrix.forEach(row => {
                 row.posOffset = row.left;
@@ -112,7 +113,7 @@ class LSTMVis {
 
             this.wordMatrix.update({wordMatrix});
 
-            this.resultSVG.transition().attr('opacity', 1);
+            this.matchingSVG.transition().attr('opacity', 1);
         })
 
     }
@@ -167,7 +168,7 @@ class LSTMVis {
 
         d3.select('#match_precise').on('click',
           () => {
-              this.resultSVG.transition().attr('opacity', 0);
+              this.matchingSVG.transition().attr('opacity', 0);
 
               this.controller.requestMatch({
                   metaDims: [...Object.keys(this.controller.projectMetadata.meta)],
@@ -177,7 +178,7 @@ class LSTMVis {
 
         d3.select('#match_fast').on('click',
           () => {
-              this.resultSVG.transition().attr('opacity', 0);
+              this.matchingSVG.transition().attr('opacity', 0);
               this.controller.requestMatch({
                   metaDims: [...Object.keys(this.controller.projectMetadata.meta)],
                   mode: 'fast'
@@ -210,30 +211,30 @@ class LSTMVis {
         // --------------------------------
 
 
-        this.eventHandler.bind(WordSequence.events.brushSelectionChanged,
+        this.selectionEventHandler.bind(WordSequence.events.brushSelectionChanged,
           sel => {
               this.controller.wordBrush = sel;
               this.updateCellSelection(true);
           }
         );
 
-        this.eventHandler.bind(WordSequence.events.zeroBrushSelectionChanged,
+        this.selectionEventHandler.bind(WordSequence.events.zeroBrushSelectionChanged,
           sel => {
               this.controller.wordBrushZero = sel;
               this.updateCellSelection(true);
           }
         );
 
-        this.eventHandler.bind(LinePlot.events.thresholdChanged, th => {
+        this.selectionEventHandler.bind(LinePlot.events.thresholdChanged, th => {
               this.controller.threshold = Util.round(th.newValue, 4);
               this.updateCellSelection(true);
           }
         )
 
-        this.eventHandler.bind(LSTMController.events.windowResize, () => {
+        this.selectionEventHandler.bind(LSTMController.events.windowResize, () => {
             const newWidth = this.controller.windowSize.width;
-            this.querySVG.attr('width', newWidth);
-            this.resultSVG.attr('width', newWidth);
+            this.selectionSVG.attr('width', newWidth);
+            this.matchingSVG.attr('width', newWidth);
         })
 
         d3.select('#addMetaTrackBtn').on('click', () => {
@@ -247,11 +248,11 @@ class LSTMVis {
 
             ModalDialog.open({
                 rootNode: d3.select('#addMetaDialog'),
-                eventHandler: this.eventHandler
+                eventHandler: this.selectionEventHandler
             })
         })
 
-        this.eventHandler.bind(ModalDialog.events.modalDialogSubmitted,
+        this.selectionEventHandler.bind(ModalDialog.events.modalDialogSubmitted,
           node => {
 
               console.log(node.attr('id'));
@@ -262,21 +263,21 @@ class LSTMVis {
     }
 
     bindHoverEvents() {
-        this.eventHandler.bind(
+        this.selectionEventHandler.bind(
           [CellList.events.cellHovered, LinePlot.events.cellHovered].join(' '),
           d => {
               this.lineplot.actionCellHovered(d.index);
               this.cellList.actionCellHovered(d.index);
           })
 
-        this.eventHandler.bind(
+        this.matchingEventHandler.bind(
           [WordMatrix.events.cellHovered, HeatMap.events.cellHovered].join(' '),
           d => {
               this.wordMatrix.actionCellHovered(d.row, d.col, d.active);
               this.hmHandler.actionCellHovered(d.row, d.col, d.active);
           })
 
-        this.eventHandler.bind(
+        this.matchingEventHandler.bind(
           HeatMap.events.rectSelected,
           hm_id => {
               const heatmap = this.hmHandler.getHeatmapById(hm_id);
