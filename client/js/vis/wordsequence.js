@@ -42,7 +42,7 @@ class WordSequence extends VComponent {
     }
 
     _init() {
-        const svgMeasure = new SVGMeasurements(this.layers.measure);
+        const svgMeasure = new SVGMeasurements(this.layers.measure, 'word');
         this._calcTextLength = text => svgMeasure.textLength(text);
     }
 
@@ -95,7 +95,7 @@ class WordSequence extends VComponent {
           .attr('transform', (d, i) => `translate(${xScale(i)},0)`)
           .classed('selected', d => ('selectedWords' in st) && st.selectedWords.has(d.index))
 
-        word.select('text').text(d => d.text)
+        word.select('text').text(d => d.text);
 
         const rects = word.select('rect')
           .attrs({y: -op.cellHeight - 3, width: op.cellWidth, height: op.cellHeight + 6})
@@ -107,12 +107,11 @@ class WordSequence extends VComponent {
         }
 
         word.select('text')
-          .attr('y', -op.cellHeight / 2)
-          .attr('x', op.cellPadding / 2)
           .attr("transform", d => {
-              const scaleX = (op.cellWidth - op.cellPadding / 2) / d.length || 1;
+              const scaleX = (op.cellWidth-op.cellPadding) / d.length;
+              const translate = `translate(${op.cellPadding / 2},${-op.cellHeight / 2})`
 
-              return (scaleX < 1 ? `scale(${scaleX},1)` : '');
+              return (scaleX < 1 ? `${translate}scale(${scaleX},1)` : translate);
           });
 
         if (st.multiSelect) {

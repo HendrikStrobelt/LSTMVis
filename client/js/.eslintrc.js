@@ -22,7 +22,8 @@ module.exports = {
         "CellList": false,
         "SVGMeasurements": false,
         "WordMatrix": false,
-        "LSTMHeatmapHandler": false
+        "LSTMHeatmapHandler": false,
+        "ModalDialog":false
     },
     "extends": "eslint:recommended",
     "rules": {

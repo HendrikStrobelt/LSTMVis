@@ -31,7 +31,7 @@ class WordMatrix extends VComponent {
     }
 
     _init() {
-        const svgMeasure = new SVGMeasurements(this.layers.measure);
+        const svgMeasure = new SVGMeasurements(this.layers.measure, 'word');
         this._calcTextLength = text => svgMeasure.textLength(text);
 
     }
@@ -51,8 +51,10 @@ class WordMatrix extends VComponent {
 
 
     _render(renderData) {
-        this._renderWords(renderData.wordMatrix);
-        this._renderHeatmap(renderData.wordMatrix, renderData.heatmap)
+        if (renderData) {
+            this._renderWords(renderData.wordMatrix);
+            this._renderHeatmap(renderData.wordMatrix, renderData.heatmap)
+        }
     }
 
     _renderWords(rowData) {

@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>LSTMVis </title>
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
 
     <script src="js/ext_libs/jquery.min.js"></script>
     <script src="js/ext_libs/lodash.min.js"></script>
@@ -19,6 +21,7 @@
     <script src="js/vis/wordsequence.js"></script>
     <script src="js/vis/celllist.js"></script>
     <script src="js/vis/wordmatrix.js"></script>
+    <script src="js/etc/general_ui.js"></script>
     <script src="js/apps/LSTMController.js"></script>
     <script src="js/apps/LSTMHeatmapHandler.js"></script>
 
@@ -27,17 +30,18 @@
     <link rel="stylesheet" type="text/css" href="css/vis/lineplot.css">
     <link rel="stylesheet" type="text/css" href="css/vis/wordsequence.css">
     <link rel="stylesheet" type="text/css" href="css/vis/celllist.css">
+    <link rel="stylesheet" type="text/css" href="css/etc/general_ui.css">
     <link rel="stylesheet" type="text/css" href="css/vis/wordmatrix.css">
     <link rel="stylesheet" type="text/css" href="css/apps/LSTMVis.css">
 
 </head>
 <body>
+<!--Trick to pre-cache font before JS execution-->
+<span style="font-family:'Roboto Condensed';position: absolute;top:-100px;">abc</span>
 
-<!--<h1>LSTMVis V2</h1>-->
 <div class="header">
-<img src="assets/lstmvis_v2_smaller.png" width="200">
+    <img src="assets/lstmvis_v2_smaller.png" width="200">
 </div>
-
 
 <hr/>
 <div>
@@ -59,7 +63,7 @@
     <svg id="queryVis" width="900" height="260"></svg>
 </div>
 <div style="margin-top: 5px; margin-bottom: 5px;text-align:center;">
-    <button class="hidden-print uiButton"> add meta track</button>
+    <button id='addMetaTrackBtn' class="hidden-print uiButton"> add meta track</button>
 </div>
 <div>
     <svg id="queryVisCells" width="900" height="20"></svg>
@@ -82,6 +86,36 @@
 
 <div>
     <svg id="resultVis" width="900" height="500"></svg>
+</div>
+
+<!-- MODAL DIALOGS -->
+
+<div class="modalDialog" id="addMetaDialog" hidden>
+    <h2> Select a meta field to add:</h2>
+    <!--<div class="uiRow">-->
+    <!--<input class="textInput" type="text" value="abc">-->
+    <!--</div>-->
+
+
+    <!--<form>-->
+    <!--<input type="radio" value="checked" >-->
+    <!--<input type="radio" value="checked2" >-->
+    <!--</form>-->
+
+    <div class="uiRow">
+        <select class="selectInput" id="addMetaList">
+            <option value="1">abc</option>
+            <option value="2">bfc</option>
+        </select>
+    </div>
+
+
+    <div class="uiRow" style="text-align: end;">
+        <button class="uiButton uiCancel"> cancel</button>
+        <button class="uiButton uiSubmit"> accept</button>
+    </div>
+
+
 </div>
 
 

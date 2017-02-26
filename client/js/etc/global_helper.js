@@ -47,8 +47,10 @@ class Util {
 
 
 class SVGMeasurements {
-    constructor(baseElement) {
-        this.measureElement = baseElement.append('text').attrs({x: 0, y: -20})
+    constructor(baseElement, classes = '') {
+        this.measureElement = baseElement.append('text')
+          .attrs({x: 0, y: -20, class: classes})
+
     }
 
     textLength(text) {

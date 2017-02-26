@@ -51,7 +51,7 @@ class LSTMVis {
         this.cellList = new CellList({
             parent: this.querySVGCells, eventHandler: this.eventHandler,
             options: {
-                pos: {x: 0, y:0},
+                pos: {x: 0, y: 0},
                 globalExclusiveEvents: [CellList.events.cellHovered]
             }
         })
@@ -236,6 +236,28 @@ class LSTMVis {
             this.resultSVG.attr('width', newWidth);
         })
 
+        d3.select('#addMetaTrackBtn').on('click', () => {
+            console.log(this.controller.projectMetadata.meta);
+
+            const metaKeys = Object.keys(this.controller.projectMetadata.meta)
+            const metaOps = d3.select('#addMetaList').selectAll('option').data(metaKeys)
+            metaOps.exit().remove()
+            metaOps.enter().append('option')
+              .merge(metaOps).attr('value', d => d).text(d => d)
+
+            ModalDialog.open({
+                rootNode: d3.select('#addMetaDialog'),
+                eventHandler: this.eventHandler
+            })
+        })
+
+        this.eventHandler.bind(ModalDialog.events.modalDialogSubmitted,
+          node => {
+
+              console.log(node.attr('id'));
+          }
+        )
+
 
     }
 
@@ -261,7 +283,7 @@ class LSTMVis {
               if (heatmap) {
                   const colorScale = heatmap.renderData.colorScale;
                   const colorMap = heatmap.data.values
-                    .map(row => row.map(cell => colorScale(cell))                  );
+                    .map(row => row.map(cell => colorScale(cell)));
                   this.wordMatrix.actionChangeHeatmap(colorMap)
               } else {
                   this.wordMatrix.actionChangeHeatmap(null);
