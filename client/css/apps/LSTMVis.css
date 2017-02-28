@@ -83,3 +83,16 @@ hr {
 .metaOption.activeHM {
     background-color: #a1dd8d;
 }
+
+.metaTrack .closeButton {
+    text-anchor: middle;
+    dominant-baseline: central;
+    cursor: pointer;
+    opacity: .5;
+}
+
+.metaTrack .closeButton:hover {
+    opacity: 1;
+}
+
+

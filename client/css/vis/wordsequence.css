@@ -6,7 +6,7 @@
 }
 
 .wordsequence .word.hovered rect{
-    stroke: #1399e4;
+    stroke: #ff4340;
     stroke-width: 2;
 }
 .wordsequence .word.selected rect{
@@ -17,6 +17,7 @@
 .wordsequence .word text {
     pointer-events: none;
     dominant-baseline: central;
+    text-anchor: middle;
 }
 
 

@@ -23,7 +23,9 @@ module.exports = {
         "SVGMeasurements": false,
         "WordMatrix": false,
         "LSTMHeatmapHandler": false,
-        "ModalDialog":false
+        "ModalDialog": false,
+        "ColorManager": false,
+        "LSTMMetaTrackHandler": false
     },
     "extends": "eslint:recommended",
     "rules": {

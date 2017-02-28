@@ -18,7 +18,8 @@ class WordSequence extends VComponent {
     static get modes() {
         return {
             brushing: ['zeroBrush', 'brushSelect', 'hovering'],
-            multiSelect: ['multiSelect', 'hovering']
+            multiSelect: ['multiSelect', 'hovering'],
+            simple: ['hovering']
         }
     }
 
@@ -35,9 +36,9 @@ class WordSequence extends VComponent {
     get layout() {
         return [
             {name: 'measure', pos: {x: 0, y: -10}},
-            {name: 'text', pos: {x: 0, y: 20}},
-            {name: 'brush', pos: {x: 0, y: 20}},
-            {name: 'zeroBrush', pos: {x: 0, y: 20 + 5}}
+            {name: 'text', pos: {x: 0, y: 0}},
+            {name: 'brush', pos: {x: 0, y: 0}},
+            {name: 'zeroBrush', pos: {x: 0, y: 25}}
         ]
     }
 
@@ -64,6 +65,9 @@ class WordSequence extends VComponent {
         const op = this.options;
         const st = this._states;
         const wordCount = renderData.words.length;
+
+        this.base.attr('transform', `translate(${op.pos.x},${op.pos.y})`);
+
 
         st.xScale = d3.scaleLinear()
           .domain([0, wordCount])
@@ -98,7 +102,7 @@ class WordSequence extends VComponent {
         word.select('text').text(d => d.text);
 
         const rects = word.select('rect')
-          .attrs({y: -op.cellHeight - 3, width: op.cellWidth, height: op.cellHeight + 6})
+          .attrs({y: 0, width: op.cellWidth, height: op.cellHeight})
 
         if ('colorArray' in st) {
             rects.style('fill', d => (d.index < st.colorArray.length) ? st.colorArray[d.index] : null);
@@ -108,8 +112,8 @@ class WordSequence extends VComponent {
 
         word.select('text')
           .attr("transform", d => {
-              const scaleX = (op.cellWidth-op.cellPadding) / d.length;
-              const translate = `translate(${op.cellPadding / 2},${-op.cellHeight / 2})`
+              const scaleX = (op.cellWidth - op.cellPadding) / d.length;
+              const translate = `translate(${op.cellWidth / 2},${op.cellHeight / 2})`
 
               return (scaleX < 1 ? `${translate}scale(${scaleX},1)` : translate);
           });
@@ -117,14 +121,14 @@ class WordSequence extends VComponent {
         if (st.multiSelect) {
             word.on('click',
               d => this.eventHandler.trigger(WordSequence.events.wordClicked, d.index))
+        }
 
-            if (st.hovering) {
-                word.select('rect')
-                  .on('mouseenter',
-                    d => this.eventHandler.trigger(WordSequence.events.wordHovered, d.index))
-                this.layers.text.on('mouseout',
-                  () => this.eventHandler.trigger(WordSequence.events.wordHovered, -1))
-            }
+        if (st.hovering && !st.brushSelect) {
+            word.select('rect')
+              .on('mouseenter',
+                d => this.eventHandler.trigger(WordSequence.events.wordHovered, d.index))
+            this.layers.text.on('mouseout',
+              () => this.eventHandler.trigger(WordSequence.events.wordHovered, -1))
         }
 
     }
@@ -178,7 +182,7 @@ class WordSequence extends VComponent {
 
 
         const brushGenerator = d3.brushX()
-          .extent([[xScale.range()[0], -op.cellHeight], [xScale.range()[1], 0]])
+          .extent([[xScale.range()[0], 3], [xScale.range()[1], op.cellHeight - 3]])
           .on("brush", brushed)
           .on("end", brushEnd);
 
@@ -210,6 +214,8 @@ class WordSequence extends VComponent {
     }
 
     _renderZeroBrush({op, st}) {
+        this.layers.zeroBrush.attr('transform', SVG.translate({x: 0, y: op.cellHeight + 5}));
+
         const xScale = st.xScale;
         const sr = st.selectedRange;
 

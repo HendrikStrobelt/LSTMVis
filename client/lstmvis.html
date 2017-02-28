@@ -14,6 +14,7 @@
 
 
     <script src="js/etc/global_helper.js"></script>
+    <script src="js/vis/vhelper.js"></script>
     <script src="js/vis/vcomponent.js"></script>
     <script src="js/vis/SimpleComponent.js"></script>
     <script src="js/vis/heatmap.js"></script>
@@ -24,6 +25,7 @@
     <script src="js/etc/general_ui.js"></script>
     <script src="js/apps/LSTMController.js"></script>
     <script src="js/apps/LSTMHeatmapHandler.js"></script>
+    <script src="js/apps/LSTMMetaTrackHandler.js"></script>
 
     <link rel="stylesheet" type="text/css" href="css/vis/general.css">
     <link rel="stylesheet" type="text/css" href="css/vis/heatmap.css">
@@ -62,7 +64,9 @@
 <div>
     <svg id="selectionVis" width="900" height="260"></svg>
 </div>
-<div style="margin-top: 5px; margin-bottom: 5px;text-align:center;">
+<div style="margin-bottom: 5px;" id="metaTracks">
+</div>
+<div style="margin-bottom: 5px;text-align:center;">
     <button id='addMetaTrackBtn' class="hidden-print uiButton"> add meta track</button>
 </div>
 <div>

@@ -7,6 +7,7 @@ class HeatMap extends VComponent {
             cellHovered: 'heatmap-cellHovered',
             rectSelected: 'heatmap-rectSelected',
             circleSelected: 'heatmap-circleSelected',
+            closeWindow: 'heatmap-closeWindow'
         }
     }
 
@@ -14,6 +15,7 @@ class HeatMap extends VComponent {
         return {
             pos: {x: 30, y: 50},
             title: "Heatmap",
+            key: '',
             // Width and height of one HM cell
             cellWidth: 10,
             cellHeight: 20,
@@ -21,17 +23,13 @@ class HeatMap extends VComponent {
             chartType: HeatMap.chartType.scalar,
             // D3 color scale or 'null' if using automatic min-max scale
             ownColorScale: null,
-            // Default color schemes for automatic scales
-            colorsZeroOne: ['#f7f7f7', '#0571b0'],
-            colorsNegativeZeroOne: ['#ca0020', '#f7f7f7', '#0571b0'],
-            colorsCategorical: ["#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", "#0099c6", "#dd4477", "#66aa00",
-                "#b82e2e", "#316395", "#994499", "#22aa99", "#aaaa11", "#6633cc", "#e67300", "#8b0707", "#651067",
-                "#329262", "#5574a6", "#3b3eac"]
+            colorManager: new ColorManager({})
         }
     }
 
     get layout() {
         return [
+            // {name: 'bg', pos: {x: 0, y: 0}},
             {name: 'title', pos: {x: 30, y: -20 + 12}},
             {name: 'guiPanel', pos: {x: 0, y: -20}},
             {name: 'cells', pos: {x: 0, y: 0}},
@@ -82,19 +80,20 @@ class HeatMap extends VComponent {
             y, width, height
         }).on('click', select(HeatMap.events.rectSelected, rect_button));
 
-        const circle_button = this.layers.guiPanel.append('circle')
-        circle_button.attrs({
-            class: 'mapping-circle-button',
-            cx: x[1] + width / 2,
-            cy: y + width / 2,
-            r: width / 2
-        }).on('click', select(HeatMap.events.circleSelected, circle_button));
+        // const circle_button = this.layers.guiPanel.append('circle')
+        // circle_button.attrs({
+        //     class: 'mapping-circle-button',
+        //     cx: x[1] + width / 2,
+        //     cy: y + width / 2,
+        //     r: width / 2
+        // }).on('click', select(HeatMap.events.circleSelected, circle_button));
 
         this.layers.guiPanel.append('text').attrs({
             class: 'mapping-hide-button noselect',
             y: y + height / 2,
             x: 100
-        }).text('\uf05c').on('click', () => this.hideView());
+        }).text('\uf05c').on('click',
+          () => this.eventHandler.trigger(HeatMap.events.closeWindow, this));
 
     }
 
@@ -115,26 +114,21 @@ class HeatMap extends VComponent {
 
     // RENDER/WRANGLE METHODS
     _wrangle(data) {
-        let colorScale = this.options.ownColorScale;
-        // If no own color scale given, create one
-        if (this.options.ownColorScale == undefined) {
+        const op = this.options;
 
-            if (this.options.chartType == HeatMap.chartType.scalar) {
-                const max = _.max(_.flatten(data.values));
-                const min = _.min(_.flatten(data.values));
-                if (min < 0) {
-                    const maxAbs = -min > max ? -min : max;
-                    colorScale = d3.scaleLinear()
-                      .domain([-maxAbs, 0, maxAbs])
-                      .range(this.options.colorsNegativeZeroOne);
-                } else {
-                    colorScale = d3.scaleLinear()
-                      .domain([min, max])
-                      .range(this.options.colorsZeroOne)
-                }
-            } else if (this.options.chartType == HeatMap.chartType.categorical) {
-                const allCategories = [...new Set(_.flatten(data.values))].sort();
-                colorScale = d3.scaleOrdinal(this.options.colorsCategorical).domain(allCategories);
+        let colorScale = op.ownColorScale;
+        // If no own color scale given, create one
+        if (op.ownColorScale == undefined) {
+
+            if (op.chartType == HeatMap.chartType.scalar) {
+                colorScale =
+                  op.colorManager.scaleForDim(op.key) ||
+                  op.colorManager.dynamicScalarScale(_.flatten(data.values));
+
+            } else if (op.chartType == HeatMap.chartType.categorical) {
+                colorScale =
+                  op.colorManager.scaleForDim(op.key) ||
+                  op.colorManager.dynamicCategoricalScale(_.flatten(data.values));
             }
         }
 
@@ -146,7 +140,8 @@ class HeatMap extends VComponent {
             label = (x, y, v) => { return {row: x, col: y, label: labelFormat(v), value: v};};
         }
 
-        this._states.yLength = data.values[0].length;
+        this._states.xLength = data.values[0].length;
+        this._states.yLength = data.values.length;
 
         // Return the renderData.
         return {
@@ -231,7 +226,11 @@ class HeatMap extends VComponent {
 
 
     get currentWidth() {
-        return this.scaleX(this._states.yLength)
+        return this.scaleX(this._states.xLength)
+    }
+
+    get currentHeight() {
+        return this.scaleY(this._states.yLength)
     }
 
     _bindLocalEvents(handler) {
@@ -243,6 +242,12 @@ class HeatMap extends VComponent {
 
         this._bindEvent(handler, HeatMap.events.circleSelected,
           hm_id => this.actionCircleSelect(new Set([hm_id])));
+
+        this._bindEvent(handler, HeatMap.events.closeWindow,
+          hm => {
+              if (this.id === hm.id) this.hideView();
+          }
+        )
 
     }
 }

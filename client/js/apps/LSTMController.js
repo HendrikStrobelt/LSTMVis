@@ -9,7 +9,8 @@ class LSTMController {
             contextRequestSent: 'lstmcontrol_ctxreq',
             newContextAvailable: 'lstmcontrol_newctx',
             newMatchingResults: 'lstmcontrol_newmatch',
-            windowResize: 'lestmcontrol_wres'
+            windowResize: 'lestmcontrol_wres',
+            projectsMetaAvailable: 'lstmcontrol_metaav'
         }
     }
 
@@ -26,6 +27,7 @@ class LSTMController {
         this.apiURL = URLHandler.basicURL() + '/api/v2';
         this.eventHandler = eventHandler;
         this.state = {};
+        this.colorManager = new ColorManager({});
 
 
         this.params = URLHandler.parameters();
@@ -63,6 +65,16 @@ class LSTMController {
                   const allProjects = JSON.parse(response);
                   this.allProjectInfos = new Map();
                   allProjects.forEach(d => this.allProjectInfos.set(d.project, d))
+
+                  // Register the known dimensions to color manager
+                  this.colorManager.reset();
+                  this.projectMetas.forEach(meta => {
+                      if (meta.type === 'discrete') {
+                          this.colorManager.registerCategoricalDim(meta.key, meta.range);
+                      }
+                  });
+
+                  this.eventHandler.trigger(LSTMController.events.projectsMetaAvailable, {});
                   this.requestContext({});
 
               })
@@ -80,6 +92,7 @@ class LSTMController {
         sd('dims', ['states', 'words']);
         sd('activation', 0.3);
         sd('cw', 30);
+        sd('meta', []);
 
     }
 
@@ -88,10 +101,10 @@ class LSTMController {
         const parMap = Util.objectMap(params);
         const payload = new Map();
         const parameterNames =
-          ['project', 'pos', 'source', 'left', 'right', 'dims', 'activation'];
+          ['project', 'pos', 'source', 'left', 'right', 'activation'];
 
-        parameterNames.forEach(pName => payload.set(pName,
-          (parMap.get(pName) || this.params.get(pName))));
+        parameterNames.forEach(pName =>
+          payload.set(pName, (parMap.get(pName) || this.params.get(pName))));
 
         if (persist) {
             parameterNames.forEach(pName => {
@@ -99,6 +112,8 @@ class LSTMController {
             });
             this.updateURLparams();
         }
+
+        payload.set('dims', [...(this.visibleMeta.map(d => 'meta_' + d)), 'states', 'words']);
 
 
         Network.ajax_request(this.apiURL + '/context')
@@ -199,6 +214,16 @@ class LSTMController {
         this.updateURLparams();
     }
 
+    get visibleMeta() {
+        return this.params.get('meta')
+    }
+
+    set visibleMeta(meta) {
+        this.params.set('meta', meta);
+        this.updateURLparams();
+    }
+
+
     get pos() {
         return this.params.get('pos');
     }
@@ -207,9 +232,32 @@ class LSTMController {
         return this.params.set('pos', p);
     }
 
-    get projectMetadata() {
+    get projectInfo() {
         return this.allProjectInfos.get(this.params.get('project')).info
     }
+
+    get projectMetas() {
+        const meta = this.projectInfo.meta;
+
+        return Object.keys(meta).map(key => ({
+            key,
+            type: meta[key].vis.type,
+            range: meta[key].vis.range
+        }))
+    }
+
+    get selectMetaDims() {
+        const metaDims = Object.keys(this.context.results)
+          .filter(d => d.startsWith('meta_'));
+
+        const res = {};
+        metaDims.forEach(
+          key => res[key.substring(5)] = this.context.results[key]
+        );
+
+        return res;
+    }
+
 
     get cellWidth() {
         return this.params.get('cw');
@@ -221,7 +269,7 @@ class LSTMController {
     }
 
     get windowSize() {
-        return {width: window.innerWidth-20, height: window.innerHeight-20}
+        return {width: window.innerWidth - 20, height: window.innerHeight - 20}
     }
 
     cellSelection(recalc = false) {

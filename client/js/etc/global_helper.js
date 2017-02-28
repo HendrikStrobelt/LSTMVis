@@ -88,22 +88,28 @@ class URLHandler {
             if (v.length > 0) {
                 const splits = v.split('=');
                 const key = decodeURIComponent(splits[0]);
-                const raw_value = decodeURIComponent(splits[1]);
+                let raw_value = decodeURIComponent(splits[1]);
 
-                const all_values = raw_value.split(',').map(val => {
-                    if (isInt(val)) {
-                        return Number.parseInt(val, 10);
-                    } else if (isFloat(val)) {
-                        return Number.parseFloat(val);
-                    }
+                const isArray = raw_value.startsWith('..');
+                if (isArray) {
+                    raw_value = raw_value.slice(2);
+                }
 
-                    return val;
-                });
+                if (raw_value.length < 1) {
+                    urlParameters.set(key, isArray ? [] : '');
+                } else {
+                    const [first, ...rest] = raw_value.split(',').map(val => {
+                        if (isInt(val)) {
+                            return Number.parseInt(val, 10);
+                        } else if (isFloat(val)) {
+                            return Number.parseFloat(val);
+                        }
 
-
-                urlParameters.set(key, all_values.length > 1 ? all_values : all_values[0]);
+                        return val;
+                    });
+                    urlParameters.set(key, isArray ? [first, ...rest] : first);
+                }
             }
-
         });
 
         return urlParameters;
@@ -126,7 +132,7 @@ class URLHandler {
         urlParameters.forEach((v, k) => {
             if (v != undefined) {
                 let value = v;
-                if (Array.isArray(v)) value = v.join(',');
+                if (Array.isArray(v)) value = '..' + v.join(',');
                 attr.push(encodeURI(k + '=' + value))
             }
         });

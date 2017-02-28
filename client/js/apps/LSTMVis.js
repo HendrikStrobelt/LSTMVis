@@ -13,7 +13,16 @@ class LSTMVis {
         this.hmHandler = new LSTMHeatmapHandler({
             parentNode: this.matchingSVG,
             controller: this.controller,
-            eventHandler: this.matchingEventHandler
+            eventHandler: this.matchingEventHandler,
+            generalEventHandler: this.selectionEventHandler,
+            metaOptionPanel: d3.select('#metaOptions'),
+            colorManager: this.controller.colorManager
+        })
+        this.metaHandler = new LSTMMetaTrackHandler({
+            parentNode: d3.select('#metaTracks'),
+            controller: this.controller,
+            eventHandler: this.selectionEventHandler,
+            colorManager: this.controller.colorManager
         })
 
 
@@ -56,7 +65,6 @@ class LSTMVis {
                 globalExclusiveEvents: [CellList.events.cellHovered]
             }
         })
-
 
     }
 
@@ -118,7 +126,6 @@ class LSTMVis {
 
     }
 
-
     updateCellSelection(recalc = false) {
         const cellSelection = this.controller.cellSelection(recalc);
         this.lineplot.actionUpdateSelectedCells(cellSelection);
@@ -139,21 +146,24 @@ class LSTMVis {
 
     bindUIEvents() {
         const cellWidthUpdate = () => {
+            const cellWidth = this.controller.cellWidth;
             this.lineplot.updateOptions({
-                options: {cellWidth: this.controller.cellWidth},
+                options: {cellWidth},
                 reRender: true
             });
 
             this.wordSequence.updateOptions({
-                options: {cellWidth: this.controller.cellWidth},
+                options: {cellWidth, pos: {x: 60 - cellWidth, y: 215}},
                 reRender: true
             });
-            this.wordSequence.base.attr('transform', `translate(${60 - this.controller.cellWidth},215)`)
 
             this.wordMatrix.updateOptions({
-                options: {cellWidth: this.controller.cellWidth},
+                options: {cellWidth},
                 reRender: true
             });
+
+            this.metaHandler.actionCellWidthChange();
+
         };
 
 
@@ -171,7 +181,7 @@ class LSTMVis {
               this.matchingSVG.transition().attr('opacity', 0);
 
               this.controller.requestMatch({
-                  metaDims: [...Object.keys(this.controller.projectMetadata.meta)],
+                  metaDims: [...Object.keys(this.controller.projectInfo.meta)],
                   mode: 'precise'
               })
           });
@@ -180,7 +190,7 @@ class LSTMVis {
           () => {
               this.matchingSVG.transition().attr('opacity', 0);
               this.controller.requestMatch({
-                  metaDims: [...Object.keys(this.controller.projectMetadata.meta)],
+                  metaDims: [...Object.keys(this.controller.projectInfo.meta)],
                   mode: 'fast'
               })
           });
@@ -236,28 +246,6 @@ class LSTMVis {
             this.selectionSVG.attr('width', newWidth);
             this.matchingSVG.attr('width', newWidth);
         })
-
-        d3.select('#addMetaTrackBtn').on('click', () => {
-            console.log(this.controller.projectMetadata.meta);
-
-            const metaKeys = Object.keys(this.controller.projectMetadata.meta)
-            const metaOps = d3.select('#addMetaList').selectAll('option').data(metaKeys)
-            metaOps.exit().remove()
-            metaOps.enter().append('option')
-              .merge(metaOps).attr('value', d => d).text(d => d)
-
-            ModalDialog.open({
-                rootNode: d3.select('#addMetaDialog'),
-                eventHandler: this.selectionEventHandler
-            })
-        })
-
-        this.selectionEventHandler.bind(ModalDialog.events.modalDialogSubmitted,
-          node => {
-
-              console.log(node.attr('id'));
-          }
-        )
 
 
     }

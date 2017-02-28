@@ -4,16 +4,21 @@
 
 class LSTMHeatmapHandler {
 
-    constructor({parentNode, controller, eventHandler}) {
+    constructor({parentNode, controller, eventHandler, generalEventHandler, metaOptionPanel, colorManager}) {
         this.parentNode = parentNode;
         this.controller = controller;
         this.eventHandler = eventHandler;
+        this.metaOptionPanel = metaOptionPanel;
+        this.generalEventHandler = generalEventHandler;
+        this.colorManager = colorManager;
+
     }
 
     init() {
         this.cellCountHM = new HeatMap({
             parent: this.parentNode, eventHandler: this.eventHandler,
             options: {
+                key: 'match count',
                 title: 'match count',
                 pos: {x: 400, y: 20},
                 globalExclusiveEvents: [HeatMap.events.cellHovered]
@@ -22,17 +27,19 @@ class LSTMHeatmapHandler {
 
         this.hmInfo = new Map();
 
-        this.eventHandler.bind(LSTMController.events.windowResize, () => this.updateVisibility())
+        this.generalEventHandler.bind(LSTMController.events.windowResize, () => this.updateVisibility())
+
+        this.eventHandler.bind(HeatMap.events.closeWindow,
+          hm => this.swapVisibility(hm.options.key)
+        )
 
     }
 
     updateMetaOptions() {
-        const that = this;
 
-        const metaInfo = this.controller.projectMetadata.meta;
+        const metaInfo = this.controller.projectInfo.meta;
         const metaKeys = ['match count', ...Object.keys(metaInfo)];
-        const mOp = d3.select('#metaOptions').selectAll('.metaOption')
-          .data(metaKeys);
+        const mOp = this.metaOptionPanel.selectAll('.metaOption').data(metaKeys);
         mOp.exit().each(d => {
             this.hmInfo.get(d).heatmap.destroy();
             this.hmInfo.remove(d);
@@ -40,16 +47,21 @@ class LSTMHeatmapHandler {
 
         mOp.enter().append('button').attr('class', 'metaOption noselect')
           .each(d => this._heatmapAdd(d))
-          .on('click', function (d) {
-              const selected = !that.hmInfo.get(d).selected;
-              that.hmInfo.get(d).selected = selected;
-              d3.select(this).classed('activeHM', selected);
-              that.updateVisibility();
-          })
+          .on('click', d => this.swapVisibility(d))
           // .style('padding-right', '2px')
           .merge(mOp)
           .classed('activeHM', d => this.hmInfo.get(d).selected)
           .text(d => d);
+
+    }
+
+    swapVisibility(key) {
+        const selected = !this.hmInfo.get(key).selected;
+        this.hmInfo.get(key).selected = selected;
+        this.metaOptionPanel.selectAll('.metaOption')
+          .filter(d => d == key)
+          .classed('activeHM', selected);
+        this.updateVisibility();
 
     }
 
@@ -60,17 +72,19 @@ class LSTMHeatmapHandler {
                 heatmap: this.cellCountHM
             })
         } else {
-            const metaInfo = this.controller.projectMetadata.meta[key];
+            const metaInfo = this.controller.projectInfo.meta[key];
             const hmType =
               (metaInfo.vis.type == 'scalar') ? HeatMap.chartType.scalar : HeatMap.chartType.categorical;
 
             const heatmap = new HeatMap({
                 parent: this.parentNode, eventHandler: this.eventHandler,
                 options: {
+                    key,
                     title: key,
                     pos: {x: 450, y: 20},
                     chartType: hmType,
-                    globalExclusiveEvents: [HeatMap.events.cellHovered]
+                    globalExclusiveEvents: [HeatMap.events.cellHovered],
+                    colorManager:this.colorManager
                 }
             });
 
@@ -109,6 +123,7 @@ class LSTMHeatmapHandler {
 
     updateHeatmapData() {
 
+
         this.cellCountHM.update({values: this.controller.matchingCellCount});
 
         const allDims = this.controller.matchingMetaDims;
@@ -119,7 +134,8 @@ class LSTMHeatmapHandler {
                     values: allDims[dim]
                 })
             }
-        })
+        });
+        this.updateVisibility();
 
     }
 
