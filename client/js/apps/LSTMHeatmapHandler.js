@@ -37,8 +37,9 @@ class LSTMHeatmapHandler {
 
     updateMetaOptions() {
 
-        const metaInfo = this.controller.projectInfo.meta;
-        const metaKeys = ['match count', ...Object.keys(metaInfo)];
+        const metaInfo = this.controller.projectMetas
+          .filter(d => d.type === 'discrete' || d.type === 'scalar');
+        const metaKeys = ['match count', ...metaInfo.map(d => d.key)];
         const mOp = this.metaOptionPanel.selectAll('.metaOption').data(metaKeys);
         mOp.exit().each(d => {
             this.hmInfo.get(d).heatmap.destroy();
@@ -84,7 +85,7 @@ class LSTMHeatmapHandler {
                     pos: {x: 450, y: 20},
                     chartType: hmType,
                     globalExclusiveEvents: [HeatMap.events.cellHovered],
-                    colorManager:this.colorManager
+                    colorManager: this.colorManager
                 }
             });
 

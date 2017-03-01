@@ -25,6 +25,8 @@ class LSTMVis {
             colorManager: this.controller.colorManager
         })
 
+        // Throttling to stay responsive
+        this.updateCellSelection = _.throttle(this._updateCellSelection, 200);
 
         this.setupSelection();
         this.setupMatching();
@@ -126,7 +128,7 @@ class LSTMVis {
 
     }
 
-    updateCellSelection(recalc = false) {
+    _updateCellSelection(recalc = false) {
         const cellSelection = this.controller.cellSelection(recalc);
         this.lineplot.actionUpdateSelectedCells(cellSelection);
 
@@ -236,7 +238,7 @@ class LSTMVis {
         );
 
         this.selectionEventHandler.bind(LinePlot.events.thresholdChanged, th => {
-              this.controller.threshold = Util.round(th.newValue, 4);
+              this.controller.threshold = th.newValue;
               this.updateCellSelection(true);
           }
         )

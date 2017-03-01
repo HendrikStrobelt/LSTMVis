@@ -29,6 +29,9 @@ class LSTMController {
         this.state = {};
         this.colorManager = new ColorManager({});
 
+        // Throttling to stay responsive
+        this.updateURLparams = _.throttle(this._updateURLparams, 300);
+
 
         this.params = URLHandler.parameters();
         this._setContextDefaults(this.params);
@@ -40,7 +43,8 @@ class LSTMController {
 
     }
 
-    updateURLparams() {
+
+    _updateURLparams() {
         const validParams = new Map([...this.params]
           .filter(d => !LSTMController.hiddenParams.has(d[0])));
 
@@ -49,6 +53,7 @@ class LSTMController {
             urlParameters: validParams,
             addToBrowserHistory: false
         })
+
     }
 
     initByUrlAndRun() {
@@ -56,7 +61,6 @@ class LSTMController {
 
         if (
           params.has('project') &&
-          params.has('pos') &&
           params.has('source')) {
 
             Network.ajax_request(this.apiURL + '/info')
@@ -93,6 +97,7 @@ class LSTMController {
         sd('activation', 0.3);
         sd('cw', 30);
         sd('meta', []);
+        sd('pos', 100);
 
     }
 

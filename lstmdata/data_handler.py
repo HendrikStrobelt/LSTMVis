@@ -77,6 +77,7 @@ class LSTMDataHandler:
 
         if self.config.get('meta', False):
             for _, m_info in self.config['meta'].iteritems():
+                m_info['type'] = m_info.get('type', 'general')
                 m_info['index'] = m_info.get('index', 'self')
                 m_info['vis']['range'] = m_info['vis'].get('range', '0...100')
                 vis_range = m_info['vis']['range']
@@ -231,12 +232,50 @@ class LSTMDataHandler:
             return []
 
         meta_data_info = meta[name]
-        meta_data = self.h5_files[meta_data_info['file']][meta_data_info['path']]
 
+        if meta_data_info['type'] == 'general':
+            return self._get_meta_general(meta_data_info, pos_array, left, right)
+        elif meta_data_info['type'] == 'wordvec':
+            return self._get_meta_wordvec(meta_data_info, pos_array, left, right)
+
+        return []
+
+    def _get_meta_wordvec(self, meta_data_info, pos_array, left, right):
+        word_indices = self.h5_files[meta_data_info['file']][meta_data_info['path']]
+        max_length = len(word_indices)
+
+        has_weights = 'weights_path' in meta_data_info
+        word_weights = self.h5_files[meta_data_info['file']][meta_data_info['weights_path']] \
+            if has_weights else []
+
+        has_dict = 'dict' in meta_data_info
+        word_dict = self.dicts_id_value[meta_data_info['dict']] if has_dict else []
+
+        res_indices = []
+        res_weights = []
+        res_words = []
+
+        for pos in pos_array:
+            left_pos = pos - min(left, pos)
+            right_pos = min(max_length, pos + 1 + right)
+
+            wi = word_indices[left_pos:right_pos].tolist()
+            res_indices.append(wi)
+
+            if has_dict:
+                res_words.append([[word_dict[wi] for wi in row] for row in wi])
+
+            if has_weights:
+                weights = word_weights[left_pos:right_pos].tolist()
+                res_weights.append(weights)
+
+        return {'word_ids': res_indices, 'words': res_words, 'weights': res_weights}
+
+    def _get_meta_general(self, meta_data_info, pos_array, left, right):
+        meta_data = self.h5_files[meta_data_info['file']][meta_data_info['path']]
         meta_index = meta_data_info.get('index')
         if not meta_index:
             meta_index = 'self'
-
         res = []
         if meta_index == 'self':  # if meta info is related to global coordinates
             for pos in pos_array:
@@ -256,7 +295,6 @@ class LSTMDataHandler:
         if 'dict' in meta_data_info:
             mapper = self.dicts_id_value[meta_data_info['dict']]
             res = [[mapper[y] for y in x] for x in res]
-
         return res
 
     def get_dimensions(self, pos_array, source, left, right, dimensions, round_values=5, data_transform='tanh',
@@ -430,12 +468,13 @@ class LSTMDataHandler:
 
             res.append({'pos': pos,
                         'factors': [pos, 0, ml,  # int(value[int(indices[ll2]) + 1])
-                                  (float(len(intersect)) / float(len(union))),  # Jaccard
-                                  cell_count - len(intersect), len(union),
-                                  len(intersect)]})  # how many selected cells are not active
+                                    (float(len(intersect)) / float(len(union))),  # Jaccard
+                                    cell_count - len(intersect), len(union),
+                                    len(intersect)]})  # how many selected cells are not active
 
         def key(elem):
-            return -elem['factors'][6], elem['factors'][5], -elem['factors'][2]  # largest intersection, smallest union, longest phrase
+            return -elem['factors'][6], elem['factors'][5], -elem['factors'][
+                2]  # largest intersection, smallest union, longest phrase
 
         meta = {}
         if add_histograms:
