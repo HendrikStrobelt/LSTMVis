@@ -38,6 +38,24 @@ body {
 .header {
     margin-top: 10px;
     margin-bottom: 5px;
+    cursor: default;
+}
+
+.headerBlock {
+    vertical-align:middle;
+    display: inline-block;
+    margin-right: 1em;
+}
+
+.editIcon{
+    color: black;
+    opacity: .1;
+    cursor: pointer;
+    transition-duration: 500ms;
+}
+
+.editIcon:hover{
+    opacity: 1;
 }
 
 hr {

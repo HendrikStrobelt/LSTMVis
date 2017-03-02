@@ -241,7 +241,7 @@ class LinePlot extends VComponent {
     _updateExtendButton() {
         const xScale = this.xScale;
 
-        const eb = this.layers.overlay.selectAll('.extendButton').data(['\uf141']) //\uf101
+        const eb = this.layers.overlay.selectAll('.extendButton').data(['\uf141'])
         eb.enter().append('text').attrs({
             class: 'extendButton fontAwesome noselect'
         }).text(d => d)

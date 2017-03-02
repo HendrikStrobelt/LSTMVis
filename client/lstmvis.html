@@ -42,12 +42,39 @@
 <span style="font-family:'Roboto Condensed';position: absolute;top:-100px;">abc</span>
 
 <div class="header">
-    <img src="assets/lstmvis_v2_smaller.png" width="200">
+    <div class="headerBlock">
+        <img src="assets/lstmvis_v2_smaller.png" width="200">
+    </div>
+    <div class="headerBlock" style="max-width: 350px;font-size: 14pt;">
+        <span id="info_projectName">...</span>
+        <!--PA simple synthetic dataset to test bracketing and counting. The language can open and close parents, and generate a number indicating the current nesting level.-->
+    </div>
+    <div class="headerBlock noselect">
+        <b>pos</b> <br>
+        <button class="uiButton" id="info_position">100</button>
+        <!--<span class="fontAwesome editIcon">&#xf040;</span>-->
+    </div>
+    <div class="headerBlock">
+        <b>project ID</b> <br>
+        <span id="info_id">...</span>
+        <!--<span class="fontAwesome editIcon">&#xf040;</span>-->
+    </div>
+    <div class="headerBlock">
+        <b>source</b> <br>
+        <button class="uiButton" id="info_source">...</button>
+        <!--<span class="fontAwesome editIcon">&#xf040;</span>-->
+    </div>
+
 </div>
 
 <hr/>
 <div>
     <div class="section">Selection</div>
+    <div class="optionGrp">
+        <label for="thresholdValue">threshold</label>
+        <input type="number" step=".001" style="width: 50px;"
+               id="thresholdValue">
+    </div>
     <div class="optionGrp">
         zoom
         <button class="hidden-print uiButton" id="smaller_btn">&gt;&lt;</button>

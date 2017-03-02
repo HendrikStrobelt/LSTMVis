@@ -7,6 +7,8 @@ class LSTMVis {
         this.selectionSVG = d3.select('#selectionVis');
         this.selectedCellsSVG = d3.select('#selectedCellsVis');
         this.matchingSVG = d3.select('#matchingVis');
+        this.thresholdForm = d3.select('#thresholdValue');
+
         this.selectionEventHandler = new SimpleEventHandler(this.selectionSVG.node());
         this.matchingEventHandler = new SimpleEventHandler(this.matchingSVG.node());
         this.controller = new LSTMController({eventHandler: this.selectionEventHandler});
@@ -68,6 +70,8 @@ class LSTMVis {
             }
         })
 
+        this.thresholdForm.property('value', this.controller.threshold);
+
     }
 
     setupMatching() {
@@ -109,6 +113,12 @@ class LSTMVis {
               this.updateCellSelection();
               this.hmHandler.updateMetaOptions();
 
+
+              const pi = this.controller.projectInfo
+              d3.select('#info_position').text(this.controller.pos)
+              d3.select('#info_projectName').text(pi.name);
+              d3.select('#info_id').text(this.controller.projectID);
+              d3.select('#info_source').text(this.controller.source);
 
           });
 
@@ -245,9 +255,15 @@ class LSTMVis {
 
         this.selectionEventHandler.bind(LinePlot.events.thresholdChanged, th => {
               this.controller.threshold = th.newValue;
+              this.thresholdForm.property('value', th.newValue);
               this.updateCellSelection(true);
           }
         )
+
+        this.thresholdForm.on('change', () => {
+            const newValue = this.thresholdForm.property('value');
+            this.selectionEventHandler.trigger(LinePlot.events.thresholdChanged, {newValue});
+        })
 
         this.selectionEventHandler.bind(LSTMController.events.windowResize, () => {
             const newWidth = this.controller.windowSize.width;

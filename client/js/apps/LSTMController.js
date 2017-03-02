@@ -244,6 +244,14 @@ class LSTMController {
         return this.allProjectInfos.get(this.params.get('project')).info
     }
 
+    get projectID(){
+        return this.params.get('project');
+    }
+
+    get source(){
+        return this.params.get('source')
+    }
+
     get projectMetas() {
         const meta = this.projectInfo.meta;
 
