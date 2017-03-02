@@ -3,7 +3,14 @@
  */
 class LSTMMetaTrackHandler {
 
+
     constructor({parentNode, controller, eventHandler, colorManager}) {
+        this.visTypes = {
+            categorical: 'discrete',
+            wordVec: 'wordvec'
+        }
+
+
         this.parentNode = parentNode;
         this.controller = controller;
         this.eventHandler = eventHandler;
@@ -23,12 +30,12 @@ class LSTMMetaTrackHandler {
     init() {
 
         const meta = this.controller.projectInfo.meta
-        const vismeta = this.controller.visibleMeta;
 
         Object.keys(meta).forEach(key => this.availableTracks[key] = {type: meta[key].vis.type, key});
 
 
         this.addButton.on('click', () => {
+            const vismeta = this.controller.visibleMeta;
             const metaKeys = Object.keys(this.availableTracks).filter(d => vismeta.indexOf(d) < 0);
             const metaOps = this.optionList.selectAll('option').data(metaKeys);
             metaOps.exit().remove();
@@ -98,22 +105,24 @@ class LSTMMetaTrackHandler {
 
         // Dealing with different 'this' scopes without using 'that'
         const appendTrack = (track, node) => {
-            if (track.type === 'discrete') this._appendCategoricalTrack(track.key, node);
+            if (track.type === this.visTypes.categorical) this._appendCategoricalTrack(track.key, node);
+            if (track.type === this.visTypes.wordVec) this._appendWordVecTrack(track.key, node);
         };
 
         svgs.enter().append('svg')
+          .attr('height', d => (d.type === this.visTypes.categorical) ? 22 : 5)
           .each(function (track) {appendTrack(track, d3.select(this));})
           .merge(svgs).attrs({
             class: d => `metaTrack meta_${d.key}`,
-            width: this.controller.windowSize.width,
-            height: d => (d.type === 'discrete') ? 22 : 5
+            width: this.controller.windowSize.width
         });
     }
 
     _updateVisualizations(visibleTracks) {
         const metaData = this.controller.selectMetaDims;
         visibleTracks.forEach(track => {
-            if (track.type === 'discrete') this._updateCategoricalTrack(track, metaData);
+            if (track.type === this.visTypes.categorical) this._updateCategoricalTrack(track, metaData);
+            if (track.type === this.visTypes.wordVec) this._updateWordVecTrack(track, metaData);
         })
     }
 
@@ -148,7 +157,7 @@ class LSTMMetaTrackHandler {
               options: {
                   pos: {x: 60 - this.controller.cellWidth, y: 1},
                   cellWidth: this.controller.cellWidth,
-                  cellHeight:20,
+                  cellHeight: 20,
                   mode: WordSequence.modes.simple
               }
           })
@@ -159,6 +168,78 @@ class LSTMMetaTrackHandler {
         this._updateVisualizations(this.controller.visibleMeta.map(key => this.availableTracks[key]))
     }
 
+    _appendWordVecTrack(key, node) {
+        node.append('text').attrs({
+            class: 'fontAwesome closeButton',
+            x: 10,
+            y: 11
+        }).text('\uf057').on('click', () => this._unuseTrack(key));
+
+        node.attr('height', 10 * 22 + 2);
+        const allVis = [];
+        for (const i of _.range(0, 10)) {
+            allVis.push(
+              new WordSequence({
+                  parent: node,
+                  eventHandler: this.eventHandler,
+                  options: {
+                      pos: {x: 60 - this.controller.cellWidth, y: 1 + i * 22},
+                      cellWidth: this.controller.cellWidth,
+                      cellHeight: 20,
+                      mode: WordSequence.modes.simple
+                  }
+              }))
+        }
+        this.availableTracks[key].vis = allVis;
+
+    }
+
+    _updateWordVecTrack(track, metaData) {
+        const allVis = this.availableTracks[track.key].vis;
+        const trackData = metaData[track.key];
+
+        const has_words = 'words' in trackData && trackData.words[0].length > 0;
+        const has_weights = 'weights' in trackData && trackData.weights[0].length > 0
+
+
+        if (has_words) {
+            const wordVecs = Util.transpose(trackData.words[0]);
+            let weights = []
+            let colorScales = null;
+            if (has_weights) {
+                const percolumn = trackData.weights[0];
+                weights = Util.transpose(percolumn);
+                const cm = new ColorManager({});
+                colorScales = percolumn.map(d => cm.dynamicScalarScale(d));
+            }
+
+
+            const maxWords = Math.min(10, wordVecs[0].length);
+
+            _.range(0, maxWords).forEach(i => {
+
+                allVis[i].updateOptions({
+                    options: {
+                        pos: {x: 60 - this.controller.cellWidth, y: 1 + i * 22},
+                        cellWidth: this.controller.cellWidth
+                    }
+                })
+
+                const updateValues = {
+                    words: wordVecs[i]
+                };
+                if (has_weights) {
+                    updateValues['colorArray'] = weights[i].map((d, di) => colorScales[di](d))
+                }
+
+                allVis[i].update(updateValues);
+
+            })
+
+
+        }
+
+    }
 }
 
 LSTMMetaTrackHandler;

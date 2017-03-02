@@ -43,6 +43,26 @@ class Util {
         return roundedTempNumber / factor;
     }
 
+    static transpose(matrix) {
+
+        const matrixHeight = matrix.length,
+          matrixWidth = matrix[0].length,
+          res = [];
+
+        for (let i = 0; i < matrixWidth; i += 1) {
+            res.push([]);
+        }
+
+        for (let i = 0; i < matrixHeight; i += 1) {
+            for (let j = 0; j < matrixWidth; j++) {
+                res[j].push(matrix[i][j]);
+            }
+        }
+
+        return res;
+    }
+
+
 }
 
 

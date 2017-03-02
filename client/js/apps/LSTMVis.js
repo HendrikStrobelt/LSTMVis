@@ -196,6 +196,12 @@ class LSTMVis {
                   mode: 'fast'
               })
           });
+
+
+        this.selectionEventHandler.bind(LinePlot.events.moreContext,
+          () => this.controller.requestContext({}));
+
+
         // --------------------------------
         // -- Move Position ---
         // --------------------------------

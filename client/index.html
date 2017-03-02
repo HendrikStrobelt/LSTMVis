@@ -35,7 +35,7 @@
 
 <script>
     var url = '';
-    var query = url + '/api/info/';
+    var query = url + '/api/v2/info';
     $.ajax(query, {
         dataType: 'json',
         success: function (info) {
@@ -90,7 +90,7 @@
                     that = that.append('p').attr({class: 'row'})
                     ds.info.states.types.forEach(function (d, i) {
                         that.append('div').attr({class: 'col-xs-12'}).html(function () {
-                            return '<a href="pattern_finder.html?data_set=' + ds.project + '&source=' + d.file + '::' + d.path + '">'
+                            return '<a href="lstmvis.html?project=' + ds.project + '&source=' + d.file + '::' + d.path + '">'
                                     + 'layer ' + d.layer + ' ' + d.type
                                     + ' ( size: ' + d.size.join(' x ') + ')'
                                     + (d.unsigned ? ' - <b>unsigned</b>' : '')

@@ -9,7 +9,8 @@ class LinePlot extends VComponent {
     static get events() {
         return {
             thresholdChanged: 'lineplot-thresholdChanged',
-            cellHovered: 'lineplot-cellhovered'
+            cellHovered: 'lineplot-cellhovered',
+            moreContext: 'lineplot-morecontext'
         }
     }
 
@@ -23,7 +24,8 @@ class LinePlot extends VComponent {
             maxValue: 1,
             height: 150,
             // Cell width along x axis
-            cellWidth: 25
+            cellWidth: 25,
+            extendButton: true
         }
     }
 
@@ -127,6 +129,7 @@ class LinePlot extends VComponent {
 
         this._updateLines(renderData);
         this._updateAxisAndSlider();
+        if (this.options.extendButton) this._updateExtendButton()
 
     }
 
@@ -149,14 +152,12 @@ class LinePlot extends VComponent {
 
         // Update the slider area
         const dragging = () => {
-            const v = clampedYScale.invert(d3.event.y);
+            const v = Util.round(clampedYScale.invert(d3.event.y), 3);
             if (this._states.threshold !== v) {
                 this._states.threshold = v;
                 this.eventHandler.trigger(
                   LinePlot.events.thresholdChanged, {newValue: v});
             }
-
-
         }
 
         axisParent.select('.slider-bg').attrs({
@@ -237,6 +238,20 @@ class LinePlot extends VComponent {
 
     }
 
+    _updateExtendButton() {
+        const xScale = this.xScale;
+
+        const eb = this.layers.overlay.selectAll('.extendButton').data(['\uf141']) //\uf101
+        eb.enter().append('text').attrs({
+            class: 'extendButton fontAwesome noselect'
+        }).text(d => d)
+          .on('click', () => this.eventHandler.trigger(LinePlot.events.moreContext, this))
+          .append('title').text('fill until right border')
+
+        eb.attrs({
+            'transform': SVG.translate({x: xScale.range()[1] + 5, y: this.options.height / 2})
+        })
+    }
 
     // Lineplot methods ----------------
 
@@ -244,6 +259,7 @@ class LinePlot extends VComponent {
         const op = this.options;
         if (op.yScale) return op.yScale.range([op.height, 0]);
 
+        // Else:
         return d3.scaleLinear().domain([op.minValue, op.maxValue])
           .range([op.height, 0]);
     }

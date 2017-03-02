@@ -121,6 +121,9 @@ class LSTMController {
         payload.set('dims', [...(this.visibleMeta.map(d => 'meta_' + d)), 'states', 'words']);
 
 
+        const fillRight = Math.ceil((this.windowSize.width-60)/this.cellWidth) - this.params.get('left');
+        payload.set('right', fillRight);
+
         Network.ajax_request(this.apiURL + '/context')
           .get(payload)
           .then(d => {

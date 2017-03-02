@@ -35,3 +35,14 @@
 .lineplot .valueLine.hovered {
     stroke: red;
 }
+
+.lineplot .extendButton {
+    font-size: 20pt;
+    dominant-baseline: central;
+    fill: black;
+    opacity: .3;
+    cursor: pointer;
+}
+.lineplot .extendButton:hover {
+    opacity: 1;
+}

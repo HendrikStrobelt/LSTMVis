@@ -79,7 +79,7 @@ class ColorManager {
     }
 
     _scalarScale(min, max) {
-        if (min < 0) {
+        if (min * max < 0) {
             const maxAbs = -min > max ? -min : max;
 
             return d3.scaleLinear().domain([-maxAbs, 0, maxAbs]).range(this.colorsNegativeZeroOne);
