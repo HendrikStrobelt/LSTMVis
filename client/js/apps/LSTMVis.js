@@ -26,6 +26,11 @@ class LSTMVis {
             eventHandler: this.selectionEventHandler,
             colorManager: this.controller.colorManager
         })
+        this.dialogHandler = new LSTMDialogHandler({
+            controller: this.controller,
+            eventHandler: this.selectionEventHandler
+        })
+
 
         // Throttling to stay responsive
         this.updateCellSelection = _.throttle(this._updateCellSelection, 200);
@@ -92,7 +97,7 @@ class LSTMVis {
 
     bindDataEvents() {
         this.selectionEventHandler.bind(LSTMController.events.newContextAvailable,
-          () => {
+          ({keepSelectedCells}) => {
               const states = this.controller.states;
               const timeSteps = states.right - states.left;
 
@@ -110,15 +115,17 @@ class LSTMVis {
                   wordBrushZero: this.controller.wordBrushZero
               });
 
-              this.updateCellSelection();
+              this.updateCellSelection(!keepSelectedCells);
               this.hmHandler.updateMetaOptions();
 
 
-              const pi = this.controller.projectInfo
+              const pi = this.controller.projectInfo;
               d3.select('#info_position').text(this.controller.pos)
+                .on('click', () => this.dialogHandler.openPositionDialog());
               d3.select('#info_projectName').text(pi.name);
               d3.select('#info_id').text(this.controller.projectID);
-              d3.select('#info_source').text(this.controller.source);
+              d3.select('#info_source').text(this.controller.source)
+                .on('click', () => this.dialogHandler.openSourceDialog());
 
           });
 
@@ -131,7 +138,7 @@ class LSTMVis {
             });
             this.hmHandler.updateHeatmapData();
 
-            this.wordMatrix.update({wordMatrix});
+            this.wordMatrix.update({wordMatrix, heatmap: this.hmHandler.bgColorMap});
 
             this.matchingSVG.transition().attr('opacity', 1);
         })
@@ -289,23 +296,14 @@ class LSTMVis {
               this.hmHandler.actionCellHovered(d.row, d.col, d.active);
           })
 
-        this.matchingEventHandler.bind(
-          HeatMap.events.rectSelected,
-          hm_id => {
-              const heatmap = this.hmHandler.getHeatmapById(hm_id);
-              if (heatmap) {
-                  const colorScale = heatmap.renderData.colorScale;
-                  const colorMap = heatmap.data.values
-                    .map(row => row.map(cell => colorScale(cell)));
-                  this.wordMatrix.actionChangeHeatmap(colorMap)
-              } else {
-                  this.wordMatrix.actionChangeHeatmap(null);
-              }
 
-          }
-        )
+        this.matchingEventHandler.bind(LSTMHeatmapHandler.events.newMappedHM,
+          () => {
+            this.wordMatrix.actionChangeHeatmap(this.hmHandler.bgColorMap)
+          })
 
     }
+
 
 }
 

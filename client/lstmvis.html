@@ -25,6 +25,7 @@
     <script src="js/etc/general_ui.js"></script>
     <script src="js/apps/LSTMController.js"></script>
     <script src="js/apps/LSTMHeatmapHandler.js"></script>
+    <script src="js/apps/LSTMDialogHandler.js"></script>
     <script src="js/apps/LSTMMetaTrackHandler.js"></script>
 
     <link rel="stylesheet" type="text/css" href="css/vis/general.css">
@@ -55,13 +56,13 @@
         <!--<span class="fontAwesome editIcon">&#xf040;</span>-->
     </div>
     <div class="headerBlock">
-        <b>project ID</b> <br>
-        <span id="info_id">...</span>
+        <b>source</b> <br>
+        <button class="uiButton" id="info_source">...</button>
         <!--<span class="fontAwesome editIcon">&#xf040;</span>-->
     </div>
     <div class="headerBlock">
-        <b>source</b> <br>
-        <button class="uiButton" id="info_source">...</button>
+        <b>project ID</b> <br>
+        <span id="info_id">...</span>
         <!--<span class="fontAwesome editIcon">&#xf040;</span>-->
     </div>
 
@@ -109,6 +110,10 @@
         <button class="hidden-print uiButton" id="match_fast">fast</button>
         <button class="hidden-print uiButton" id="match_precise">precise</button>
     </div>
+    <!--<div class="optionGrp">-->
+        <!--opacity-->
+        <!--<div id="metaOptions" class="optionGrp"></div>-->
+    <!--</div>-->
     <div class="optionGrp">
         meta
         <div id="metaOptions" class="optionGrp"></div>
@@ -149,6 +154,48 @@
 
 </div>
 
+<div class="modalDialog" id="positionDialog" hidden>
+    <h2> Select/Search a new position:</h2>
+    <div class="uiRow">
+        <label for="pd_pos">Position:</label>
+        <input type="number" class="textInput" id="pd_pos">
+    </div>
+
+    <div class="uiRow">
+        <label for="pd_search">Search:</label>
+        <input type="text" class="textInput" id="pd_search">
+    </div>
+
+    <div id='pd_results' class="uiRow" style="max-height: 300px; overflow: auto;">
+
+    </div>
+
+    <div class="uiRow" style="text-align: end;">
+        <button class="uiButton uiCancel"> cancel</button>
+        <button class="uiButton uiSubmit"> accept</button>
+    </div>
+
+
+</div>
+
+
+<div class="modalDialog" id="selectSourceDialog" hidden>
+    <h2> Select source:</h2>
+    <div class="uiRow">
+        <select class="selectInput" id="ssd_list">
+            <option value="1">abc</option>
+            <option value="2">bfc</option>
+        </select>
+    </div>
+
+
+    <div class="uiRow" style="text-align: end;">
+        <button class="uiButton uiCancel"> cancel</button>
+        <button class="uiButton uiSubmit"> accept</button>
+    </div>
+
+
+</div>
 
 <script src="js/apps/LSTMVis.js"></script>
 

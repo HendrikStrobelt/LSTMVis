@@ -113,4 +113,11 @@ hr {
     opacity: 1;
 }
 
+.pd_result{
+    border-bottom: dotted darkgray 1px;
+}
+.pd_result:hover{
+    background-color: lightgray;
+}
+
 

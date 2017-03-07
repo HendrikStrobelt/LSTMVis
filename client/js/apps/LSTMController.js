@@ -9,6 +9,7 @@ class LSTMController {
             contextRequestSent: 'lstmcontrol_ctxreq',
             newContextAvailable: 'lstmcontrol_newctx',
             newMatchingResults: 'lstmcontrol_newmatch',
+            newWordSearchResults: 'lstmcontrol_newwordsearchRes',
             windowResize: 'lestmcontrol_wres',
             projectsMetaAvailable: 'lstmcontrol_metaav'
         }
@@ -101,7 +102,7 @@ class LSTMController {
 
     }
 
-    requestContext({params = {}, persist = true}) {
+    requestContext({params = {}, persist = true, keepSelectedCells = true}) {
 
         const parMap = Util.objectMap(params);
         const payload = new Map();
@@ -121,14 +122,14 @@ class LSTMController {
         payload.set('dims', [...(this.visibleMeta.map(d => 'meta_' + d)), 'states', 'words']);
 
 
-        const fillRight = Math.ceil((this.windowSize.width-60)/this.cellWidth) - this.params.get('left');
+        const fillRight = Math.ceil((this.windowSize.width - 60) / this.cellWidth) - this.params.get('left');
         payload.set('right', fillRight);
 
         Network.ajax_request(this.apiURL + '/context')
           .get(payload)
           .then(d => {
               this.context = JSON.parse(d);
-              this.eventHandler.trigger(LSTMController.events.newContextAvailable, {});
+              this.eventHandler.trigger(LSTMController.events.newContextAvailable, {keepSelectedCells});
           })
 
     }
@@ -156,6 +157,23 @@ class LSTMController {
               })
         }
 
+
+    }
+
+
+    requestWordSearch({searchTerm}) {
+        const payload = new Map();
+
+        payload.set('project', this.params.get('project'));
+        payload.set('html', true);
+        payload.set('q', searchTerm)
+
+        Network.ajax_request(this.apiURL + '/search')
+          .get(payload)
+          .then(d => {
+              this.wordSearchResult = JSON.parse(d);
+              this.eventHandler.trigger(LSTMController.events.newWordSearchResults, this);
+          })
 
     }
 
@@ -244,12 +262,16 @@ class LSTMController {
         return this.allProjectInfos.get(this.params.get('project')).info
     }
 
-    get projectID(){
+    get projectID() {
         return this.params.get('project');
     }
 
-    get source(){
+    get source() {
         return this.params.get('source')
+    }
+
+    get availableSources() {
+       return this.projectInfo.states.types.map(t => `${t.file}::${t.path}`);
     }
 
     get projectMetas() {

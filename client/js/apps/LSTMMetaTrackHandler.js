@@ -24,6 +24,8 @@ class LSTMMetaTrackHandler {
         this.eventHandler.bind(LSTMController.events.newContextAvailable, () => this._update())
 
         this.availableTracks = {};
+        this.maxLengthWordVec = 5;
+
     }
 
 
@@ -175,9 +177,11 @@ class LSTMMetaTrackHandler {
             y: 11
         }).text('\uf057').on('click', () => this._unuseTrack(key));
 
-        node.attr('height', 10 * 22 + 2);
+        const ml = this.maxLengthWordVec;
+
+        node.attr('height', ml * 22 + 2);
         const allVis = [];
-        for (const i of _.range(0, 10)) {
+        for (const i of _.range(0, ml)) {
             allVis.push(
               new WordSequence({
                   parent: node,
@@ -214,7 +218,7 @@ class LSTMMetaTrackHandler {
             }
 
 
-            const maxWords = Math.min(10, wordVecs[0].length);
+            const maxWords = Math.min(this.maxLengthWordVec, wordVecs[0].length);
 
             _.range(0, maxWords).forEach(i => {
 

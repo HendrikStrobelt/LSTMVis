@@ -4,6 +4,12 @@
 
 class LSTMHeatmapHandler {
 
+    static get events() {
+        return {
+            newMappedHM: 'hmh_newmapped'
+        }
+    }
+
     constructor({parentNode, controller, eventHandler, generalEventHandler, metaOptionPanel, colorManager}) {
         this.parentNode = parentNode;
         this.controller = controller;
@@ -32,6 +38,14 @@ class LSTMHeatmapHandler {
         this.eventHandler.bind(HeatMap.events.closeWindow,
           hm => this.swapVisibility(hm.options.key)
         )
+
+        this.eventHandler.bind(HeatMap.events.rectSelected,
+          hmID => {
+              this.mappedHM = hmID;
+              this.eventHandler.trigger(LSTMHeatmapHandler.events.newMappedHM, {});
+          }
+        )
+
 
     }
 
@@ -149,6 +163,30 @@ class LSTMHeatmapHandler {
 
         return res;
     }
+
+
+    get bgColorMap() {
+        const heatmap = this.getHeatmapById(this.mappedHM);
+        const cchm = this.cellCountHM;
+        const cs = cchm.renderData.colorScale.copy().range([0.5, 1])
+        const ccData = cchm.data.values;
+
+        if (heatmap) {
+            const colorScale = heatmap.renderData.colorScale;
+
+            return heatmap.data.values
+              .map((row, ri) => row.map((cell, ci) => {
+                  const color = d3.color(colorScale(cell));
+                  if (heatmap!== cchm) color.opacity = cs(ccData[ri][ci]);
+
+                  return color;
+              }));
+
+        } else {
+            return null;
+        }
+    }
+
 
     actionCellHovered(x, y, active) {
         this.hmInfo.forEach(hm => hm.heatmap.actionHoverCell(y, x, active))
