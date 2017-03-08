@@ -175,7 +175,7 @@ class LSTMSelectionView {
 
     }
 
-    actionCellWidthUpdate() {
+    actionUpdateCellWidth() {
         const cellWidth = this.controller.cellWidth;
         this.lineplot.updateOptions({
             options: {cellWidth},

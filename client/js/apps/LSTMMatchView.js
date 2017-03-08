@@ -52,23 +52,6 @@ class LSTMMatchView {
 
     }
 
-    actionNewMatchResult() {
-        const wordMatrix = this.controller.matchingWordMatrix;
-        wordMatrix.forEach(row => {
-            row.posOffset = row.left;
-            row.rowId = row.pos;
-        });
-        this.hmHandler.updateHeatmapData();
-
-        this.wordMatrix.update({
-            wordMatrix,
-            heatmap: this.hmHandler.bgColorMap,
-            leftPadding: this.controller.matchingLeftPadding
-        });
-
-        this.matchingSVG.transition().attr('opacity', 1);
-    }
-
     _bindUIEvents() {
         d3.select('#match_precise').on('click', () => {
             this.matchingSVG.transition().attr('opacity', 0);
@@ -105,7 +88,24 @@ class LSTMMatchView {
           });
     }
 
-    actionCellWidthUpdate() {
+    actionNewMatchResult() {
+        const wordMatrix = this.controller.matchingWordMatrix;
+        wordMatrix.forEach(row => {
+            row.posOffset = row.left;
+            row.rowId = row.pos;
+        });
+        this.hmHandler.updateHeatmapData();
+
+        this.wordMatrix.update({
+            wordMatrix,
+            heatmap: this.hmHandler.bgColorMap,
+            leftPadding: this.controller.matchingLeftPadding
+        });
+
+        this.matchingSVG.transition().attr('opacity', 1);
+    }
+
+    actionUpdateCellWidth() {
         const cellWidth = this.controller.cellWidth;
         this.wordMatrix.updateOptions({
             options: {cellWidth},
@@ -113,10 +113,10 @@ class LSTMMatchView {
         });
     }
 
-
     actionUpdateWidth(width) {
         this.matchingSVG.attr('width', width);
     }
+
 }
 
 LSTMMatchView;

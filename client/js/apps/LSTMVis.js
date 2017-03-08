@@ -35,7 +35,7 @@ class LSTMVis {
             const newWidth = this.controller.windowSize.width;
             this.selectionView.actionUpdateWidth(newWidth);
             this.matchView.actionUpdateWidth(newWidth);
-        })
+        });
 
         // --------------------------------
         // -- Shrink/Expand Cell Width---
@@ -43,14 +43,14 @@ class LSTMVis {
 
         d3.select('#smaller_btn').on('click', () => {
             this.controller.cellWidth = Math.max(5, this.controller.cellWidth - 5);
-            this.selectionView.actionCellWidthUpdate();
-            this.matchView.actionCellWidthUpdate();
+            this.selectionView.actionUpdateCellWidth();
+            this.matchView.actionUpdateCellWidth();
         });
 
         d3.select('#larger_btn').on('click', () => {
             this.controller.cellWidth = this.controller.cellWidth + 5;
-            this.selectionView.actionCellWidthUpdate();
-            this.matchView.actionCellWidthUpdate();
+            this.selectionView.actionUpdateCellWidth();
+            this.matchView.actionUpdateCellWidth();
         });
 
 
