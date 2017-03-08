@@ -37,6 +37,7 @@ class WordSequence extends VComponent {
         return [
             {name: 'measure', pos: {x: 0, y: -10}},
             {name: 'text', pos: {x: 0, y: 0}},
+            {name: 'overlay', pos: {x: 0, y: 0}},
             {name: 'brush', pos: {x: 0, y: 0}},
             {name: 'zeroBrush', pos: {x: 0, y: 25}}
         ]
@@ -57,7 +58,8 @@ class WordSequence extends VComponent {
 
         return {
             words: data.words.map((d, i) =>
-              ({text: d, index: i, length: this._calcTextLength(d)}))
+              ({text: d, index: i, length: this._calcTextLength(d)})),
+            leftPadding: data.leftPadding || -1
         };
     }
 
@@ -75,7 +77,8 @@ class WordSequence extends VComponent {
 
         op.mode.forEach(d => st[d] = true);
 
-        this._renderWords({renderData, op, st});
+        this._renderWords({words: renderData.words, op, st});
+        this._renderPadding(renderData.leftPadding);
 
         if (st.brushSelect) this._renderBrush({op, st});
         if (st.zeroBrush) this._renderZeroBrush({op, st});
@@ -83,9 +86,27 @@ class WordSequence extends VComponent {
 
     }
 
-    _renderWords({renderData, op, st}) {
+    _renderPadding(leftPadding) {
+        const rData = leftPadding > -1 ? [leftPadding] : [];
+
+        const paddingLine = this.layers.overlay.selectAll('.paddingLine').data(rData);
+        paddingLine.exit().remove();
+
+        paddingLine.enter().append('line').attr('class', 'paddingLine')
+          .merge(paddingLine).attrs({
+            x1: d => this._states.xScale(d) - 1,
+            x2: d => this._states.xScale(d) - 1,
+            y1: 0,
+            y2: this.options.cellHeight
+        })
+
+
+    }
+
+
+    _renderWords({words, op, st}) {
         const xScale = st.xScale;
-        let word = this.layers.text.selectAll(".word").data(renderData.words);
+        let word = this.layers.text.selectAll(".word").data(words);
         word.exit().remove();
 
         // --- adding Element to class word
@@ -348,7 +369,7 @@ class WordSequence extends VComponent {
             delete this._states.colorArray;
         }
 
-        this._renderWords({renderData: this.renderData, op: this.options, st: this._states});
+        this._renderWords({words: this.renderData.words, op: this.options, st: this._states});
     }
 
     actionWordHovered(wordNo) {

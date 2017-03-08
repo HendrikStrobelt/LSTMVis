@@ -14,4 +14,5 @@
 
 .celllist .cell.hovered  rect{
     opacity: 1;
+    fill: red;
 }

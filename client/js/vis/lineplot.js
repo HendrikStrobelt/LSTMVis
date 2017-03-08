@@ -278,12 +278,15 @@ class LinePlot extends VComponent {
     actionCellHovered(cell) {
         this.layers.overlay.selectAll('.valueLine')
           .classed('hovered', d => cell === d.index)
+          .filter(d => cell === d.index).raise()
     }
-
 
     _bindLocalEvents(eventHandler) {
         this._bindEvent(eventHandler, LinePlot.events.thresholdChanged,
           ({newValue}) => this.actionUpdateThreshold(newValue))
+
+        this._bindEvent(eventHandler, LinePlot.events.cellHovered,
+          cell => this.actionCellHovered(cell))
     }
 
 

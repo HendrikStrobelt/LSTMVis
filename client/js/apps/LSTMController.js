@@ -35,7 +35,7 @@ class LSTMController {
 
 
         this.params = URLHandler.parameters();
-        this._setContextDefaults(this.params);
+        this._setDefaults(this.params);
         this.updateURLparams();
 
         window.onresize = () =>
@@ -90,9 +90,9 @@ class LSTMController {
         }
     }
 
-    _setContextDefaults(params) {
+    _setDefaults(params) {
         const sd = (att, def) => params.set(att, params.get(att) || def);
-        sd('left', 5);
+        sd('left', 3);
         sd('right', 20);
         sd('dims', ['states', 'words']);
         sd('activation', 0.3);
@@ -196,7 +196,14 @@ class LSTMController {
         );
 
         return res;
+    }
 
+    get matchingLeftPadding() {
+        return this.matchResult.request.left
+    }
+
+    get ctxLeftPadding() {
+        return this.context.request.left
     }
 
 
@@ -271,7 +278,7 @@ class LSTMController {
     }
 
     get availableSources() {
-       return this.projectInfo.states.types.map(t => `${t.file}::${t.path}`);
+        return this.projectInfo.states.types.map(t => `${t.file}::${t.path}`);
     }
 
     get projectMetas() {

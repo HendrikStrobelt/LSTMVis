@@ -13,3 +13,8 @@
     stroke: red;
     stroke-dasharray: 1,1;
 }
+
+.wordmatrix .paddingLine {
+    stroke: #333;
+    stroke-width: 2;
+}

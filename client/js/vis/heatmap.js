@@ -226,6 +226,8 @@ class HeatMap extends VComponent {
 
 
     get currentWidth() {
+        if (!this.scaleX) return 0;
+
         return this.scaleX(this._states.xLength)
     }
 

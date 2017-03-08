@@ -10,14 +10,14 @@ class LSTMHeatmapHandler {
         }
     }
 
-    constructor({parentNode, controller, eventHandler, generalEventHandler, metaOptionPanel, colorManager}) {
+    constructor({parentNode, controller, eventHandler, globalEventHandler}) {
         this.parentNode = parentNode;
         this.controller = controller;
         this.eventHandler = eventHandler;
-        this.metaOptionPanel = metaOptionPanel;
-        this.generalEventHandler = generalEventHandler;
-        this.colorManager = colorManager;
+        this.globalEventHandler = globalEventHandler;
 
+        this.metaOptionPanel = d3.select('#metaOptions');
+        this.maskOptionButton = d3.select('#matchingMask');
     }
 
     init() {
@@ -33,18 +33,26 @@ class LSTMHeatmapHandler {
 
         this.hmInfo = new Map();
 
-        this.generalEventHandler.bind(LSTMController.events.windowResize, () => this.updateVisibility())
+
+        this.maskOptionButton.on("click", () => {
+            const m = this.maskOptionButton;
+            m.classed('activeOption', !m.classed('activeOption'));
+            this.eventHandler.trigger(LSTMHeatmapHandler.events.newMappedHM, {});
+        });
+
+
+        this.globalEventHandler.bind(LSTMController.events.windowResize, () => this.updateVisibility())
 
         this.eventHandler.bind(HeatMap.events.closeWindow,
           hm => this.swapVisibility(hm.options.key)
-        )
+        );
 
         this.eventHandler.bind(HeatMap.events.rectSelected,
           hmID => {
               this.mappedHM = hmID;
               this.eventHandler.trigger(LSTMHeatmapHandler.events.newMappedHM, {});
           }
-        )
+        );
 
 
     }
@@ -65,7 +73,7 @@ class LSTMHeatmapHandler {
           .on('click', d => this.swapVisibility(d))
           // .style('padding-right', '2px')
           .merge(mOp)
-          .classed('activeHM', d => this.hmInfo.get(d).selected)
+          .classed('activeOption', d => this.hmInfo.get(d).selected)
           .text(d => d);
 
     }
@@ -75,7 +83,7 @@ class LSTMHeatmapHandler {
         this.hmInfo.get(key).selected = selected;
         this.metaOptionPanel.selectAll('.metaOption')
           .filter(d => d == key)
-          .classed('activeHM', selected);
+          .classed('activeOption', selected);
         this.updateVisibility();
 
     }
@@ -168,8 +176,11 @@ class LSTMHeatmapHandler {
     get bgColorMap() {
         const heatmap = this.getHeatmapById(this.mappedHM);
         const cchm = this.cellCountHM;
-        const cs = cchm.renderData.colorScale.copy().range([0.5, 1])
+        const cs = cchm.renderData.colorScale.copy().range([0.3, 1])
         const ccData = cchm.data.values;
+
+        const maskHM = this.maskHeatmap;
+        console.log(maskHM,'\n-- maskHM --');
 
         if (heatmap) {
             const colorScale = heatmap.renderData.colorScale;
@@ -177,14 +188,20 @@ class LSTMHeatmapHandler {
             return heatmap.data.values
               .map((row, ri) => row.map((cell, ci) => {
                   const color = d3.color(colorScale(cell));
-                  if (heatmap!== cchm) color.opacity = cs(ccData[ri][ci]);
+                  if (maskHM && (heatmap !== cchm)) color.opacity = cs(ccData[ri][ci]);
 
                   return color;
               }));
 
-        } else {
-            return null;
         }
+
+        // Else:
+        return null;
+    }
+
+
+    get maskHeatmap() {
+        return this.maskOptionButton.classed('activeOption');
     }
 
 

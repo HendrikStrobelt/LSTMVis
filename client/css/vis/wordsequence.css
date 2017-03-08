@@ -39,4 +39,7 @@
     /*stroke-dasharray: 3,1;*/
 }
 
-
+.wordsequence .paddingLine {
+    stroke: #333;
+    stroke-width: 2;
+}

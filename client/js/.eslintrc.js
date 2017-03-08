@@ -26,7 +26,9 @@ module.exports = {
         "ModalDialog": false,
         "ColorManager": false,
         "LSTMMetaTrackHandler": false,
-        "LSTMDialogHandler":false
+        "LSTMDialogHandler":false,
+        "LSTMSelectionView":false,
+        "LSTMMatchView":false
     },
     "extends": "eslint:recommended",
     "rules": {

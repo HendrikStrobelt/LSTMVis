@@ -20,8 +20,10 @@ class LSTMMetaTrackHandler {
         this.optionList = d3.select('#addMetaList');
         this.dialog = d3.select('#addMetaDialog');
 
-        this.eventHandler.bind(LSTMController.events.projectsMetaAvailable, () => this.init())
-        this.eventHandler.bind(LSTMController.events.newContextAvailable, () => this._update())
+        this.eventHandler.bind(LSTMController.events.projectsMetaAvailable, () => this.init());
+        this.eventHandler.bind(LSTMController.events.newContextAvailable, () => this._update());
+
+        this.maskOptionButton = d3.select('#selectionMask');
 
         this.availableTracks = {};
         this.maxLengthWordVec = 5;
@@ -31,7 +33,7 @@ class LSTMMetaTrackHandler {
 
     init() {
 
-        const meta = this.controller.projectInfo.meta
+        const meta = this.controller.projectInfo.meta;
 
         Object.keys(meta).forEach(key => this.availableTracks[key] = {type: meta[key].vis.type, key});
 
@@ -58,7 +60,13 @@ class LSTMMetaTrackHandler {
 
                   ModalDialog.close({rootNode: node})
               }
-          })
+          });
+
+        this.maskOptionButton.on("click", () => {
+            const m = this.maskOptionButton;
+            m.classed('activeOption', !m.classed('activeOption'));
+            this._update()
+        });
 
     }
 
@@ -86,6 +94,11 @@ class LSTMMetaTrackHandler {
         const at = this.availableTracks;
 
         const visibleTracks = this.controller.visibleMeta.map(key => at[key]);
+
+        this.selectedCells = this.maskTrack ? this.controller.cellSelection() : [];
+        if (this.selectedCells.length > 0) {
+            this.selectedCellsHM = this.controller.sumCellValues(this.selectedCells);
+        }
 
         // Change visibility of 'add' button if all tracks are displayed
         this.addButton.attr('hidden', (Object.keys(at).length == visibleTracks.length) ? true : null);
@@ -130,18 +143,38 @@ class LSTMMetaTrackHandler {
 
     _updateCategoricalTrack(track, metaData) {
         const cm = this.colorManager.scaleForDim(track.key);
-        const trackData = metaData[track.key][0];
+        const words = metaData[track.key][0];
 
         track.vis.updateOptions({
             options: {
                 pos: {x: 60 - this.controller.cellWidth, y: 1},
                 cellWidth: this.controller.cellWidth
             }
-        })
+        });
+
+        let colorArray = words.map(d => cm(d));
+
+        // Mask only if there are selected cells AND Masking active
+        const mask = this.selectedCells.length > 0;
+
+        if (mask) {
+            const maskHM = this.selectedCellsHM;
+
+            const maskScale = d3.scaleLinear().domain([0, d3.max(maskHM)]).range([0.1, 1]);
+
+            colorArray = colorArray.map((d, i) => {
+                const col = d3.color(d);
+                col.opacity = maskScale(maskHM[i]);
+
+                return col;
+            })
+        }
+
 
         track.vis.update({
-            words: trackData,
-            colorArray: trackData.map(d => cm(d))
+            words,
+            colorArray,
+            leftPadding: this.controller.ctxLeftPadding
         })
     }
 
@@ -168,6 +201,10 @@ class LSTMMetaTrackHandler {
 
     actionCellWidthChange() {
         this._updateVisualizations(this.controller.visibleMeta.map(key => this.availableTracks[key]))
+    }
+
+    actionUpdateAll() {
+        this._update();
     }
 
     _appendWordVecTrack(key, node) {
@@ -230,10 +267,11 @@ class LSTMMetaTrackHandler {
                 })
 
                 const updateValues = {
-                    words: wordVecs[i]
+                    words: wordVecs[i],
+                    leftPadding: this.controller.ctxLeftPadding
                 };
                 if (has_weights) {
-                    updateValues['colorArray'] = weights[i].map((d, di) => colorScales[di](d))
+                    updateValues.colorArray = weights[i].map((d, di) => colorScales[di](d))
                 }
 
                 allVis[i].update(updateValues);
@@ -244,6 +282,12 @@ class LSTMMetaTrackHandler {
         }
 
     }
+
+    get maskTrack() {
+        return this.maskOptionButton.classed('activeOption');
+    }
+
+
 }
 
 LSTMMetaTrackHandler;

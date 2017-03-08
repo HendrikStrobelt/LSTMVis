@@ -27,6 +27,8 @@
     <script src="js/apps/LSTMHeatmapHandler.js"></script>
     <script src="js/apps/LSTMDialogHandler.js"></script>
     <script src="js/apps/LSTMMetaTrackHandler.js"></script>
+    <script src="js/apps/LSTMSelectionView.js"></script>
+    <script src="js/apps/LSTMMatchView.js"></script>
 
     <link rel="stylesheet" type="text/css" href="css/vis/general.css">
     <link rel="stylesheet" type="text/css" href="css/vis/heatmap.css">
@@ -44,49 +46,58 @@
 
 <div class="header">
     <div class="headerBlock">
-        <img src="assets/lstmvis_v2_smaller.png" width="200">
+        <a href="index.html"><img src="assets/lstmvis_v2_smaller.png" width="100"></a>
     </div>
-    <div class="headerBlock" style="max-width: 350px;font-size: 14pt;">
+    <div class="headerBlock" style="max-width: 350px;">
         <span id="info_projectName">...</span>
         <!--PA simple synthetic dataset to test bracketing and counting. The language can open and close parents, and generate a number indicating the current nesting level.-->
     </div>
-    <div class="headerBlock noselect">
-        <b>pos</b> <br>
-        <button class="uiButton" id="info_position">100</button>
-        <!--<span class="fontAwesome editIcon">&#xf040;</span>-->
-    </div>
     <div class="headerBlock">
-        <b>source</b> <br>
+        <b>source</b>
         <button class="uiButton" id="info_source">...</button>
         <!--<span class="fontAwesome editIcon">&#xf040;</span>-->
     </div>
-    <div class="headerBlock">
-        <b>project ID</b> <br>
-        <span id="info_id">...</span>
+    <div class="headerBlock noselect">
+        <b>pos</b>
+        <button class="uiButton" id="info_position">100</button>
+        <button class="hidden-print uiButton" id="inc_pos">&lt;&lt;</button>
+        <button class="hidden-print uiButton" id="dec_pos">&gt;&gt;</button>
         <!--<span class="fontAwesome editIcon">&#xf040;</span>-->
     </div>
 
-</div>
 
-<hr/>
-<div>
+    <!--<div class="headerBlock">-->
+    <!--<b>project ID</b> <br>-->
+    <!--<span id="info_id">...</span>-->
+    <!--&lt;!&ndash;<span class="fontAwesome editIcon">&#xf040;</span>&ndash;&gt;-->
+    <!--</div>-->
+
+</div>
+<div class="visChapter">
     <div class="section">Selection</div>
     <div class="optionGrp">
-        <label for="thresholdValue">threshold</label>
+        <label for="thresholdValue"><b>threshold</b></label>
         <input type="number" step=".001" style="width: 50px;"
                id="thresholdValue">
     </div>
+    <div class="optionGrp ">
+        <span class="fontAwesome">&#xf013;</span>
+        <button id='selectionMask' class="metaOption noselect activeOption">mask</button>
+
+    </div>
     <div class="optionGrp">
-        zoom
+        <b>zoom</b>
         <button class="hidden-print uiButton" id="smaller_btn">&gt;&lt;</button>
         <button class="hidden-print uiButton" id="larger_btn">&lt; &gt;</button>
     </div>
 
-    <div class="optionGrp">
-        move
-        <button class="hidden-print uiButton" id="inc_pos">&lt;&lt;</button>
-        <button class="hidden-print uiButton" id="dec_pos">&gt;&gt;</button>
-    </div>
+    <!--<div class="optionGrp">-->
+    <!--<b>move</b>-->
+    <!--<button class="hidden-print uiButton" id="inc_pos">&lt;&lt;</button>-->
+    <!--<button class="hidden-print uiButton" id="dec_pos">&gt;&gt;</button>-->
+    <!--</div>-->
+
+
 </div>
 
 <div>
@@ -101,27 +112,27 @@
     <svg id="selectedCellsVis" width="900" height="20"></svg>
 </div>
 
-<hr/>
 
-<div>
+<div class="visChapter">
     <div class="section">Matching</div>
     <div class="optionGrp">
-        match
+        <b>match</b>
         <button class="hidden-print uiButton" id="match_fast">fast</button>
         <button class="hidden-print uiButton" id="match_precise">precise</button>
     </div>
-    <!--<div class="optionGrp">-->
-        <!--opacity-->
-        <!--<div id="metaOptions" class="optionGrp"></div>-->
-    <!--</div>-->
+    <div class="optionGrp ">
+        <span class="fontAwesome">&#xf013;</span>
+        <button id='matchingMask' class="metaOption noselect activeOption">mask</button>
+        <button id='matchingStats' class="metaOption noselect activeOption">stats</button>
+    </div>
     <div class="optionGrp">
-        meta
+        <b>meta</b>
         <div id="metaOptions" class="optionGrp"></div>
     </div>
 </div>
 
 <div>
-    <svg id="matchingVis" width="900" height="500"></svg>
+    <svg id="matchingVis" width="900" height="1000"></svg>
 </div>
 
 <!-- MODAL DIALOGS -->
