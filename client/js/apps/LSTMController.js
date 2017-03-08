@@ -44,6 +44,17 @@ class LSTMController {
 
     }
 
+    newLinkString({overwrite = {}, ignore = []}) {
+        const ignoreSet = new Set(ignore);
+        const validParams = new Map([...this.params]
+          .filter(d => !(LSTMController.hiddenParams.has(d[0]) || ignoreSet.has(d[0]))));
+
+
+        Object.keys(overwrite).forEach(key => validParams.set(key, overwrite[key]));
+
+        return URLHandler.urlString(validParams);
+
+    }
 
     _updateURLparams() {
         const validParams = new Map([...this.params]

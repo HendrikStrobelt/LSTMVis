@@ -59,6 +59,7 @@ button {
     font-family: inherit;
     font-size: smaller;
     border-style: none;
+    padding: 2px 5px;
 }
 
 button:focus {
@@ -66,8 +67,8 @@ button:focus {
 }
 
 .uiButton {
-    border-radius: 5px;
-    background-color: rgba(179, 179, 179, .4);
+    border-radius: 3px;
+    background-color: rgba(179, 179, 179, .3);
 }
 
 .uiButton:hover {

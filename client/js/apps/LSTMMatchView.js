@@ -33,9 +33,20 @@ class LSTMMatchView {
             parent: this.matchingSVG, eventHandler: this.localEventHandler,
             options: {
                 cellWidth: this.controller.cellWidth,
-                pos: {x: 10, y: 20}
+                pos: {x: 35, y: 20}
             }
         });
+
+        this.resultLinkPanel = new ButtonMatrix({
+            parent: this.matchingSVG, eventHandler: this.localEventHandler,
+            options: {
+                cellWidth: 25,
+                cellHeight: 20,
+                pos: {x: 5, y: 20},
+                additionalClasses: 'fontAwesome',
+                buttonText: '\uf08e'
+            }
+        })
 
         this.hmHandler.init();
     }
@@ -86,6 +97,19 @@ class LSTMMatchView {
               this.wordMatrix.actionCellHovered(d.row, d.col, d.active);
               this.hmHandler.actionCellHovered(d.row, d.col, d.active);
           });
+
+
+        this.localEventHandler.bind(ButtonMatrix.events.buttonClicked,
+          ({caller, value}) => {
+              if (caller === this.resultLinkPanel) {
+                  const nls = this.controller.newLinkString({
+                      overwrite: {pos: value},
+                      ignore: ['wordBrush', 'wordBrushZero']
+                  });
+                 window.open(nls, '_blank');
+              }
+          })
+
     }
 
     actionNewMatchResult() {
@@ -95,6 +119,8 @@ class LSTMMatchView {
             row.rowId = row.pos;
         });
         this.hmHandler.updateHeatmapData();
+
+        this.resultLinkPanel.update(wordMatrix.map(d => [d.pos]))
 
         this.wordMatrix.update({
             wordMatrix,

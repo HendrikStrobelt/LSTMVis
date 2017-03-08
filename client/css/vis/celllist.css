@@ -7,7 +7,7 @@
 .celllist .cell rect {
     stroke: none;
     border-radius: 5px;
-    fill: #13a2f5;
+    fill: #3399b2;
     opacity: .5;
     cursor: crosshair;
 }
