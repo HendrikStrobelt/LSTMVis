@@ -19,7 +19,8 @@ class LSTMSelectionView {
             parentNode: d3.select('#metaTracks'),
             controller: this.controller,
             eventHandler: this.globalEventHandler,
-            colorManager: this.controller.colorManager
+            colorManager: this.controller.colorManager,
+            view: this
         });
 
         // Throttling to stay responsive
@@ -49,7 +50,7 @@ class LSTMSelectionView {
             parent: this.selectionSVG, eventHandler: this.localEventHandler,
             options: {
                 cellWidth: this.controller.cellWidth,
-                pos: {x: 60 - this.controller.cellWidth, y: 210 + 5}
+                pos: {x: this.posX, y: 210 + 5}
             }
         });
 
@@ -150,6 +151,10 @@ class LSTMSelectionView {
         }
     }
 
+    get posX() {
+        return Math.round(60 - this.controller.cellWidth / 2);
+    }
+
     actionNewContext({keepSelectedCells}) {
 
         const states = this.controller.states;
@@ -183,7 +188,7 @@ class LSTMSelectionView {
         });
 
         this.wordSequence.updateOptions({
-            options: {cellWidth, pos: {x: 60 - cellWidth, y: 215}},
+            options: {cellWidth, pos: {x: this.posX, y: 215}},
             reRender: true
         });
 

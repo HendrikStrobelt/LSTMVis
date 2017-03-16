@@ -25,7 +25,10 @@ class LinePlot extends VComponent {
             height: 150,
             // Cell width along x axis
             cellWidth: 25,
-            extendButton: true
+            extendButton: true,
+            // Distance between plot and axis (!! must be reflected in layers as well)
+            axisPadding: 10
+
         }
     }
 
@@ -33,7 +36,7 @@ class LinePlot extends VComponent {
         return [
             {name: 'main', pos: {x: 60, y: 0}},
             {name: 'overlay', pos: {x: 60, y: 0}},
-            {name: 'axis', pos: {x: 60, y: 0}},
+            {name: 'axis', pos: {x: 60 - this.options.axisPadding, y: 0}}
         ]
     }
 
@@ -179,7 +182,7 @@ class LinePlot extends VComponent {
 
         this.layers.overlay.select('.thresholdLine')
           .attrs({
-              x1: xScale.range()[0],
+              x1: xScale.range()[0]-this.options.axisPadding,
               x2: xScale.range()[1],
               y1: tValue,
               y2: tValue

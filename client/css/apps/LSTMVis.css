@@ -76,8 +76,9 @@ hr {
 }
 
 .visChapter{
-    background-color: #eee;
-    padding: 5px 0px;
+    /*background-color: #eee;*/
+    padding: 5px 0;
+    border-top: #777 1px solid;
 }
 
 .optionGrp {
@@ -85,6 +86,7 @@ hr {
     white-space: nowrap;
     margin-right: 1em;
     vertical-align: middle;
+    color: #777;
 }
 
 .word {

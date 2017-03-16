@@ -4,7 +4,7 @@
 class LSTMMetaTrackHandler {
 
 
-    constructor({parentNode, controller, eventHandler, colorManager}) {
+    constructor({parentNode, controller, eventHandler, colorManager, view}) {
         this.visTypes = {
             categorical: 'discrete',
             wordVec: 'wordvec'
@@ -15,6 +15,7 @@ class LSTMMetaTrackHandler {
         this.controller = controller;
         this.eventHandler = eventHandler;
         this.colorManager = colorManager;
+        this.view = view;
 
         this.addButton = d3.select('#addMetaTrackBtn');
         this.optionList = d3.select('#addMetaList');
@@ -147,7 +148,7 @@ class LSTMMetaTrackHandler {
 
         track.vis.updateOptions({
             options: {
-                pos: {x: 60 - this.controller.cellWidth, y: 1},
+                pos: {x: this.view.posX, y: 1},
                 cellWidth: this.controller.cellWidth
             }
         });
@@ -190,7 +191,7 @@ class LSTMMetaTrackHandler {
               parent: node,
               eventHandler: this.eventHandler,
               options: {
-                  pos: {x: 60 - this.controller.cellWidth, y: 1},
+                  pos: {x: this.view.posX, y: 1},
                   cellWidth: this.controller.cellWidth,
                   cellHeight: 20,
                   mode: WordSequence.modes.simple
@@ -224,7 +225,7 @@ class LSTMMetaTrackHandler {
                   parent: node,
                   eventHandler: this.eventHandler,
                   options: {
-                      pos: {x: 60 - this.controller.cellWidth, y: 1 + i * 22},
+                      pos: {x: this.view.posX, y: 1 + i * 22},
                       cellWidth: this.controller.cellWidth,
                       cellHeight: 20,
                       mode: WordSequence.modes.simple
@@ -261,7 +262,7 @@ class LSTMMetaTrackHandler {
 
                 allVis[i].updateOptions({
                     options: {
-                        pos: {x: 60 - this.controller.cellWidth, y: 1 + i * 22},
+                        pos: {x: this.view.posX, y: 1 + i * 22},
                         cellWidth: this.controller.cellWidth
                     }
                 })

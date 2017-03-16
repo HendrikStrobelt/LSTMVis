@@ -14,6 +14,7 @@ class LSTMMatchView {
             parentNode: this.matchingSVG,
             controller: this.controller,
             eventHandler: this.localEventHandler,
+            colorManager: this.controller.colorManager,
             globalEventHandler
         });
 

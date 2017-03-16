@@ -10,11 +10,12 @@ class LSTMHeatmapHandler {
         }
     }
 
-    constructor({parentNode, controller, eventHandler, globalEventHandler}) {
+    constructor({parentNode, controller, eventHandler, globalEventHandler, colorManager}) {
         this.parentNode = parentNode;
         this.controller = controller;
         this.eventHandler = eventHandler;
         this.globalEventHandler = globalEventHandler;
+        this.colorManager = colorManager;
 
         this.metaOptionPanel = d3.select('#metaOptions');
         this.maskOptionButton = d3.select('#matchingMask');
