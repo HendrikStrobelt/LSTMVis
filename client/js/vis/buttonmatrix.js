@@ -72,6 +72,10 @@ class ButtonMatrix extends VComponent {
 
     }
 
+    _bindLocalEvents() {
+        null;
+    }
+
 
 }
 
