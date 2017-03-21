@@ -4,7 +4,7 @@
 class LSTMMetaTrackHandler {
 
 
-    constructor({parentNode, controller, eventHandler, colorManager, view}) {
+    constructor({parentNode, controller, eventHandler, globalEventHandler, colorManager, view}) {
         this.visTypes = {
             categorical: 'discrete',
             wordVec: 'wordvec'
@@ -14,6 +14,7 @@ class LSTMMetaTrackHandler {
         this.parentNode = parentNode;
         this.controller = controller;
         this.eventHandler = eventHandler;
+        this.globalEventHandler = globalEventHandler;
         this.colorManager = colorManager;
         this.view = view;
 
@@ -21,8 +22,8 @@ class LSTMMetaTrackHandler {
         this.optionList = d3.select('#addMetaList');
         this.dialog = d3.select('#addMetaDialog');
 
-        this.eventHandler.bind(LSTMController.events.projectsMetaAvailable, () => this.init());
-        this.eventHandler.bind(LSTMController.events.newContextAvailable, () => this._update());
+        this.globalEventHandler.bind(LSTMController.events.projectsMetaAvailable, () => this.init());
+        this.globalEventHandler.bind(LSTMController.events.newContextAvailable, () => this._update());
 
         this.maskOptionButton = d3.select('#selectionMask');
 
@@ -161,7 +162,7 @@ class LSTMMetaTrackHandler {
         if (mask) {
             const maskHM = this.selectedCellsHM;
 
-            const maskScale = d3.scaleLinear().domain([0, d3.max(maskHM)]).range([0.1, 1]);
+            const maskScale = d3.scaleLinear().domain([0, d3.max(maskHM)]).range([0.2, 1]);
 
             colorArray = colorArray.map((d, i) => {
                 const col = d3.color(d);

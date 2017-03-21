@@ -18,7 +18,8 @@ class LSTMSelectionView {
         this.metaHandler = new LSTMMetaTrackHandler({
             parentNode: d3.select('#metaTracks'),
             controller: this.controller,
-            eventHandler: this.globalEventHandler,
+            eventHandler: this.localEventHandler,
+            globalEventHandler: this.globalEventHandler,
             colorManager: this.controller.colorManager,
             view: this
         });
