@@ -42,19 +42,19 @@ body {
 }
 
 .headerBlock {
-    vertical-align:middle;
+    vertical-align: middle;
     display: inline-block;
     margin-right: 1em;
 }
 
-.editIcon{
+.editIcon {
     color: black;
     opacity: .1;
     cursor: pointer;
     transition-duration: 500ms;
 }
 
-.editIcon:hover{
+.editIcon:hover {
     opacity: 1;
 }
 
@@ -75,7 +75,7 @@ hr {
     vertical-align: middle;
 }
 
-.visChapter{
+.visChapter {
     /*background-color: #eee;*/
     padding: 5px 0;
     border-top: #777 1px solid;
@@ -125,11 +125,19 @@ hr {
     opacity: 1;
 }
 
-.pd_result{
+.pd_result {
     border-bottom: dotted darkgray 1px;
 }
-.pd_result:hover{
+
+.pd_result:hover {
     background-color: lightgray;
 }
 
+.infoBox {
+    display: inline-block;
+    width: 350px;
+    height: 350px;
+    overflow-y: auto;
+    margin: 10px;
+}
 

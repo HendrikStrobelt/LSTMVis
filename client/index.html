@@ -3,14 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <title>LSTMVis</title>
-    <script src="bower_components/jquery/dist/jquery.min.js"></script>
-    <script src="bower_components/d3/d3.min.js"></script>
-    <script src="bower_components/lodash/dist/lodash.min.js"></script>
-    <script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="js/ext_libs/jquery.min.js"></script>
+    <script src="js/ext_libs/d3.min.js"></script>
+    <script src="js/ext_libs/d3-selection-multi.v1.min.js"></script>
+    <script src="js/ext_libs/lodash.min.js"></script>
+    <!--<script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>-->
 
-    <link rel="stylesheet" type="text/css" href="bower_components/bootswatch/cosmo/bootstrap.min.css">
-    <link rel="stylesheet" type="text/css" href="bower_components/font-awesome/css/font-awesome.min.css">
-
+    <!--<link rel="stylesheet" type="text/css" href="bower_components/bootswatch/cosmo/bootstrap.min.css">-->
+    <!--<link rel="stylesheet" type="text/css" href="bower_components/font-awesome/css/font-awesome.min.css">-->
+    <link rel="stylesheet" type="text/css" href="css/vis/general.css">
+    <link rel="stylesheet" type="text/css" href="css/apps/LSTMVis.css">
 </head>
 <body>
 <div class="container">
@@ -19,13 +21,16 @@
         <span style="vertical-align: middle;"><img src="assets/lstmvis_v2_smaller.png" height="40"></span>
         <span style="vertical-align: middle;">- Visual Analysis for Recurrent Neural Networks</span>
     </h1>
-    <p>
-      LSTMVis allows you to interactively analyze the hidden state vectors of a recurrent neural network model, 
-      by simply selecting and comparing regions of the input. To demonstrate the system, we have provided a set of real example
-      models and datasets to play with, including several word and character language models for text, music and code,
-      a sequence auto-encoder, a German <-> English neural translation system, and a sentence summarization system. 
-      We recommend that you begin with the <a href="http://lstmvis.selfip.org:8888/client/pattern_finder.html?data_set=00parens&source=states::states2">parentheses dataset</a>, which has a simple and regular structure to demonstrate
-      the use of the tool. 
+    <p style="max-width: 1000px">
+        LSTMVis allows you to interactively analyze the hidden state vectors of a recurrent neural network model,
+        by simply selecting and comparing regions of the input. To demonstrate the system, we have provided a set of
+        real example
+        models and datasets to play with, including several word and character language models for text, music and code,
+        a sequence auto-encoder, a German <-> English neural translation system, and a sentence summarization system.
+        We recommend that you begin with the <a
+            href="http://lstmvis.selfip.org:8888/client/pattern_finder.html?data_set=00parens&source=states::states2">parentheses
+        dataset</a>, which has a simple and regular structure to demonstrate
+        the use of the tool.
     </p>
     <!--</div>-->
     <!--<h2>Datasets:</h2>-->
@@ -37,8 +42,8 @@
 </div>
 
 <script>
-    var url = '';
-    var query = url + '/api/v2/info';
+    const url = '';
+    const query = url + '/api/v2/info';
     $.ajax(query, {
         dataType: 'json',
         success: function (info) {
@@ -46,63 +51,64 @@
 
 //            d3.text('assets/schema_interactive.svg', function (e_, schema_svg) {
 
-                var lis = d3.select('#ds_list').selectAll('div').data(info)
-                        .enter().append('div')
-                        .attr({
-                            class: "col-md-4 col-sm-6"
-                        })
-                        .style({
-                            'height': '300px',
-                            'overflow-y': 'auto'
-                        }).append('div').attr({
-                            'background-color': '#dddddd',
-                            'margin': '10pt'
-                        });
+            const lis = d3.select('#ds_list').selectAll('div').data(info)
+              .enter().append('div')
+              .attrs({
+                  class: "col-md-4 col-sm-6 infoBox"
+              })
+//              .styles({
+//                  'height': '300px',
+//                  'overflow-y': 'auto'
+//              })
+              .append('div').attrs({
+                  'background-color': '#dddddd',
+                  'margin': '10pt'
+              });
 
-                lis.append('hr');
-                lis.append('h4').text(function (d, i) {return d.info.name}).style({'font-weight': 500});
-                lis.append('hr');
+            lis.append('hr');
+            lis.append('h4').text(function (d, i) {return d.info.name}).style({'font-weight': 500});
+            lis.append('hr');
 
-                lis.append('p').html(function (d, i) {return d.info.description})
+            lis.append('p').html(function (d, i) {return d.info.description})
 
 
-                info_p = lis.append('p').attr({class: 'row'})
+            info_p = lis.append('p').attrs({class: 'row'})
 
-                function add_info(parent, title, accesor) {
-                    parent.append('div').attr({
-                        class: 'col-xs-2 text-left'
-                    }).style({
-                        'font-weight': 'bold'
-                    }).html(title);
+            function add_info(parent, title, accesor) {
+                parent.append('div').attrs({
+                    class: 'col-xs-2 text-left'
+                }).styles({
+                    'font-weight': 'bold'
+                }).html(title);
 
-                    parent.append('div').attr({
-                        class: 'col-xs-10 text-left'
-                    }).html(function (d) {return accesor(d)});
+                parent.append('div').attrs({
+                    class: 'col-xs-10 text-left'
+                }).html(function (d) {return accesor(d)});
 
-                }
+            }
 
-                add_info(info_p, 'meta', function (d, i) {
-                    var keys = Object.keys(d.info.meta);
-                    return (keys.length > 0) ? keys.join(', ') : '---'
+            add_info(info_p, 'meta', function (d, i) {
+                const keys = Object.keys(d.info.meta);
+                return (keys.length > 0) ? keys.join(', ') : '---'
+            });
+            add_info(info_p, 'index', function (d, i) {return d.info.index});
+            add_info(info_p, 'length', function (d, i) {return d.info.word_sequence.size[0]});
+
+            lis.each(function (ds, ds_id) {
+                let that = d3.select(this);
+                that = that.append('p').attrs({class: 'row'})
+                ds.info.states.types.forEach(function (d, i) {
+                    that.append('div').attrs({class: 'col-xs-12'}).html(function () {
+                        return '<a href="lstmvis.html?project=' + ds.project + '&source=' + d.file + '::' + d.path + '">'
+                          + 'layer ' + d.layer + ' ' + d.type
+                          + ' ( size: ' + d.size.join(' x ') + ')'
+                          + (d.unsigned ? ' - <b>unsigned</b>' : '')
+                          + '</a>'
+                    })
                 });
-                add_info(info_p, 'index', function (d, i) {return d.info.index});
-                add_info(info_p, 'length', function (d, i) {return d.info.word_sequence.size[0]});
-
-                lis.each(function (ds, ds_id) {
-                    var that = d3.select(this);
-                    that = that.append('p').attr({class: 'row'})
-                    ds.info.states.types.forEach(function (d, i) {
-                        that.append('div').attr({class: 'col-xs-12'}).html(function () {
-                            return '<a href="lstmvis.html?project=' + ds.project + '&source=' + d.file + '::' + d.path + '">'
-                                    + 'layer ' + d.layer + ' ' + d.type
-                                    + ' ( size: ' + d.size.join(' x ') + ')'
-                                    + (d.unsigned ? ' - <b>unsigned</b>' : '')
-                                    + '</a>'
-                        })
-                    });
 
 
-                });
+            });
 
 //            })
 
