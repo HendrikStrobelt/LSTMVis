@@ -444,9 +444,15 @@ class LSTMDataHandler:
 
         res = []
 
+        max_pos = cell_states.shape[0]
+
         for cand in all_candidates:  # positions where all pivot cells start jointly
             ml = cand[0]  # maximal length of _all_ pivot cells on
             pos = cand[1]  # position of the pattern
+
+            if pos < 1 or pos + ml + 1 > max_pos:
+                continue
+            # TODO: find a more elegant solution
 
             cs = np.array(cell_states[pos - 1:pos + ml + 1, :])  # cell values of _all_ cells for the range
             hf.threshold_discrete(cs, activation_threshold_corrected, -1, 1)  # discretize
