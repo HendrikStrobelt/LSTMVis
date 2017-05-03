@@ -3,7 +3,7 @@
 More information about LSTMVis, an introduction video, and the link to the live demo can be found at **[lstm.seas.harvard.edu](http://lstm.seas.harvard.edu)**
 
 <div style='text-align:center'>
-<img src="docs/img/teaser_V2_small.png" />
+<img src="docs/img/teaser_V2.png" />
 </div>
 
 
@@ -41,7 +41,7 @@ start server:
 python server.py -dir <datadir>
 ```
 
-open browser at [http://localhost:8888](http://localhost:8888) - eh voila !
+open browser at [http://localhost:8888](http://localhost:8888/client/index.html) - eh voila !
 
 
 ## Adding Your Own Data
