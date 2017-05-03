@@ -28,7 +28,7 @@ class LinePlot extends VComponent {
             extendButton: true,
             // Distance between plot and axis (!! must be reflected in layers as well)
             axisPadding: 10
-
+            
         }
     }
 

@@ -156,18 +156,25 @@ class WordSequence extends VComponent {
 
     _renderBrush({op, st}) {
         const xScale = st.xScale;
+        // Indicates if brush is moved or newly created
+        let moveBrush = false;
 
         const brushed = () => {
             const ev = d3.event;
 
             if (ev.sourceEvent && ev.sourceEvent.type === 'mousemove') {
-                const range = d3.event.selection
+                const rangeRaw = d3.event.selection
                   .map(xScale.invert)
-                  .map(d => Math.floor(d));
-                range[1] += 1;
+                const range = rangeRaw.map(d => Math.round(d));
+
+                // If not a brush moving event: ceil and floor
+                if (!moveBrush) {
+                    range[0] = Math.floor(rangeRaw[0]);
+                    range[1] = Math.round(rangeRaw[1]);
+                }
 
                 // Set internal state to minimize emitting change events
-                const sameRange = (a, b) => (a[0] == b[0]) && (a[1] == b[1]);
+                const sameRange = (a, b) => (a[0] === b[0]) && (a[1] === b[1]);
                 const deepAssign = (a, b) => {
                     a[0] = b[0];
                     a[1] = b[1]
@@ -191,19 +198,24 @@ class WordSequence extends VComponent {
             const ev = d3.event;
             // Only catch events that clear selection
             if (ev.sourceEvent && ev.sourceEvent.type === 'mouseup') {
-                if (ev.type == 'end' && ev.selection === null) {
+                if (ev.type === 'end' && ev.selection === null) {
                     st.selectedRange = undefined;
                     this.eventHandler.trigger(
                       WordSequence.events.brushSelectionChanged, null);
                 }
             }
-
-
         }
 
+        const brushStart = () => {
+            const ev = d3.event;
+            if (ev.selection) {
+                moveBrush = ev.selection[0] !== ev.selection[1];
+            }
+        };
 
         const brushGenerator = d3.brushX()
           .extent([[xScale.range()[0], 3], [xScale.range()[1], op.cellHeight - 3]])
+          .on("start", brushStart)
           .on("brush", brushed)
           .on("end", brushEnd);
 
@@ -214,7 +226,7 @@ class WordSequence extends VComponent {
         if (st.hovering) {
             ol.on('mousemove', () => {
                 const wordNo = Math.floor(xScale.invert(d3.mouse(ol.node())[0]));
-                if (st.wordHovered != wordNo) {
+                if (st.wordHovered !== wordNo) {
                     st.wordHovered = wordNo;
                     this.eventHandler.trigger(WordSequence.events.wordHovered, wordNo)
                 }
@@ -374,7 +386,7 @@ class WordSequence extends VComponent {
 
     actionWordHovered(wordNo) {
         this.layers.text.selectAll('.word')
-          .classed('hovered', d => d.index == wordNo)
+          .classed('hovered', d => d.index === wordNo)
     }
 }
 
