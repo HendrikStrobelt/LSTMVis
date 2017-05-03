@@ -29,7 +29,8 @@ module.exports = {
         "LSTMDialogHandler": false,
         "LSTMSelectionView": false,
         "LSTMMatchView": false,
-        "ButtonMatrix": false
+        "ButtonMatrix": false,
+        "Histogram": false
     },
     "extends": "eslint:recommended",
     "rules": {

@@ -38,6 +38,7 @@ class ColorManager {
     // -----
 
     registerCategoricalDim(key, values) {
+        console.log(values, this._categoricalScale(values).range());
         this.staticScales.set(key, this._categoricalScale(values));
     }
 
@@ -63,7 +64,7 @@ class ColorManager {
 
     _categoricalScale(uniqueValues) {
 
-        let allColors = this.colorsCategorical;
+        let allColors = [...this.colorsCategorical];
 
         if (allColors.length >= uniqueValues.length) {
             allColors = allColors.slice(0, uniqueValues.length);
@@ -75,7 +76,7 @@ class ColorManager {
             allColors = [...allColors, ...fillArray]
         }
 
-        return d3.scaleOrdinal(allColors).domain(uniqueValues);
+        return d3.scaleOrdinal().domain(uniqueValues).range(allColors);
     }
 
     _scalarScale(min, max) {

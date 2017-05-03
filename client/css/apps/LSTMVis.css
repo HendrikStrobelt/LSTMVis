@@ -135,8 +135,8 @@ hr {
 
 .infoBox {
     display: inline-block;
-    width: 350px;
-    height: 350px;
+    width: 320px;
+    height: 300px;
     overflow-y: auto;
     margin: 10px;
 }
