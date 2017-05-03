@@ -56,10 +56,10 @@
               .attrs({
                   class: "col-md-4 col-sm-6 infoBox"
               })
-//              .styles({
-//                  'height': '300px',
-//                  'overflow-y': 'auto'
-//              })
+              //              .styles({
+              //                  'height': '300px',
+              //                  'overflow-y': 'auto'
+              //              })
               .append('div').attrs({
                   'background-color': '#dddddd',
                   'margin': '10pt'
@@ -75,15 +75,8 @@
             info_p = lis.append('p').attrs({class: 'row'})
 
             function add_info(parent, title, accesor) {
-                parent.append('div').attrs({
-                    class: 'col-xs-2 text-left'
-                }).styles({
-                    'font-weight': 'bold'
-                }).html(title);
 
-                parent.append('div').attrs({
-                    class: 'col-xs-10 text-left'
-                }).html(function (d) {return accesor(d)});
+                parent.append('div').html(d => `<b>${title}:</b> ${accesor(d)}`);
 
             }
 

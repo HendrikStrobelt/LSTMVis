@@ -47,7 +47,7 @@ class Indexer:
         
 def get_data(args):
     target_indexer = Indexer()
-    #add special words to indices in the target_indexer
+    # add special words to indices in the target_indexer
     target_indexer.convert("<s>")
     target_indexer.convert("<unk>")
     target_indexer.convert("</s>")

@@ -177,7 +177,7 @@ class LSTMHeatmapHandler {
     get bgColorMap() {
         const heatmap = this.getHeatmapById(this.mappedHM);
         const cchm = this.cellCountHM;
-        const cs = cchm.renderData.colorScale.copy().range([0.2, 1])
+        const cs = cchm.renderData.colorScale.copy().range([0.1, 1])
         const ccData = cchm.data.values;
 
         const maskHM = this.maskHeatmap;
