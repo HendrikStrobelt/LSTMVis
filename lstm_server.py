@@ -53,7 +53,7 @@ def get_context(**request):
 def get_info():
     res = []
     for key, project in data_handlers.iteritems():
-        print key
+        # print key
         res.append({
             'project': key,
             'info': project.config
