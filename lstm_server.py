@@ -3,7 +3,7 @@ import connexion
 import numpy as np
 import os
 import yaml
-from flask import send_from_directory
+from flask import send_from_directory, redirect
 
 from lstmdata.data_handler import LSTMDataHandler
 import lstmdata.read_index as ri
@@ -136,6 +136,10 @@ def send_static(path):
     :param path: path from api call
     """
     return send_from_directory('client/', path)
+
+@app.route('/')
+def redirect_home():
+    return redirect('/client/index.html', code=302)
 
 
 def create_data_handlers(directory):
