@@ -30,7 +30,7 @@ pip install --user -r requirements.txt
 cd client; bower install; cd ..
 ```-->
 
-Download & Unzip example dataset(s):
+Download & Unzip example dataset(s) into `<LSTMVis>/data/05childbook`:
 
 [Children Book - Gutenberg](https://drive.google.com/file/d/0B542UFSlrvMjMHcxWHluNzh3clU/view?usp=sharing) - 2.2 GB
 
@@ -38,8 +38,10 @@ Download & Unzip example dataset(s):
 start server:
 
 ```bash
-python server.py -dir <datadir>
+python lstm_server.py -dir <datadir>
 ```
+
+For the example dataset, use `python lstm_server.py -dir data`
 
 open browser at [http://localhost:8888](http://localhost:8888/client/index.html) - eh voila !
 
