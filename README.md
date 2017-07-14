@@ -59,8 +59,8 @@ open browser at [http://localhost:8888](http://localhost:8888/client/index.html)
 
 If you want to train your own data first, please read the [Training](docs/chapter/train.md) document. If you have your own data at hand, adding it to LSTMVis is very easy. You only need three files:
 
-* HDF5 file containing the state vectors for each time step (e.g. `cbt_epoch10.h5`)
-* HDF5 file containing a word ID for each time step (e.g. `train.h5`)*
+* HDF5 file containing the state vectors for each time step (e.g. `states.hdf5`)
+* HDF5 file containing a word ID for each time step (e.g. `train.hdf5`)*
 * Dict file containing the mapping from word ID to word (e.g. `words.dict`)*
 
 A schematic representation of the data:
@@ -77,10 +77,10 @@ A typical `<datadir>` might look like this:
 
 ```
 <datadir>
-├── children_book  		<--- project directory
+├── paren  		        <--- project directory
 │   ├── lstm.yml 		<--- config file
-│   ├── cbt_epoch10.h5 	<--- states for each time step
-│   ├── train.h5 		<--- word ID for each time step
+│   ├── states.hdf5 	        <--- states for each time step
+│   ├── train.hdf5 		<--- word ID for each time step
 │   └── words.dict 		<--- mapping word ID -> word
 ├── fun .. 
 ```
@@ -95,8 +95,8 @@ name: children books  # project name
 description: children book texts from the Gutenberg project # little description
 
 files: # assign files to reference name
-  states: cbt_epoch10.h5 # HDF5 files have to end with .h5 or .hdf5 !!!
-  train: train.h5 # word ids of training set
+  states: states.hdf5 # HDF5 files have to end with .h5 or .hdf5 !!!
+  train: train.hdf5 # word ids of training set
   words: words.dict # dict files have to end with .dict !!
 
 word_sequence: # defines the word sequence
