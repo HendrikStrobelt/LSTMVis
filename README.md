@@ -61,7 +61,7 @@ If you want to train your own data first, please read the [Training](docs/chapte
 
 * HDF5 file containing the state vectors for each time step (e.g. `states.hdf5`)
 * HDF5 file containing a word ID for each time step (e.g. `train.hdf5`)*
-* Dict file containing the mapping from word ID to word (e.g. `words.dict`)*
+* Dict file containing the mapping from word ID to word (e.g. `train.dict`)*
 
 A schematic representation of the data:
 
@@ -81,7 +81,7 @@ A typical `<datadir>` might look like this:
 │   ├── lstm.yml 		<--- config file
 │   ├── states.hdf5 	        <--- states for each time step
 │   ├── train.hdf5 		<--- word ID for each time step
-│   └── words.dict 		<--- mapping word ID -> word
+│   └── train.dict 		<--- mapping word ID -> word
 ├── fun .. 
 ```
 
@@ -97,7 +97,7 @@ description: children book texts from the Gutenberg project # little description
 files: # assign files to reference name
   states: states.hdf5 # HDF5 files have to end with .h5 or .hdf5 !!!
   train: train.hdf5 # word ids of training set
-  words: words.dict # dict files have to end with .dict !!
+  words: train.dict # dict files have to end with .dict !!
 
 word_sequence: # defines the word sequence
   file: train # HDF5 file
