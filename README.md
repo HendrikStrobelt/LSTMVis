@@ -107,9 +107,9 @@ word_sequence: # defines the word sequence
 states: # section to define which states of your model you want to look at
   file: states # HDF5 files containing the state for each position
   types: [
-  	{type: state, layer: 1, path: states1}, # type={state, output}, layer=[1..x], path = HDF5 path
-	{type: state, layer: 2, path: states2},
-  	{type: output, layer: 2, path: output2}
+        {type: state, layer: 1, path: states1}, # type={state, output}, layer=[1..x], path = HDF5 path
+        {type: state, layer: 2, path: states2},
+        {type: output, layer: 2, path: output2}
   ]
 
 ```
