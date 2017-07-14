@@ -6,6 +6,15 @@ More information about LSTMVis, an introduction video, and the link to the live 
 <img src="docs/img/teaser_V2.png" />
 </div>
 
+## Changes in V2
+- new design and server-backend
+- discrete zooming for hidden-state track
+- added annotation tracks for meta-data and prediction
+- added training and extraction workflow for tensorflow
+- client is now ES6 and D3v4
+- some performance enhancements on client side
+
+
 
 ## Install
 
@@ -112,6 +121,7 @@ Check out our documents about:
 * [details about configuring the states file input](docs/chapter/config_states.md)
 * [adding annotation files for result heatmaps](docs/chapter/meta.md)
 * [training a model with torch](docs/chapter/train.md)
+* NEW !!! [training a model with tensorflow (link)](https://github.com/sebastianGehrmann/tensorflow-statereader)
 * [tools that make your life easier](docs/chapter/tools.md)
 
 
