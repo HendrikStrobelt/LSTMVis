@@ -43,9 +43,15 @@ class LSTMDataHandler:
             with open(os.path.join(directory, file_name), 'r') as f:
                 for line in f:
                     if len(line) > 0:
-                        k, v = line.split()
-                        kv[k] = int(v)
-                        vk[int(v)] = k
+                        if len(line.split()) == 2:
+                            k, v = line.split()
+                            kv[k] = int(v)
+                            vk[int(v)] = k
+                        elif line[0] == " ":
+                            k = " "
+                            v = line.strip()
+                            kv[k] = int(v)
+                            vk[int(v)] = k
                 self.dicts_value_id[name] = kv
                 self.dicts_id_value[name] = vk
 

@@ -52,7 +52,11 @@ def dictionary(project_dir, config):
     try:
         with open(dict_file_name, 'r') as df:
             for line in df:
-                k, v = line.split()
+                if len(line.split()) == 2:
+                    k, v = line.split()
+                elif line[0] == " ":
+                    k = " "
+                    v = line.strip()
                 try:
                     id2word[int(v)] = unicode(k, 'utf-8')
                 except UnicodeError:
