@@ -1,16 +1,14 @@
+import cgi
+
 import os
 
-import gc
 import h5py
 import resource
 
 import numpy as np
 import re
-import scipy.signal
-import time
 
 import helper_functions as hf
-from data_structures import State
 
 __author__ = 'Hendrik Strobelt'
 
@@ -85,6 +83,7 @@ class LSTMDataHandler:
 
         if self.config.get('meta', False):
             for _, m_info in self.config['meta'].iteritems():
+                m_info['type'] = m_info.get('type', 'general')
                 m_info['index'] = m_info.get('index', 'self')
                 m_info['vis']['range'] = m_info['vis'].get('range', '0...100')
                 vis_range = m_info['vis']['range']
@@ -96,6 +95,13 @@ class LSTMDataHandler:
                         m_info['vis']['range'] = range(int(m.group(1)), int(m.group(2)))
         else:
             self.config['meta'] = []
+
+        if self.config.get('etc'):
+            self.config['etc']['regex_search'] = self.config['etc'].get('regex_search', False)
+        else:
+            self.config['etc'] = {"regex_search": False}
+
+        self.config['is_searchable'] = self.config['index'] or self.config['etc']['regex_search']
 
         if not ('description' in self.config and self.config['description']):
             self.config['description'] = self.config['name']
@@ -232,12 +238,50 @@ class LSTMDataHandler:
             return []
 
         meta_data_info = meta[name]
-        meta_data = self.h5_files[meta_data_info['file']][meta_data_info['path']]
 
+        if meta_data_info['type'] == 'general':
+            return self._get_meta_general(meta_data_info, pos_array, left, right)
+        elif meta_data_info['type'] == 'wordvec':
+            return self._get_meta_wordvec(meta_data_info, pos_array, left, right)
+
+        return []
+
+    def _get_meta_wordvec(self, meta_data_info, pos_array, left, right):
+        word_indices = self.h5_files[meta_data_info['file']][meta_data_info['path']]
+        max_length = len(word_indices)
+
+        has_weights = 'weights_path' in meta_data_info
+        word_weights = self.h5_files[meta_data_info['file']][meta_data_info['weights_path']] \
+            if has_weights else []
+
+        has_dict = 'dict' in meta_data_info
+        word_dict = self.dicts_id_value[meta_data_info['dict']] if has_dict else []
+
+        res_indices = []
+        res_weights = []
+        res_words = []
+
+        for pos in pos_array:
+            left_pos = pos - min(left, pos)
+            right_pos = min(max_length, pos + 1 + right)
+
+            wi = word_indices[left_pos:right_pos].tolist()
+            res_indices.append(wi)
+
+            if has_dict:
+                res_words.append([[word_dict[wi] for wi in row] for row in wi])
+
+            if has_weights:
+                weights = word_weights[left_pos:right_pos].tolist()
+                res_weights.append(weights)
+
+        return {'word_ids': res_indices, 'words': res_words, 'weights': res_weights}
+
+    def _get_meta_general(self, meta_data_info, pos_array, left, right):
+        meta_data = self.h5_files[meta_data_info['file']][meta_data_info['path']]
         meta_index = meta_data_info.get('index')
         if not meta_index:
             meta_index = 'self'
-
         res = []
         if meta_index == 'self':  # if meta info is related to global coordinates
             for pos in pos_array:
@@ -257,7 +301,6 @@ class LSTMDataHandler:
         if 'dict' in meta_data_info:
             mapper = self.dicts_id_value[meta_data_info['dict']]
             res = [[mapper[y] for y in x] for x in res]
-
         return res
 
     def get_dimensions(self, pos_array, source, left, right, dimensions, round_values=5, data_transform='tanh',
@@ -284,12 +327,6 @@ class LSTMDataHandler:
 
         for dim in dimensions:
             if dim == 'states':
-                # TODO: contradicts with cell_count call
-                # if states:  # reuse states from alignment
-                #     for st in states:
-                #         st['data'] = [[round(y, round_values) for y in x] for x in st['data'].tolist()]
-                #     res[dim] = states
-                # else:
                 res[dim], cell_active = self.get_states(pos_array, source, left, right,
                                                         round_values=round_values,
                                                         data_transform=data_transform,
@@ -299,12 +336,7 @@ class LSTMDataHandler:
                                                         transpose=True, rle=rle)
                 if 'cell_count' in dimensions:
                     res['cell_count'] = cell_active
-            elif dim == 'words':  # reuse words from alignment
-                # if words_and_embedding:
-                #     for we in words_and_embedding:
-                #         del we['embeddings']
-                #     res[dim] = words_and_embedding
-                # else:
+            elif dim == 'words':
                 res[dim] = self.get_words(pos_array, left, right)
             elif dim.startswith('meta_'):
                 res[dim] = self.get_meta(dim[5:], pos_array, left, right)
@@ -312,8 +344,8 @@ class LSTMDataHandler:
         return res
 
     def query_similar_activations(self, cells, source, activation_threshold=.3,
-                                  data_transform='tanh', add_histograms=False, phrase_length=0, sort_mode='cells',
-                                  query_mode='fast', constrain_left=False, constrain_right=False):
+                                  data_transform='tanh', add_histograms=False, phrase_length=0,
+                                  query_mode='fast', constrain_left=False, constrain_right=False, no_of_results=50):
         """ search for the longest sequences given the activation threshold and a set of cells
 
         :param cells: the cells
@@ -324,7 +356,7 @@ class LSTMDataHandler:
         """
         cell_states, data_transformed = self.get_cached_matrix(data_transform, source)
 
-        print 'before cs:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+        # print 'before cs:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 
         activation_threshold_corrected = activation_threshold
         if not data_transformed:
@@ -332,7 +364,7 @@ class LSTMDataHandler:
 
         cut_off = 2
 
-        print 'out cs 1:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+        # print 'out cs 1:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 
         if query_mode == "fast":
             num_of_cells_per_sum = 5  # how many cells are evaluated per batch
@@ -344,7 +376,7 @@ class LSTMDataHandler:
             num_of_cells_per_sum = 1 if num_of_cells_per_sum == 0 else num_of_cells_per_sum
             num_candidates = 10000
 
-        print 'num_cells', num_of_cells_per_sum
+        # print 'num_cells', num_of_cells_per_sum
 
         cs_cand = None
         # start = time.time()
@@ -418,9 +450,15 @@ class LSTMDataHandler:
 
         res = []
 
+        max_pos = cell_states.shape[0]
+
         for cand in all_candidates:  # positions where all pivot cells start jointly
             ml = cand[0]  # maximal length of _all_ pivot cells on
             pos = cand[1]  # position of the pattern
+
+            if pos < 1 or pos + ml + 1 > max_pos:
+                continue
+            # TODO: find a more elegant solution
 
             cs = np.array(cell_states[pos - 1:pos + ml + 1, :])  # cell values of _all_ cells for the range
             hf.threshold_discrete(cs, activation_threshold_corrected, -1, 1)  # discretize
@@ -440,33 +478,35 @@ class LSTMDataHandler:
             intersect = np.intersect1d(all_active_cells, cells)  # intersection with selected cells
             union = np.union1d(all_active_cells, cells)  # union with selected cells
 
-            res.append([pos, 0, ml,  # int(value[int(indices[ll2]) + 1])
-                        (float(len(intersect)) / float(len(union))),  # Jaccard
-                        cell_count - len(intersect), len(union),
-                       len(intersect)])  # how many selected cells are not active
+            res.append({'pos': pos,
+                        'factors': [pos, 0, ml,  # int(value[int(indices[ll2]) + 1])
+                                    (float(len(intersect)) / float(len(union))),  # Jaccard
+                                    cell_count - len(intersect), len(union),
+                                    len(intersect)]})  # how many selected cells are not active
 
         def key(elem):
-            return -elem[6], elem[5], -elem[2]  # largest intersection, smallest union, longest phrase
+            return -elem['factors'][6], elem['factors'][5], -elem['factors'][
+                2]  # largest intersection, smallest union, longest phrase
 
         meta = {}
         if add_histograms:
-            meta['fuzzy_length_histogram'] = np.bincount([x[2] for x in res])
-            meta['strict_length_histogram'] = np.bincount([x[2] for x in res if x[4] == 0])
+            meta['fuzzy_length_histogram'] = np.bincount([x['factors'][2] for x in res])
+            meta['strict_length_histogram'] = np.bincount([x['factors'][2] for x in res if x['factors'][4] == 0])
 
         if phrase_length > 1:
-            res = [x for x in res if x[2] == phrase_length]
+            res = [x for x in res if x['factors'][2] == phrase_length]
 
         res.sort(key=key)
 
-        res_50 = list(res[:50])
+        final_res = list(res[:no_of_results])
 
-        for elem in res_50:
-            print elem, cell_count, -1. * (cell_count - elem[4]) / float(elem[3] + cell_count)
-        print(constrain_left, constrain_right)
+        # for elem in res_50:
+        #     print elem, cell_count, -1. * (cell_count - elem[4]) / float(elem[3] + cell_count)
+        # print(constrain_left, constrain_right)
         del res
-        print 'out cs 2:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+        # print 'out cs 2:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 
-        return res_50, meta
+        return final_res, meta
 
     def get_cached_matrix(self, data_transform, source, full_matrix=False):
         """ request the cached full state matrix or a reference to it
@@ -499,3 +539,57 @@ class LSTMDataHandler:
         # print 'cs:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 
         return matrix, transformed
+
+    def is_valid_source(self, source_id):
+        split = source_id.split('::')
+        if len(split) < 2:
+            return False
+
+        source_file = source_id.split('::')[0]
+        source = source_id.split('::')[1]
+
+        b = source in self.h5_files[source_file]
+
+        return (source_file in self.h5_files) and \
+               (source in self.h5_files[source_file])
+
+    def valid_sources(self):
+        res = []
+        for x in self.config['states']['types']:
+            res.append(x['file'] + '::' + x['path'])
+        return res
+
+    def regex_search(self, _query, no_results=20, htmlFormat=False):
+        ws = self.config['word_sequence']
+        word_sequence = self.h5_files[ws['file']][ws['path']]
+
+        ws_last_pos = len(word_sequence) - 1
+        pos = 0
+        hits = []
+        while pos < ws_last_pos and len(hits) < no_results:
+            upper_bound = min((pos + 10000), ws_last_pos)
+            word_ids = word_sequence[pos:upper_bound]
+
+            mapper = self.dicts_id_value[ws['dict_file']]
+            phrase = ''.join([mapper[x][0] for x in word_ids.tolist()])
+            r = [(m.start() + pos, m.end() + pos, m.group(0)) for m in re.finditer(_query, phrase)]
+            hits.extend(r)
+            if upper_bound < ws_last_pos:
+                pos = upper_bound - 1000
+            else:
+                pos = upper_bound
+        res = []
+        for h in hits:
+            min_pos = max(h[0] - 5, 0)
+            max_pos = min(h[1] + 5, ws_last_pos)
+            text = ''.join([mapper[x] for x in word_sequence[min_pos:max_pos].tolist()])
+            res.append({'index': h[0], 'text': cgi.escape(text)})
+        return res
+
+        # if htmlFormat:
+        #     # results.formatter = HtmlFormatter()
+        #     return map(lambda y: {'index': y['index'], 'text': y.highlights('content')}
+        #                , sorted(results, key=lambda k: k['index']))
+        # else:
+        #     return map(lambda y: {'index': y['index'], 'text': y['content']}
+        #                , sorted(results, key=lambda k: k['index']))

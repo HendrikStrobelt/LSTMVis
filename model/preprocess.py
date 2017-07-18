@@ -89,8 +89,8 @@ def get_data(args):
 
     convert(args.targetfile, args.batchsize, args.seqlength, args.outputfile + ".hdf5")
     target_indexer.lock()
-    convert(args.targetvalfile, args.batchsize, args.seqlength, args.outputfile + "val" + ".hdf5")
-    target_indexer.write(args.outputfile + ".targ.dict")
+    convert(args.targetvalfile, args.batchsize, args.seqlength, args.outputfile + "-val" + ".hdf5")
+    target_indexer.write(args.outputfile + ".dict")
     
 def main(arguments):
     parser = argparse.ArgumentParser(

@@ -1,0 +1,302 @@
+swagger: '2.0'
+info:
+  title: LSTMVis API
+  version: "0.2"
+consumes:
+  - application/json
+produces:
+  - application/json
+
+basePath: /api/v2
+
+paths:
+  /context:
+    get:
+      operationId: lstm_server.get_context
+      tags:
+        - all
+#        - contexts
+      summary: data for a list of token positions and their context
+      parameters:
+
+        - $ref: '#/parameters/project'
+
+        - $ref: '#/parameters/source'
+
+        - name: pos
+          description: list of queried positions
+          in: query
+          required: true
+          type: array
+          items:
+            type: integer
+          collectionFormat: csv
+
+        - $ref: '#/parameters/left'
+
+        - $ref: '#/parameters/right'
+
+        - $ref: '#/parameters/dims'
+
+        - name: bitmask
+          description: >
+                bitmask for selecting specific dimension of state vectors.
+                E.g., '1011' selects cells 0,2,3. Overrides parameter 'cells'
+          in: query
+          required: False
+          type: string
+          pattern: "^[01]+$"
+
+        - name: cells
+          description: an array of selected cell indices. Overwritten by 'bitmask'.
+          in: query
+          required: False
+          type: array
+          items:
+            type: integer
+          collectionFormat: csv
+
+        - $ref: '#/parameters/transform'
+
+        - name: activation
+          description: >
+            the activation threshold. Needed for querying matching results
+            (for dimension 'cell-count', e.g.)
+          in: query
+          required: False
+          type: number
+          default: 0.3
+      responses:
+        200:
+          description: Return requested data
+          schema:
+            $ref: '#/definitions/Context'
+
+  /info:
+    get:
+      tags:
+        - all
+#        - info
+      summary: information about all projects and sources available
+      operationId: lstm_server.get_info
+      responses:
+        200:
+          description: return list of projects
+          schema:
+            type: array
+            items:
+              type: object
+
+  /search:
+    get:
+      tags:
+        - all
+#        - search and match
+      summary: >
+        search for a token within the project. If an index exists,
+        it is used otherwise the search uses Regex matching.
+      operationId: lstm_server.search
+      parameters:
+        - $ref: '#/parameters/project'
+
+        - name: q
+          in: query
+          description: query string
+          type: string
+          required: true
+
+        - name: html
+          description: formatted results in HTML
+          in: query
+          type: boolean
+          default: false
+
+        - name: limit
+          description: max number of results
+          in: query
+          type: integer
+          default: 50
+      responses:
+        200:
+          description: aaa
+          schema:
+            type: object
+
+  /match:
+    get:
+      tags:
+        - all
+#        - search and match
+      summary: find a matching pattern in dataset
+      operationId: lstm_server.match
+      parameters:
+        - $ref: '#/parameters/project'
+        - $ref: '#/parameters/source'
+        - name: cells
+          description: list of cells to query for
+          in: query
+          required: true
+          type: array
+          items:
+            type: integer
+          default: 100,101
+
+        - name: activation
+          description: threshold to discretize values
+          in: query
+          required: true
+          type: number
+          default: 0.3
+
+        - $ref: '#/parameters/left'
+
+        - $ref: '#/parameters/right'
+
+        - $ref: '#/parameters/dims'
+
+        - name: phrase_length
+          description: if set, filter only for phrases of this length
+          in: query
+          required: false
+          type: integer
+          default: 0
+
+        - name: mode
+          description: matching mode -- fast or complete
+          in: query
+          required: false
+          type: string
+          enum:
+            - fast
+            - precise
+          default: fast
+
+        - name: constraints
+          description: >
+            defines the zero constraints as array [left, right]
+            -- a value larger than 0 indicates that the constrain should be applied
+          in: query
+          required: false
+          type: array
+          maxItems: 2
+          minItems: 2
+          items:
+            type: integer
+          default: 1,0
+
+
+
+
+
+        - $ref: '#/parameters/transform'
+      responses:
+        200:
+          description: result
+          schema:
+            type: object
+
+
+
+
+parameters:
+  project:
+    name: project
+    description: project ID (slug)
+    in: query
+    required: true
+    type: string
+    default: ptb_word
+
+  source:
+    name: source
+    description: source data ID (slug)
+    in: query
+    required: true
+    type: string
+    default: states::states1
+
+  transform:
+    name: transform
+    description: state value transformations. By default all values are tanh-ed
+    in: query
+    required: False
+    type: string
+    enum:
+      - tanh
+      - none
+    default: tanh
+
+  left:
+    name: left
+    description: size of context to the left of each pos
+    in: query
+    required: false
+    type: integer
+    default: 10
+
+  right:
+    name: right
+    description: size of context to the right of each pos
+    in: query
+    required: false
+    type: integer
+    default: 10
+
+  dims:
+    name: dims
+    description: >
+     list of required data dimensions, like state values ('states'), token values ('words'),
+       or meta information ('meta_XYZ')
+    in: query
+    required: false
+    type: array
+    items:
+      type: string
+    collectionFormat: csv
+    default: states,words
+
+
+
+definitions:
+  Context:
+    type: object
+    required:
+      - request
+      - results
+    properties:
+      request:
+        type: object
+        example:
+         { "activation": 0.3, "cells": [ 2 ], "dims": [ "states", "words" ],
+         "left": 3, "pos": [ 12 ], "project": "ptb_word", "right": 3,
+         "source": "states::states1", "transform": "tanh" }
+      results:
+        $ref: '#/definitions/ContextResults'
+
+  ContextResults:
+    type: object
+    description: returned values for requested dimensions and positions
+    required:
+      - cells
+    properties:
+      states:
+        type: array
+        items:
+          type: object
+        description: state values for requested positions
+        example: [ { "data": [ [ -0.10704, -0.11952, -0.10578, -0.11291, -0.00838, 0.07256,
+        0.04165 ] ], "left": 9, "pos": 12, "right": 15 } ]
+      cells:
+        type: array
+        description: all effected cells or empty if all
+        items:
+          type: integer
+        example: [2,100]
+      words:
+        type: array
+        items:
+          type: object
+        description: word sequence for each position requested
+        example: [ { "left": 9, "pos": 12, "right": 15, "word_ids": [ 13, 14, 15, 16, 17, 18, 19 ],
+        "words": [ "hydro-quebec", "ipo", "kia", "memotec", "mlx", "nahb", "punts" ] } ]
+

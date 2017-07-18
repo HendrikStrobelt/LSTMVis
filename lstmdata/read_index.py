@@ -9,7 +9,6 @@ schema = Schema(index=NUMERIC(stored=True), content=TEXT(stored=True))
 
 
 def query_index(_query, no_results=20, htmlFormat=False, dir =''):
-    results = []
     ix = open_dir(dir)
 
     with ix.searcher() as searcher:

@@ -1,0 +1,80 @@
+.modalDialog {
+    position: fixed;
+    top: 10px;
+    left: 100px;
+    width: 200px;
+    background-color: white;
+    padding: 10px;
+    box-shadow: 5px 5px 5px grey;
+}
+
+.modalDialog .textInput {
+    box-sizing: border-box;
+    outline: #b3b3b3 solid 1px;
+    border: none;
+    width: 100%;
+    padding: 5px;
+    -webkit-transition: 0.3s ease all;
+    -moz-transition: 0.3s ease all;
+    transition: 0.3s ease all;
+}
+
+.modalDialog .textInput:hover {
+    background-color: #eee;
+}
+
+.modalDialog .selectInput {
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='50px' height='50px'><polyline fill='#aaa' points='46.139,15.518 25.166,36.49 4.193,15.519'/></svg>");
+    background-color: #eee;
+    background-repeat: no-repeat;
+    background-position: right 5px top 5px;
+    background-size: 15px 15px;
+    padding: 5px;
+    width: 100%;
+    text-align: center;
+    border-radius: 3px;
+    -webkit-border-radius: 3px;
+    -webkit-appearance: none;
+    border: 0;
+    outline: 0;
+    -webkit-transition: 0.3s ease all;
+    -moz-transition: 0.3s ease all;
+    transition: 0.3s ease all;
+}
+
+.modalDialog .select:hover {
+    background-color: #ddd;
+}
+
+.inactivator {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: white;
+}
+
+button {
+    font-family: inherit;
+    font-size: smaller;
+    border-style: none;
+    padding: 2px 5px;
+}
+
+button:focus {
+    outline: none;
+}
+
+.uiButton {
+    border-radius: 3px;
+    background-color: rgba(179, 179, 179, .3);
+}
+
+.uiButton:hover {
+    background-color: rgba(179, 179, 179, 1);
+}
+
+.uiRow {
+    margin-bottom: 10px;
+}

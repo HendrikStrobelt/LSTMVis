@@ -1,0 +1,18 @@
+.celllist .cell text {
+    text-anchor: middle;
+    pointer-events: none;
+    dominant-baseline: central;
+}
+
+.celllist .cell rect {
+    stroke: none;
+    border-radius: 5px;
+    fill: #3399b2;
+    opacity: .5;
+    cursor: crosshair;
+}
+
+.celllist .cell.hovered  rect{
+    opacity: 1;
+    fill: red;
+}

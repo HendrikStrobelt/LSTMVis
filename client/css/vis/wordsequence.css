@@ -1,0 +1,45 @@
+.wordsequence .word rect {
+    fill: lightgray;
+    stroke: none;
+    opacity: .5;
+    cursor: crosshair;
+}
+
+.wordsequence .word.hovered rect{
+    stroke: #ff4340;
+    stroke-width: 2;
+}
+.wordsequence .word.selected rect{
+    stroke: #2d57b2;
+    stroke-width: 3;
+}
+
+.wordsequence .word text {
+    pointer-events: none;
+    dominant-baseline: central;
+    text-anchor: middle;
+}
+
+
+.wordsequence .brush .selection {
+    /*stroke:none;*/
+    stroke: #777;
+    border-radius: 5px;
+    fill: none;
+}
+
+.wordsequence .zeroWisker {
+    stroke: gray;
+    /*stroke-dasharray: 3,1;*/
+}
+
+.wordsequence .signatureLine{
+    stroke: gray;
+    fill:none;
+    /*stroke-dasharray: 3,1;*/
+}
+
+.wordsequence .paddingLine {
+    stroke: #333;
+    stroke-width: 2;
+}

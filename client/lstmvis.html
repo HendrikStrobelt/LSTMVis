@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>LSTMVis </title>
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+
+    <script src="js/ext_libs/jquery.min.js"></script>
+    <script src="js/ext_libs/lodash.min.js"></script>
+    <!--<script src="https://d3js.org/d3.v4.js" ></script>-->
+    <script src="js/ext_libs/d3.min.js"></script>
+    <script src="js/ext_libs/d3-selection-multi.v1.min.js"></script>
+
+
+    <script src="js/etc/global_helper.js"></script>
+    <script src="js/vis/vhelper.js"></script>
+    <script src="js/vis/vcomponent.js"></script>
+    <script src="js/vis/SimpleComponent.js"></script>
+    <script src="js/vis/heatmap.js"></script>
+    <script src="js/vis/lineplot.js"></script>
+    <script src="js/vis/wordsequence.js"></script>
+    <script src="js/vis/celllist.js"></script>
+    <script src="js/vis/wordmatrix.js"></script>
+    <script src="js/vis/buttonmatrix.js"></script>
+    <script src="js/etc/general_ui.js"></script>
+    <script src="js/apps/LSTMController.js"></script>
+    <script src="js/apps/LSTMHeatmapHandler.js"></script>
+    <script src="js/apps/LSTMDialogHandler.js"></script>
+    <script src="js/apps/LSTMMetaTrackHandler.js"></script>
+    <script src="js/apps/LSTMSelectionView.js"></script>
+    <script src="js/apps/LSTMMatchView.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="css/vis/general.css">
+    <link rel="stylesheet" type="text/css" href="css/vis/heatmap.css">
+    <link rel="stylesheet" type="text/css" href="css/vis/lineplot.css">
+    <link rel="stylesheet" type="text/css" href="css/vis/wordsequence.css">
+    <link rel="stylesheet" type="text/css" href="css/vis/celllist.css">
+    <link rel="stylesheet" type="text/css" href="css/etc/general_ui.css">
+    <link rel="stylesheet" type="text/css" href="css/vis/wordmatrix.css">
+    <link rel="stylesheet" type="text/css" href="css/vis/buttonmatrix.css">
+    <link rel="stylesheet" type="text/css" href="css/apps/LSTMVis.css">
+
+</head>
+<body>
+<!--Trick to pre-cache font before JS execution-->
+<span style="font-family:'Roboto Condensed';position: absolute;top:-100px;">abc</span>
+
+<div class="header">
+    <div class="headerBlock">
+        <a href="index.html"><img src="assets/lstmvis_v2_smaller.png" width="100"></a>
+    </div>
+    <div class="headerBlock" style="max-width: 350px;">
+        <span id="info_projectName">...</span>
+        <!--PA simple synthetic dataset to test bracketing and counting. The language can open and close parents, and generate a number indicating the current nesting level.-->
+    </div>
+    <div class="headerBlock">
+        <b>source</b>
+        <button class="uiButton" id="info_source">...</button>
+        <!--<span class="fontAwesome editIcon">&#xf040;</span>-->
+    </div>
+    <div class="headerBlock noselect">
+        <b>pos</b>
+        <button class="uiButton" id="info_position">100</button>
+        <button class="hidden-print uiButton" id="inc_pos">&lt;&lt;</button>
+        <button class="hidden-print uiButton" id="dec_pos">&gt;&gt;</button>
+        <!--<span class="fontAwesome editIcon">&#xf040;</span>-->
+    </div>
+
+
+    <!--<div class="headerBlock">-->
+    <!--<b>project ID</b> <br>-->
+    <!--<span id="info_id">...</span>-->
+    <!--&lt;!&ndash;<span class="fontAwesome editIcon">&#xf040;</span>&ndash;&gt;-->
+    <!--</div>-->
+
+</div>
+<div class="visChapter">
+    <div class="section">Selection</div>
+    <div class="optionGrp">
+        <label for="thresholdValue"><b>threshold</b></label>
+        <input type="number" step=".001" style="width: 50px;"
+               id="thresholdValue">
+    </div>
+    <div class="optionGrp ">
+        <span class="fontAwesome">&#xf013;</span>
+        <button id='selectionMask' class="metaOption noselect activeOption">mask</button>
+
+    </div>
+    <div class="optionGrp">
+        <b>zoom</b>
+        <button class="hidden-print uiButton" id="smaller_btn">&gt;&lt;</button>
+        <button class="hidden-print uiButton" id="larger_btn">&lt; &gt;</button>
+    </div>
+
+    <!--<div class="optionGrp">-->
+    <!--<b>move</b>-->
+    <!--<button class="hidden-print uiButton" id="inc_pos">&lt;&lt;</button>-->
+    <!--<button class="hidden-print uiButton" id="dec_pos">&gt;&gt;</button>-->
+    <!--</div>-->
+
+
+</div>
+
+<div>
+    <svg id="selectionVis" width="900" height="260"></svg>
+</div>
+<div style="margin-bottom: 5px;" id="metaTracks">
+</div>
+<div style="margin-bottom: 5px;text-align:center;">
+    <button id='addMetaTrackBtn' class="hidden-print uiButton"> add meta track</button>
+</div>
+<div>
+    <svg id="selectedCellsVis" width="900" height="20"></svg>
+</div>
+
+
+<div class="visChapter">
+    <div class="section">Matching</div>
+    <div class="optionGrp">
+        <b>match</b>
+        <button class="hidden-print uiButton" id="match_fast">fast</button>
+        <button class="hidden-print uiButton" id="match_precise">precise</button>
+    </div>
+    <div class="optionGrp ">
+        <span class="fontAwesome">&#xf013;</span>
+        <button id='matchingMask' class="metaOption noselect activeOption">mask</button>
+        <!--<button id='matchingStats' class="metaOption noselect activeOption">stats</button>-->
+    </div>
+    <div class="optionGrp">
+        <b>meta</b>
+        <div id="metaOptions" class="optionGrp"></div>
+    </div>
+</div>
+
+<div>
+    <svg id="matchingVis" width="900" height="1000"></svg>
+</div>
+
+<!-- MODAL DIALOGS -->
+
+<div class="modalDialog" id="addMetaDialog" hidden>
+    <h2> Select a meta field to add:</h2>
+    <!--<div class="uiRow">-->
+    <!--<input class="textInput" type="text" value="abc">-->
+    <!--</div>-->
+
+
+    <!--<form>-->
+    <!--<input type="radio" value="checked" >-->
+    <!--<input type="radio" value="checked2" >-->
+    <!--</form>-->
+
+    <div class="uiRow">
+        <select class="selectInput" id="addMetaList">
+            <option value="1">abc</option>
+            <option value="2">bfc</option>
+        </select>
+    </div>
+
+
+    <div class="uiRow" style="text-align: end;">
+        <button class="uiButton uiCancel"> cancel</button>
+        <button class="uiButton uiSubmit"> accept</button>
+    </div>
+
+
+</div>
+
+<div class="modalDialog" id="positionDialog" hidden>
+    <h2> Select/Search a new position:</h2>
+    <div class="uiRow">
+        <label for="pd_pos">Position:</label>
+        <input type="number" class="textInput" id="pd_pos">
+    </div>
+
+    <div class="uiRow">
+        <label for="pd_search">Search:</label>
+        <input type="text" class="textInput" id="pd_search">
+    </div>
+
+    <div id='pd_results' class="uiRow" style="max-height: 300px; overflow: auto;">
+
+    </div>
+
+    <div class="uiRow" style="text-align: end;">
+        <button class="uiButton uiCancel"> cancel</button>
+        <button class="uiButton uiSubmit"> accept</button>
+    </div>
+
+
+</div>
+
+
+<div class="modalDialog" id="selectSourceDialog" hidden>
+    <h2> Select source:</h2>
+    <div class="uiRow">
+        <select class="selectInput" id="ssd_list">
+            <option value="1">abc</option>
+            <option value="2">bfc</option>
+        </select>
+    </div>
+
+
+    <div class="uiRow" style="text-align: end;">
+        <button class="uiButton uiCancel"> cancel</button>
+        <button class="uiButton uiSubmit"> accept</button>
+    </div>
+
+
+</div>
+
+<script src="js/apps/LSTMVis.js"></script>
+
+</body>
+</html>

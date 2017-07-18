@@ -1,0 +1,20 @@
+.wordmatrix text.word {
+    /*text-anchor: middle;*/
+    pointer-events: none;
+    dominant-baseline: central;
+}
+
+.wordmatrix .bgCell{
+    cursor: crosshair;
+    fill-opacity: .5;
+}
+
+.wordmatrix .bgCell.hovered {
+    stroke: red;
+    stroke-dasharray: 1,1;
+}
+
+.wordmatrix .paddingLine {
+    stroke: #333;
+    stroke-width: 2;
+}

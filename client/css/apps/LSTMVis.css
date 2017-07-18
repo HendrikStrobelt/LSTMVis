@@ -1,0 +1,143 @@
+@font-face {
+    font-family: 'Open Sans';
+    font-style: normal;
+    font-weight: 400;
+    src: local('Open Sans'), local('OpenSans'),
+    url(../../assets/fonts/opensans_400_latin.woff2) format('woff2');
+}
+
+@font-face {
+    font-family: 'Open Sans';
+    font-style: normal;
+    font-weight: 700;
+    src: local('Open Sans Bold'), local('OpenSans-Bold'),
+    url(../../assets/fonts/opensans_700_latin.woff2) format('woff2');
+}
+
+@font-face {
+    font-family: 'Roboto Condensed';
+    font-style: normal;
+    font-weight: 400;
+    src: local('Roboto Condensed'), local('RobotoCondensed-Regular'),
+    url(../../assets/fonts/robotocond_400_latin.woff2) format('woff2');
+}
+
+@font-face {
+    font-family: 'Roboto Condensed';
+    font-style: normal;
+    font-weight: 700;
+    src: local('Roboto Condensed Bold'), local('RobotoCondensed-Bold'),
+    url(../../assets/fonts/robotocond_700_latin.woff2) format('woff2');
+}
+
+body {
+    font-family: 'Open Sans', sans-serif;
+    font-size: 11pt;
+}
+
+.header {
+    margin-top: 10px;
+    margin-bottom: 5px;
+    cursor: default;
+}
+
+.headerBlock {
+    vertical-align: middle;
+    display: inline-block;
+    margin-right: 1em;
+}
+
+.editIcon {
+    color: black;
+    opacity: .1;
+    cursor: pointer;
+    transition-duration: 500ms;
+}
+
+.editIcon:hover {
+    opacity: 1;
+}
+
+hr {
+    height: 1px;
+    border-width: 0;
+    color: gray;
+    background-color: gray;
+}
+
+.section {
+    display: inline-block;
+    font-weight: bold;
+    margin-right: 1em;
+    background-color: #777;
+    padding: .1em .3em;
+    color: white;
+    vertical-align: middle;
+}
+
+.visChapter {
+    /*background-color: #eee;*/
+    padding: 5px 0;
+    border-top: #777 1px solid;
+}
+
+.optionGrp {
+    display: inline-block;
+    white-space: nowrap;
+    margin-right: 1em;
+    vertical-align: middle;
+    color: #777;
+}
+
+.word {
+    font-family: "Roboto Condensed", sans-serif;
+}
+
+.metaOption {
+    /*padding-right: 5px;*/
+    margin-right: 5px;
+    background-color: #ececec;
+    cursor: crosshair;
+    background-color: rgba(179, 179, 179, .4);
+    /*outline: dotted rgb(51, 153, 178) 1px;*/
+}
+
+.metaOption:hover {
+    outline: dashed #349576 1px;
+    /*background-color: rgba(179, 179, 179, 1);*/
+}
+
+.metaOption.activeOption {
+    background-color: rgba(51, 153, 178, 0.51);
+
+    /*color: white;*/
+    /*background-color: #a1dd8d;*/
+}
+
+.metaTrack .closeButton {
+    text-anchor: middle;
+    dominant-baseline: central;
+    cursor: pointer;
+    opacity: .5;
+}
+
+.metaTrack .closeButton:hover {
+    opacity: 1;
+}
+
+.pd_result {
+    border-bottom: dotted darkgray 1px;
+}
+
+.pd_result:hover {
+    background-color: lightgray;
+}
+
+.infoBox {
+    display: inline-block;
+    width: 320px;
+    height: 300px;
+    overflow-y: auto;
+    margin: 10px;
+}
+

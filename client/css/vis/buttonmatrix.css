@@ -1,0 +1,15 @@
+.buttonmatrix rect {
+    fill: grey;
+    cursor: pointer;
+    opacity: .2;
+}
+
+.buttonmatrix rect:hover {
+    opacity: 1;
+}
+
+.buttonmatrix text {
+    text-anchor: middle;
+    pointer-events: none;
+    dominant-baseline: central;
+}

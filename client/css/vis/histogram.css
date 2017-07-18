@@ -1,0 +1,30 @@
+.histogram .histoBar{
+    pointer-events: none;
+}
+
+.histogram .histoBG .histoBar{
+    stroke: none;
+    fill: rgba(51, 153, 178, 0.5);
+}
+
+.histogram .histoFG .histoBar{
+    stroke: none;
+    fill: rgb(51, 153, 178);
+}
+
+.histogram .histoReact{
+    fill:white;
+}
+
+.histogram .histoReact:hover{
+    stroke: darkgray;
+    stroke-dasharray: 1,1;
+    stroke-width: 1px;
+}
+
+/*noinspection CssInvalidPropertyValue*/
+.histogram .histoLabelText{
+    alignment-baseline: hanging;
+    pointer-events: none;
+
+}
