@@ -18,6 +18,8 @@ More information about LSTMVis, an introduction video, and the link to the live 
 
 ## Install
 
+Please use python 2.7 to install LSTMVis.
+
 Clone the repository:
 
 ```bash
