@@ -2,6 +2,8 @@
 
 More information about LSTMVis, an introduction video, and the link to the live demo can be found at **[lstm.seas.harvard.edu](http://lstm.seas.harvard.edu)**
 
+Also check out our new work on Sequence-to-Sequence models on [github](https://github.com/hendrikstrobelt/seq2seq-vis) or the live demo at **[http://seq2seq-vis.io/](http://seq2seq-vis.io/)**
+
 <div style='text-align:center'>
 <img src="docs/img/teaser_V2.png" />
 </div>
