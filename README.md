@@ -13,6 +13,7 @@ More information about LSTMVis, an introduction video, and the link to the live 
 - added training and extraction workflow for tensorflow
 - client is now ES6 and D3v4
 - some performance enhancements on client side
+- Added Keras tutorial [here](docs/keras.md) (thanks to Mohammadreza Ebrahimi)
 
 
 
