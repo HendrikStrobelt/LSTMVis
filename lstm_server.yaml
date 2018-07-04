@@ -182,10 +182,7 @@ paths:
           minItems: 2
           items:
             type: integer
-          default: 1,0
-
-
-
+#          default: 1,0
 
 
         - $ref: '#/parameters/transform'
@@ -253,7 +250,9 @@ parameters:
     items:
       type: string
     collectionFormat: csv
-    default: states,words
+#    default:
+#      - states
+#      - words
 
 
 
