@@ -21,7 +21,7 @@ Also check out our new work on Sequence-to-Sequence models on [github](https://g
 
 ## Install
 
-Please use python 2.7 to install LSTMVis.
+Please use python 3.7 to install LSTMVis.
 
 Clone the repository:
 
@@ -32,17 +32,9 @@ git clone https://github.com/HendrikStrobelt/LSTMVis.git; cd LSTMVis
 Install python (server-side) requirements using [pip](https://pip.pypa.io/en/stable/installing/):
 
 ```bash
-pip install -r requirements.txt
-
-on OSX 10.11 (El Capitan):
-pip install --user -r requirements.txt
-```
-
-For python 3.7, install in a virtual environment and follows:
-```
 python3.7 -m venv  venv3.7
 source venv3.7/bin/activate
-pip install -r requirements-3.7.txt
+pip install -r requirements.txt
 deactivate
 ```
 
@@ -61,16 +53,12 @@ Download & Unzip example dataset(s) into `<LSTMVis>/data/05childbook`:
 start server:
 
 ```bash
+source venv3.7/bin/activate
 python lstm_server.py -dir <datadir>
 ```
 
 For the example dataset, use `python lstm_server.py -dir data`
 
-For Python3.7 you would first activate the virtual env as follows:
-```
-source venv3.7/bin/activate
-python lstm_server.py -dir data
-```
 
 open browser at [http://localhost:8888](http://localhost:8888/client/index.html) - eh voila !
 
