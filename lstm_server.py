@@ -4,9 +4,10 @@ import numpy as np
 import os
 import yaml
 from flask import send_from_directory, redirect
-
+import json
 from lstmdata.data_handler import LSTMDataHandler
 import lstmdata.read_index as ri
+import types
 
 __author__ = 'Hendrik Strobelt'
 
@@ -14,10 +15,11 @@ CONFIG_FILE_NAME = 'lstm.yml'
 data_handlers = {}
 index_map = {}
 
-app = connexion.App(__name__, debug=False)
+app = connexion.App(__name__, debug=True)
 
 
 def get_context(**request):
+    print("get_context:IN")
     project = request['project']
     if project not in data_handlers:
         return 'No such project', 404
@@ -46,22 +48,44 @@ def get_context(**request):
             activation_threshold=request['activation']
         )
         res['cells'] = cells
-
+        print("get_context:OUT")
         return {'request': request, 'results': res}
+
+def cleanup_dict(old_dictionary):
+    new_dictionary={}
+    for key, val in old_dictionary.items():
+        try:
+            s=json.dumps(val)
+            new_dictionary[key]=val
+        except:
+            print(key)
+            print(type(val))
+            print(val)
+            if type(val) is dict:
+                new_dictionary[key]=cleanup_dict(val)
+            elif type(val) is type({}.keys()):
+                new_dictionary[key]=list(val)
+    return new_dictionary
 
 
 def get_info():
+    print("get_info:IN")    
     res = []
-    for key, project in data_handlers.iteritems():
+    for key, project in data_handlers.items():
         # print key
+        # print(project.config)
+        # print(cleanup_dict(project.config))
+        # print(json.dumps(cleanup_dict(project.config)))
         res.append({
             'project': key,
-            'info': project.config
+            'info':  cleanup_dict(project.config)
         })
+    # print(res)
+    print("get_info:OUT")
     return sorted(res, key=lambda x: x['project'])
 
-
 def search(**request):
+    print("search:IN")    
     project = request['project']
     res = {}
 
@@ -78,14 +102,17 @@ def search(**request):
         elif dh.config['etc']['regex_search']:
             res = dh.regex_search(request['q'], request['limit'], request['html'])
 
+    print("search:OUT")
     return {'request': request, 'res': res}
 
 
 def match(**request):
+    print("match:IN")
     project = request['project']
     res = {}
 
     if project not in data_handlers:
+        print("match:OUT")
         return 'No such project', 404
 
     else:
@@ -125,7 +152,11 @@ def match(**request):
             'fuzzyLengthHistogram': meta['fuzzy_length_histogram'].tolist(),
             'strictLengthHistogram': meta['strict_length_histogram'].tolist()
         }
-
+        print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        print("position_details:")
+        print(position_details)
+        print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        print("match:OUT")
         return {'request': request, 'results': res}
 
 
@@ -135,10 +166,12 @@ def send_static(path):
 
     :param path: path from api call
     """
+    print("send_static:CALL")
     return send_from_directory('client/', path)
 
 @app.route('/')
 def redirect_home():
+    print("redirect_home:CALL")
     return redirect('/client/index.html', code=302)
 
 
@@ -150,6 +183,7 @@ def create_data_handlers(directory):
     :param directory: scan directory
     :return: null
     """
+    print("create_data_handlers:IN")
     project_dirs = []
     for root, dirs, files in os.walk(directory):
         if CONFIG_FILE_NAME in files:
@@ -158,12 +192,13 @@ def create_data_handlers(directory):
     i = 0
     for p_dir in project_dirs:
         with open(os.path.join(p_dir, CONFIG_FILE_NAME), 'r') as yf:
-            config = yaml.load(yf)
+            config = yaml.load(yf, Loader=yaml.FullLoader)
             dh_id = os.path.split(p_dir)[1]
             data_handlers[dh_id] = LSTMDataHandler(directory=p_dir, config=config)
             if data_handlers[dh_id].config['index']:
                 index_map[dh_id] = data_handlers[dh_id].config['index_dir']
         i += 1
+    print("create_data_handlers:OUT")
 
 
 app.add_api('lstm_server.yaml')
@@ -176,7 +211,7 @@ parser.add_argument("-dir", type=str, default=os.path.abspath('data'))
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    app.run(port=int(args.port), debug=not args.nodebug, host="0.0.0.0")
+    app.run(port=int(args.port), debug=not args.nodebug, host="127.0.0.1")
 else:
     args, _ = parser.parse_known_args()
     create_data_handlers(args.dir)

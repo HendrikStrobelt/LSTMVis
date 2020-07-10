@@ -8,7 +8,7 @@ import resource
 import numpy as np
 import re
 
-import helper_functions as hf
+import lstmdata.helper_functions as hf
 
 __author__ = 'Hendrik Strobelt'
 
@@ -29,13 +29,13 @@ class LSTMDataHandler:
         self.dicts_id_value = {}
 
         # open all h5 files
-        h5files = {k: v for k, v in config['files'].iteritems() if (v.endswith('.h5') or v.endswith('.hdf5'))}
-        for key, file_name in h5files.iteritems():
+        h5files = {k: v for k, v in config['files'].items() if (v.endswith('.h5') or v.endswith('.hdf5'))}
+        for key, file_name in h5files.items():
             self.h5_files[key] = h5py.File(os.path.join(directory, file_name), 'r')
 
         # load all dict files of format: value<space>id
-        dict_files = {k: v for k, v in config['files'].iteritems() if (v.endswith('.dict') or v.endswith('.txt'))}
-        for name, file_name in dict_files.iteritems():
+        dict_files = {k: v for k, v in config['files'].items() if (v.endswith('.dict') or v.endswith('.txt'))}
+        for name, file_name in dict_files.items():
             kv = {}
             vk = {}
             with open(os.path.join(directory, file_name), 'r') as f:
@@ -82,7 +82,7 @@ class LSTMDataHandler:
             self.config['index_dir'] = os.path.join(directory, 'indexdir')
 
         if self.config.get('meta', False):
-            for _, m_info in self.config['meta'].iteritems():
+            for _, m_info in self.config['meta'].items():
                 m_info['type'] = m_info.get('type', 'general')
                 m_info['index'] = m_info.get('index', 'self')
                 m_info['vis']['range'] = m_info['vis'].get('range', '0...100')

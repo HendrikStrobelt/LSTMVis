@@ -139,7 +139,7 @@ paths:
           type: array
           items:
             type: integer
-          default: 100,101
+          default: [100,101]
 
         - name: activation
           description: threshold to discretize values
@@ -182,7 +182,7 @@ paths:
           minItems: 2
           items:
             type: integer
-#          default: 1,0
+            default: [1,0]
 
 
         - $ref: '#/parameters/transform'
