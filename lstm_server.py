@@ -19,7 +19,6 @@ app = connexion.App(__name__, debug=True)
 
 
 def get_context(**request):
-    print("get_context:IN")
     project = request['project']
     if project not in data_handlers:
         return 'No such project', 404
@@ -48,7 +47,6 @@ def get_context(**request):
             activation_threshold=request['activation']
         )
         res['cells'] = cells
-        print("get_context:OUT")
         return {'request': request, 'results': res}
 
 def cleanup_dict(old_dictionary):
@@ -58,9 +56,6 @@ def cleanup_dict(old_dictionary):
             s=json.dumps(val)
             new_dictionary[key]=val
         except:
-            print(key)
-            print(type(val))
-            print(val)
             if type(val) is dict:
                 new_dictionary[key]=cleanup_dict(val)
             elif type(val) is type({}.keys()):
@@ -69,23 +64,16 @@ def cleanup_dict(old_dictionary):
 
 
 def get_info():
-    print("get_info:IN")    
     res = []
     for key, project in data_handlers.items():
         # print key
-        # print(project.config)
-        # print(cleanup_dict(project.config))
-        # print(json.dumps(cleanup_dict(project.config)))
         res.append({
             'project': key,
             'info':  cleanup_dict(project.config)
         })
-    # print(res)
-    print("get_info:OUT")
     return sorted(res, key=lambda x: x['project'])
 
 def search(**request):
-    print("search:IN")    
     project = request['project']
     res = {}
 
@@ -102,17 +90,14 @@ def search(**request):
         elif dh.config['etc']['regex_search']:
             res = dh.regex_search(request['q'], request['limit'], request['html'])
 
-    print("search:OUT")
     return {'request': request, 'res': res}
 
 
 def match(**request):
-    print("match:IN")
     project = request['project']
     res = {}
 
     if project not in data_handlers:
-        print("match:OUT")
         return 'No such project', 404
 
     else:
@@ -134,7 +119,7 @@ def match(**request):
             constrain_right=request['constraints'][1] > 0
         )
 
-        request_positions = map(lambda x: x['pos'], ranking)
+        request_positions = list(map(lambda x: x['pos'], ranking))
         position_details = dh.get_dimensions(
             pos_array=request_positions,
             source=request['source'],
@@ -152,11 +137,6 @@ def match(**request):
             'fuzzyLengthHistogram': meta['fuzzy_length_histogram'].tolist(),
             'strictLengthHistogram': meta['strict_length_histogram'].tolist()
         }
-        print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-        print("position_details:")
-        print(position_details)
-        print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-        print("match:OUT")
         return {'request': request, 'results': res}
 
 
@@ -166,12 +146,10 @@ def send_static(path):
 
     :param path: path from api call
     """
-    print("send_static:CALL")
     return send_from_directory('client/', path)
 
 @app.route('/')
 def redirect_home():
-    print("redirect_home:CALL")
     return redirect('/client/index.html', code=302)
 
 
@@ -183,7 +161,6 @@ def create_data_handlers(directory):
     :param directory: scan directory
     :return: null
     """
-    print("create_data_handlers:IN")
     project_dirs = []
     for root, dirs, files in os.walk(directory):
         if CONFIG_FILE_NAME in files:
@@ -198,7 +175,6 @@ def create_data_handlers(directory):
             if data_handlers[dh_id].config['index']:
                 index_map[dh_id] = data_handlers[dh_id].config['index_dir']
         i += 1
-    print("create_data_handlers:OUT")
 
 
 app.add_api('lstm_server.yaml')

@@ -125,7 +125,6 @@ class LSTMDataHandler:
         :return: [ ...{left: position left, right: position right, pos: requestes pos, data: states matrix},...],[sum_active]
         :rtype: (list, list)
         """
-
         if cell_selection is None:
             cell_selection = []
 
@@ -229,7 +228,6 @@ class LSTMDataHandler:
                 sub_res['embeddings'] = emb if raw else [[round(y, round_values) for y in x] for x in emb.tolist()]
 
             res.append(sub_res)
-
         return res
 
     def get_meta(self, name, pos_array, left=10, right=0):
@@ -340,7 +338,6 @@ class LSTMDataHandler:
                 res[dim] = self.get_words(pos_array, left, right)
             elif dim.startswith('meta_'):
                 res[dim] = self.get_meta(dim[5:], pos_array, left, right)
-
         return res
 
     def query_similar_activations(self, cells, source, activation_threshold=.3,
@@ -356,7 +353,6 @@ class LSTMDataHandler:
         """
         cell_states, data_transformed = self.get_cached_matrix(data_transform, source)
 
-        # print 'before cs:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 
         activation_threshold_corrected = activation_threshold
         if not data_transformed:
@@ -364,7 +360,6 @@ class LSTMDataHandler:
 
         cut_off = 2
 
-        # print 'out cs 1:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 
         if query_mode == "fast":
             num_of_cells_per_sum = 5  # how many cells are evaluated per batch
@@ -376,7 +371,6 @@ class LSTMDataHandler:
             num_of_cells_per_sum = 1 if num_of_cells_per_sum == 0 else num_of_cells_per_sum
             num_candidates = 10000
 
-        # print 'num_cells', num_of_cells_per_sum
 
         cs_cand = None
         # start = time.time()
@@ -439,12 +433,12 @@ class LSTMDataHandler:
         all_candidates.sort(key=lambda kk: kk[2], reverse=True)
         # for k, v in enumerate(all_candidates):
         #     if v[1] < 1000:
-        #         print 'x', v, k
+        #         print ('x', v, k)
         all_candidates = all_candidates[:num_candidates]
-        # print 'fff'
+        # print ('fff')
         # for k, v in enumerate(all_candidates):
         #     if v[1] < 1000:
-        #         print 'x', v, k
+        #         print ('x', v, k)
 
         cell_count = len(cells)
 
@@ -500,11 +494,11 @@ class LSTMDataHandler:
 
         final_res = list(res[:no_of_results])
 
-        # for elem in res_50:
-        #     print elem, cell_count, -1. * (cell_count - elem[4]) / float(elem[3] + cell_count)
+        # for elem in final_res:
+        #     print(elem, cell_count, -1. * (cell_count - elem[4]) / float(elem[3] + cell_count))
         # print(constrain_left, constrain_right)
         del res
-        # print 'out cs 2:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+        # print ('out cs 2:', '{:,}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
 
         return final_res, meta
 
