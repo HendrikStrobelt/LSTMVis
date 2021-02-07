@@ -8,6 +8,9 @@ Also check out our new work on Sequence-to-Sequence models on [github](https://g
 <img src="docs/img/teaser_V2.png" />
 </div>
 
+## Changes in V2.1
+- update to Python 3.7++ (thanks to @nneophyt)
+
 ## Changes in V2
 - new design and server-backend
 - discrete zooming for hidden-state track
@@ -21,7 +24,7 @@ Also check out our new work on Sequence-to-Sequence models on [github](https://g
 
 ## Install
 
-Please use python 3.7 to install LSTMVis.
+Please use **python 3.7 or later** to install LSTMVis.
 
 Clone the repository:
 
@@ -32,10 +35,9 @@ git clone https://github.com/HendrikStrobelt/LSTMVis.git; cd LSTMVis
 Install python (server-side) requirements using [pip](https://pip.pypa.io/en/stable/installing/):
 
 ```bash
-python3.7 -m venv  venv3.7
-source venv3.7/bin/activate
+python -m venv  venv3
+source venv3/bin/activate
 pip install -r requirements.txt
-deactivate
 ```
 
 <!--Install [bower](https://bower.io/) (client side) requirements:
@@ -53,7 +55,7 @@ Download & Unzip example dataset(s) into `<LSTMVis>/data/05childbook`:
 start server:
 
 ```bash
-source venv3.7/bin/activate
+source venv3/bin/activate
 python lstm_server.py -dir <datadir>
 ```
 
