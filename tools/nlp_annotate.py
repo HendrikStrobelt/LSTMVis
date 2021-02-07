@@ -36,7 +36,7 @@ for annotations, n in ((annotations_pos, "pos"), (annotations_ner, "ner")):
 
 
     with open(n+".dict", "w") as df:
-        for k, v in anno_dict.iteritems():
+        for k, v in anno_dict.items():
             print >>df, k, v
 
     with h5py.File(n+".h5", "w") as vf:

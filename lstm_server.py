@@ -4,9 +4,10 @@ import numpy as np
 import os
 import yaml
 from flask import send_from_directory, redirect
-
+import json
 from lstmdata.data_handler import LSTMDataHandler
 import lstmdata.read_index as ri
+import types
 
 __author__ = 'Hendrik Strobelt'
 
@@ -14,7 +15,7 @@ CONFIG_FILE_NAME = 'lstm.yml'
 data_handlers = {}
 index_map = {}
 
-app = connexion.App(__name__, debug=False)
+app = connexion.App(__name__, debug=True)
 
 
 def get_context(**request):
@@ -46,20 +47,31 @@ def get_context(**request):
             activation_threshold=request['activation']
         )
         res['cells'] = cells
-
         return {'request': request, 'results': res}
+
+def cleanup_dict(old_dictionary):
+    new_dictionary={}
+    for key, val in old_dictionary.items():
+        try:
+            s=json.dumps(val)
+            new_dictionary[key]=val
+        except:
+            if type(val) is dict:
+                new_dictionary[key]=cleanup_dict(val)
+            elif type(val) is type({}.keys()):
+                new_dictionary[key]=list(val)
+    return new_dictionary
 
 
 def get_info():
     res = []
-    for key, project in data_handlers.iteritems():
+    for key, project in data_handlers.items():
         # print key
         res.append({
             'project': key,
-            'info': project.config
+            'info':  cleanup_dict(project.config)
         })
     return sorted(res, key=lambda x: x['project'])
-
 
 def search(**request):
     project = request['project']
@@ -107,7 +119,7 @@ def match(**request):
             constrain_right=request['constraints'][1] > 0
         )
 
-        request_positions = map(lambda x: x['pos'], ranking)
+        request_positions = list(map(lambda x: x['pos'], ranking))
         position_details = dh.get_dimensions(
             pos_array=request_positions,
             source=request['source'],
@@ -125,7 +137,6 @@ def match(**request):
             'fuzzyLengthHistogram': meta['fuzzy_length_histogram'].tolist(),
             'strictLengthHistogram': meta['strict_length_histogram'].tolist()
         }
-
         return {'request': request, 'results': res}
 
 
@@ -158,7 +169,7 @@ def create_data_handlers(directory):
     i = 0
     for p_dir in project_dirs:
         with open(os.path.join(p_dir, CONFIG_FILE_NAME), 'r') as yf:
-            config = yaml.load(yf)
+            config = yaml.load(yf, Loader=yaml.FullLoader)
             dh_id = os.path.split(p_dir)[1]
             data_handlers[dh_id] = LSTMDataHandler(directory=p_dir, config=config)
             if data_handlers[dh_id].config['index']:
@@ -176,7 +187,7 @@ parser.add_argument("-dir", type=str, default=os.path.abspath('data'))
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    app.run(port=int(args.port), debug=not args.nodebug, host="0.0.0.0")
+    app.run(port=int(args.port), debug=not args.nodebug, host="127.0.0.1")
 else:
     args, _ = parser.parse_known_args()
     create_data_handlers(args.dir)

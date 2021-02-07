@@ -39,7 +39,7 @@ class Indexer:
 
     def write(self, outfile):
         out = open(outfile, "w")
-        items = [(v, k) for k, v in self.d.iteritems()]
+        items = [(v, k) for k, v in self.d.items()]
         items.sort()
         for v, k in items:
             print >>out, k, v
