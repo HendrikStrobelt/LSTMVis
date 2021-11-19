@@ -50,7 +50,7 @@ Download & Unzip example dataset(s) into `<LSTMVis>/data/05childbook`:
 
 [Children Book - Gutenberg](https://drive.google.com/file/d/0B542UFSlrvMjMHcxWHluNzh3clU/view?usp=sharing) - 2.2 GB
 
-[Parens Dataset - 10k small](https://drive.google.com/file/d/0B3yX0IkfCkLvWUowazhOZHFuSms/view?usp=sharing) - 0.03 GB
+[Parens Dataset - 10k small](https://drive.google.com/file/d/0B3yX0IkfCkLvWUowazhOZHFuSms/view?usp=sharing&resourcekey=0-JPmD2S5SFne6iTyOzAT3_w) - 0.03 GB
 
 start server:
 
